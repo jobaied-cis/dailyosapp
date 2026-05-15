@@ -33,6 +33,9 @@ function RoutinePage() {
             style={{ width: `${pct}%` }}
           />
         </div>
+        <p className="text-xs font-semibold text-primary mt-3 animate-fade-in-up">
+          {encouragement(pct)}
+        </p>
       </section>
 
       <ul className="space-y-3">
@@ -52,7 +55,7 @@ function RoutinePage() {
                   : "border-border hover:border-primary hover:bg-primary/5"
               }`}
             >
-              {t.completed && <Check className="size-3.5" strokeWidth={3} />}
+              {t.completed && <Check className="size-3.5 animate-check-pop" strokeWidth={3} />}
             </button>
             <div className="flex-1 min-w-0">
               <div className="flex items-baseline justify-between gap-2">
@@ -102,6 +105,15 @@ function RoutinePage() {
       {open && <AddTaskSheet onClose={() => setOpen(false)} />}
     </div>
   );
+}
+
+function encouragement(pct: number): string {
+  if (pct === 0) return "Let's get started";
+  if (pct === 100) return "All done. Great job!";
+  if (pct < 30) return "Let's get started";
+  if (pct < 50) return "Keep it up";
+  if (pct < 75) return "Good progress";
+  return "Almost there";
 }
 
 function AddTaskSheet({ onClose }: { onClose: () => void }) {
