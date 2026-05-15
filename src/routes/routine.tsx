@@ -169,7 +169,7 @@ function AddTaskSheet({ onClose }: { onClose: () => void }) {
           <button
             type="submit"
             disabled={!title.trim()}
-            className="w-full bg-primary text-primary-foreground rounded-[1.25rem] py-4 font-semibold shadow-[0_4px_16px_-4px_rgba(37,99,235,0.35)] disabled:opacity-45 disabled:shadow-none active:scale-[0.98] transition-all duration-200 mt-2"
+            className="press w-full bg-primary text-primary-foreground rounded-[1.25rem] py-4 font-semibold shadow-[0_4px_16px_-4px_rgba(37,99,235,0.35)] disabled:opacity-45 disabled:shadow-none mt-2"
           >
             Add task
           </button>
