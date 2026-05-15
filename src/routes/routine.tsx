@@ -99,7 +99,7 @@ function RoutinePage() {
       <button
         onClick={() => setOpen(true)}
         aria-label="Add task"
-        className="fixed bottom-24 right-1/2 translate-x-[calc(50%+7.5rem)] size-14 rounded-full bg-primary text-primary-foreground shadow-[0_8px_28px_-6px_rgba(37,99,235,0.45)] flex items-center justify-center active:scale-90 transition-all duration-200 hover:shadow-[0_12px_36px_-6px_rgba(37,99,235,0.55)]"
+        className="press fixed bottom-24 right-1/2 translate-x-[calc(50%+7.5rem)] size-14 rounded-full bg-primary text-primary-foreground shadow-[0_8px_28px_-6px_rgba(37,99,235,0.45)] flex items-center justify-center hover:shadow-[0_12px_36px_-6px_rgba(37,99,235,0.55)]"
       >
         <Plus className="size-6" strokeWidth={2.5} />
       </button>
