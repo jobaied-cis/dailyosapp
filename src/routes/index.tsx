@@ -91,7 +91,7 @@ function Dashboard() {
 
       <Link
         to="/routine"
-        className="flex items-center justify-center gap-2.5 w-full bg-primary text-primary-foreground rounded-[1.25rem] py-4 font-semibold shadow-[0_4px_20px_-4px_rgba(37,99,235,0.35)] active:scale-[0.98] transition-all duration-200 hover:shadow-[0_6px_28px_-4px_rgba(37,99,235,0.45)]"
+        className="press flex items-center justify-center gap-2.5 w-full bg-primary text-primary-foreground rounded-[1.25rem] py-4 font-semibold shadow-[0_4px_20px_-4px_rgba(37,99,235,0.35)] hover:shadow-[0_6px_28px_-4px_rgba(37,99,235,0.45)]"
       >
         Open today's routine <ArrowRight className="size-4" />
       </Link>
