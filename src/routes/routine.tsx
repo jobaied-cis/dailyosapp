@@ -74,7 +74,7 @@ function RoutinePage() {
             <button
               onClick={() => deleteTask(t.id)}
               aria-label="Delete task"
-              className="text-muted-foreground/60 hover:text-destructive p-1.5 rounded-full hover:bg-destructive/5 transition-colors opacity-0 group-hover:opacity-100"
+              className="text-muted-foreground/40 hover:text-destructive p-1.5 rounded-full hover:bg-destructive/5 transition-colors"
             >
               <Trash2 className="size-4" />
             </button>
