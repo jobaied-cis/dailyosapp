@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useTasks } from "@/lib/tasks-store";
 import { ProgressRing } from "@/components/ProgressRing";
-import { CheckCircle2, Circle, Flame, ArrowRight, Sunrise } from "lucide-react";
+import { CheckCircle2, Circle, ClipboardList, Flame, ArrowRight, Sunrise } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
