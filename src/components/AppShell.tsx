@@ -27,7 +27,7 @@ export function AppShell() {
           </div>
         </header>
 
-        <main className="flex-1 px-6 pb-32">
+        <main key={pathname} className="flex-1 px-6 pb-32 animate-screen-in">
           <Outlet />
         </main>
 
