@@ -1,5 +1,6 @@
 import { Link, Outlet, useLocation } from "@tanstack/react-router";
-import { Home, ListChecks } from "lucide-react";
+import { Home, ListChecks, Moon, Sun } from "lucide-react";
+import { useTheme } from "@/lib/theme-store";
 
 export function AppShell() {
   const { pathname } = useLocation();
