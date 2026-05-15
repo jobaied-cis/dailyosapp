@@ -1,5 +1,6 @@
 import { Link, Outlet, useLocation } from "@tanstack/react-router";
-import { Home, ListChecks } from "lucide-react";
+import { Home, ListChecks, Moon, Sun } from "lucide-react";
+import { useTheme } from "@/lib/theme-store";
 
 export function AppShell() {
   const { pathname } = useLocation();
@@ -13,13 +14,16 @@ export function AppShell() {
     <div className="min-h-screen bg-background flex justify-center">
       <div className="w-full max-w-md flex flex-col min-h-screen relative">
         <header className="px-6 pt-8 pb-4">
-          <div className="flex items-baseline justify-between">
-            <h1 className="text-[1.75rem] font-bold tracking-tight text-foreground leading-none">
-              {titles[pathname] ?? "DailyOS"}
-            </h1>
-            <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-              Your Life OS
-            </span>
+          <div className="flex items-center justify-between">
+            <div className="flex items-baseline gap-3">
+              <h1 className="text-[1.75rem] font-bold tracking-tight text-foreground leading-none">
+                {titles[pathname] ?? "DailyOS"}
+              </h1>
+              <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground hidden sm:inline">
+                Your Life OS
+              </span>
+            </div>
+            <ThemeToggle />
           </div>
         </header>
 
@@ -35,6 +39,23 @@ export function AppShell() {
         </nav>
       </div>
     </div>
+  );
+}
+
+function ThemeToggle() {
+  const { theme, toggle, mounted } = useTheme();
+  return (
+    <button
+      onClick={toggle}
+      aria-label="Toggle theme"
+      className="inline-flex items-center justify-center size-10 rounded-full bg-secondary text-foreground hover:bg-secondary/80 transition-colors"
+    >
+      {mounted ? (
+        theme === "dark" ? <Sun className="size-5" /> : <Moon className="size-5" />
+      ) : (
+        <span className="size-5" />
+      )}
+    </button>
   );
 }
 
