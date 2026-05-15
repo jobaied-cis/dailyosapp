@@ -42,7 +42,7 @@ function Dashboard() {
           </ProgressRing>
           <div className="flex-1">
             <h2 className="text-lg font-bold text-foreground tracking-tight">Today's progress</h2>
-            <p className="text-sm font-medium text-primary mt-1.5 leading-relaxed animate-fade-in">
+            <p className="text-sm font-medium text-primary mt-1.5 leading-relaxed">
               {encouragement(ratio)}
             </p>
           </div>
