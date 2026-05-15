@@ -85,11 +85,11 @@ function RoutinePage() {
         ))}
         {tasks.length === 0 && (
           <li className="text-center text-muted-foreground py-16">
-            <div className="inline-flex items-center justify-center size-14 rounded-full bg-secondary mb-4">
-              <Plus className="size-6 text-muted-foreground" />
+            <div className="inline-flex items-center justify-center size-16 rounded-full bg-secondary mb-5">
+              <ClipboardList className="size-7 text-muted-foreground" />
             </div>
-            <p className="text-sm font-medium">No tasks yet</p>
-            <p className="text-xs mt-1">Tap the button below to add your first task.</p>
+            <p className="text-base font-semibold text-foreground">No tasks yet</p>
+            <p className="text-sm text-muted-foreground mt-1.5">Add your first routine</p>
           </li>
         )}
       </ul>
