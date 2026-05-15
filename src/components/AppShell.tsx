@@ -14,13 +14,16 @@ export function AppShell() {
     <div className="min-h-screen bg-background flex justify-center">
       <div className="w-full max-w-md flex flex-col min-h-screen relative">
         <header className="px-6 pt-8 pb-4">
-          <div className="flex items-baseline justify-between">
-            <h1 className="text-[1.75rem] font-bold tracking-tight text-foreground leading-none">
-              {titles[pathname] ?? "DailyOS"}
-            </h1>
-            <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-              Your Life OS
-            </span>
+          <div className="flex items-center justify-between">
+            <div className="flex items-baseline gap-3">
+              <h1 className="text-[1.75rem] font-bold tracking-tight text-foreground leading-none">
+                {titles[pathname] ?? "DailyOS"}
+              </h1>
+              <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground hidden sm:inline">
+                Your Life OS
+              </span>
+            </div>
+            <ThemeToggle />
           </div>
         </header>
 
