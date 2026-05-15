@@ -42,12 +42,8 @@ function Dashboard() {
           </ProgressRing>
           <div className="flex-1">
             <h2 className="text-lg font-bold text-foreground tracking-tight">Today's progress</h2>
-            <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed">
-              {total === 0
-                ? "No tasks yet — add your first."
-                : done === total
-                  ? "All done. Beautiful day."
-                  : `${total - done} ${total - done === 1 ? "task" : "tasks"} remaining`}
+            <p className="text-sm font-medium text-primary mt-1.5 leading-relaxed animate-fade-in">
+              {encouragement(ratio)}
             </p>
           </div>
         </div>
