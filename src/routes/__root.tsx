@@ -7,6 +7,7 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
+import { AppShell } from "@/components/AppShell";
 
 import appCss from "../styles.css?url";
 
@@ -113,7 +114,7 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <Outlet />
+      <AppShell />
     </QueryClientProvider>
   );
 }
