@@ -33,6 +33,9 @@ function RoutinePage() {
             style={{ width: `${pct}%` }}
           />
         </div>
+        <p className="text-xs font-semibold text-primary mt-3 animate-fade-in-up">
+          {encouragement(pct)}
+        </p>
       </section>
 
       <ul className="space-y-3">
