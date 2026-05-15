@@ -12,23 +12,23 @@ export function AppShell() {
   return (
     <div className="min-h-screen bg-background flex justify-center">
       <div className="w-full max-w-md flex flex-col min-h-screen relative">
-        <header className="px-5 pt-6 pb-3">
+        <header className="px-6 pt-8 pb-4">
           <div className="flex items-baseline justify-between">
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">
+            <h1 className="text-[1.75rem] font-bold tracking-tight text-foreground leading-none">
               {titles[pathname] ?? "DailyOS"}
             </h1>
-            <span className="text-xs font-medium text-muted-foreground">
+            <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
               Your Life OS
             </span>
           </div>
         </header>
 
-        <main className="flex-1 px-5 pb-28">
+        <main className="flex-1 px-6 pb-32">
           <Outlet />
         </main>
 
-        <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md px-4 pb-4 pt-2 bg-gradient-to-t from-background via-background/95 to-transparent">
-          <div className="bg-card border border-border rounded-2xl shadow-lg shadow-primary/5 grid grid-cols-2 p-1.5">
+        <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md px-5 pb-5 pt-3">
+          <div className="bg-card/80 backdrop-blur-xl border border-border/60 rounded-[1.25rem] shadow-[0_8px_32px_-8px_rgba(15,23,42,0.12)] grid grid-cols-2 p-1.5">
             <NavItem to="/" icon={<Home className="size-5" />} label="Home" exact />
             <NavItem to="/routine" icon={<ListChecks className="size-5" />} label="Routine" />
           </div>
@@ -53,10 +53,10 @@ function NavItem({
     <Link
       to={to}
       activeOptions={{ exact }}
-      className="flex flex-col items-center justify-center gap-0.5 py-2 rounded-xl text-muted-foreground transition-colors data-[status=active]:bg-accent data-[status=active]:text-accent-foreground"
+      className="flex flex-col items-center justify-center gap-1 py-2.5 rounded-[1rem] text-muted-foreground transition-all duration-200 data-[status=active]:bg-primary data-[status=active]:text-primary-foreground data-[status=active]:shadow-md"
     >
       {icon}
-      <span className="text-xs font-medium">{label}</span>
+      <span className="text-[11px] font-semibold leading-none">{label}</span>
     </Link>
   );
 }
