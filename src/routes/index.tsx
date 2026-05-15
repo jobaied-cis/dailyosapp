@@ -91,6 +91,16 @@ function Dashboard() {
   );
 }
 
+function encouragement(ratio: number): string {
+  if (ratio === 0) return "Let's get started";
+  if (ratio === 1) return "All done. Great job!";
+  if (ratio < 0.3) return "Let's get started";
+  if (ratio < 0.5) return "Keep it up";
+  if (ratio < 0.75) return "Good progress";
+  if (ratio < 1) return "Almost there";
+  return "All done. Great job!";
+}
+
 function StatCard({
   label,
   value,
