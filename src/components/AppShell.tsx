@@ -74,7 +74,7 @@ function NavItem({
     <Link
       to={to}
       activeOptions={{ exact }}
-      className="flex flex-col items-center justify-center gap-1 py-2.5 rounded-[1rem] text-muted-foreground transition-all duration-200 data-[status=active]:bg-primary data-[status=active]:text-primary-foreground data-[status=active]:shadow-md"
+      className="press flex flex-col items-center justify-center gap-1 py-2.5 rounded-[1rem] text-muted-foreground data-[status=active]:bg-primary data-[status=active]:text-primary-foreground data-[status=active]:shadow-md"
     >
       {icon}
       <span className="text-[11px] font-semibold leading-none">{label}</span>
