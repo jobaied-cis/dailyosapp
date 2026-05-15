@@ -107,6 +107,15 @@ function RoutinePage() {
   );
 }
 
+function encouragement(pct: number): string {
+  if (pct === 0) return "Let's get started";
+  if (pct === 100) return "All done. Great job!";
+  if (pct < 30) return "Let's get started";
+  if (pct < 50) return "Keep it up";
+  if (pct < 75) return "Good progress";
+  return "Almost there";
+}
+
 function AddTaskSheet({ onClose }: { onClose: () => void }) {
   const [time, setTime] = useState("08:00");
   const [title, setTitle] = useState("");
