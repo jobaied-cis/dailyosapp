@@ -55,7 +55,7 @@ function RoutinePage() {
                   : "border-border hover:border-primary hover:bg-primary/5"
               }`}
             >
-              {t.completed && <Check className="size-3.5" strokeWidth={3} />}
+              {t.completed && <Check className="size-3.5 animate-check-pop" strokeWidth={3} />}
             </button>
             <div className="flex-1 min-w-0">
               <div className="flex items-baseline justify-between gap-2">
