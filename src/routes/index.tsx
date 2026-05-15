@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useTasks } from "@/lib/tasks-store";
 import { ProgressRing } from "@/components/ProgressRing";
-import { CheckCircle2, Circle, Flame, ArrowRight, Sunrise } from "lucide-react";
+import { CheckCircle2, Circle, ClipboardList, Flame, ArrowRight, Sunrise } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -71,6 +71,14 @@ function Dashboard() {
           </div>
           {next.note && <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed">{next.note}</p>}
         </Link>
+      )}
+
+      {total === 0 && (
+        <div className="bg-card border border-border/60 rounded-[1.5rem] p-8 shadow-[0_4px_20px_-8px_rgba(15,23,42,0.06)] text-center">
+          <ClipboardList className="size-10 text-primary/30 mx-auto mb-4" />
+          <h3 className="font-bold text-foreground text-base">No tasks yet</h3>
+          <p className="text-sm text-muted-foreground mt-1.5">Add your first routine to get started.</p>
+        </div>
       )}
 
       {!next && total > 0 && (
