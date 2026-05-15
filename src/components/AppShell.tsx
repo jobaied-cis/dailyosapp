@@ -27,7 +27,7 @@ export function AppShell() {
           </div>
         </header>
 
-        <main className="flex-1 px-6 pb-32">
+        <main key={pathname} className="flex-1 px-6 pb-32 animate-screen-in">
           <Outlet />
         </main>
 
@@ -48,7 +48,7 @@ function ThemeToggle() {
     <button
       onClick={toggle}
       aria-label="Toggle theme"
-      className="inline-flex items-center justify-center size-10 rounded-full bg-secondary text-foreground hover:bg-secondary/80 transition-colors"
+      className="press inline-flex items-center justify-center size-10 rounded-full bg-secondary text-foreground hover:bg-secondary/80"
     >
       {mounted ? (
         theme === "dark" ? <Sun className="size-5" /> : <Moon className="size-5" />
@@ -74,7 +74,7 @@ function NavItem({
     <Link
       to={to}
       activeOptions={{ exact }}
-      className="flex flex-col items-center justify-center gap-1 py-2.5 rounded-[1rem] text-muted-foreground transition-all duration-200 data-[status=active]:bg-primary data-[status=active]:text-primary-foreground data-[status=active]:shadow-md"
+      className="press flex flex-col items-center justify-center gap-1 py-2.5 rounded-[1rem] text-muted-foreground data-[status=active]:bg-primary data-[status=active]:text-primary-foreground data-[status=active]:shadow-md"
     >
       {icon}
       <span className="text-[11px] font-semibold leading-none">{label}</span>

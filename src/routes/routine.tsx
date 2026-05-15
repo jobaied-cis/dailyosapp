@@ -39,17 +39,18 @@ function RoutinePage() {
       </section>
 
       <ul className="space-y-3">
-        {tasks.map((t) => (
+        {tasks.map((t, i) => (
           <li
             key={t.id}
-            className={`group flex items-start gap-3.5 bg-card border border-border/60 rounded-[1.25rem] p-4 shadow-[0_2px_12px_-4px_rgba(15,23,42,0.06)] transition-all duration-200 hover:shadow-[0_4px_20px_-6px_rgba(15,23,42,0.1)] ${
-              t.completed ? "opacity-55" : ""
+            style={{ animationDelay: `${Math.min(i * 40, 240)}ms` }}
+            className={`group flex items-start gap-3.5 bg-card border border-border/60 rounded-[1.25rem] p-4 shadow-[0_2px_12px_-4px_rgba(15,23,42,0.06)] animate-list-item-in transition-all duration-300 hover:shadow-[0_4px_20px_-6px_rgba(15,23,42,0.1)] ${
+              t.completed ? "opacity-55 scale-[0.99]" : ""
             }`}
           >
             <button
               onClick={() => toggleTask(t.id)}
               aria-label={t.completed ? "Mark incomplete" : "Mark complete"}
-              className={`mt-0.5 size-7 rounded-full border-2 flex items-center justify-center shrink-0 transition-all duration-200 ${
+              className={`press mt-0.5 size-7 rounded-full border-2 flex items-center justify-center shrink-0 ${
                 t.completed
                   ? "bg-primary border-primary text-primary-foreground shadow-sm shadow-primary/25"
                   : "border-border hover:border-primary hover:bg-primary/5"
@@ -60,8 +61,9 @@ function RoutinePage() {
             <div className="flex-1 min-w-0">
               <div className="flex items-baseline justify-between gap-2">
                 <h3
-                  className={`font-semibold text-foreground truncate text-[0.95rem] ${
-                    t.completed ? "line-through text-muted-foreground" : ""
+                  key={t.completed ? "done" : "todo"}
+                  className={`font-semibold text-foreground truncate text-[0.95rem] transition-colors duration-300 ${
+                    t.completed ? "strike-anim text-muted-foreground" : ""
                   }`}
                 >
                   {t.title}
@@ -69,7 +71,7 @@ function RoutinePage() {
                 <span className="text-xs font-mono font-medium text-muted-foreground shrink-0">{t.time}</span>
               </div>
               {t.note && (
-                <p className={`text-sm text-muted-foreground mt-1 leading-relaxed ${t.completed ? "line-through" : ""}`}>
+                <p className={`text-sm text-muted-foreground mt-1 leading-relaxed transition-opacity duration-300 ${t.completed ? "line-through opacity-70" : ""}`}>
                   {t.note}
                 </p>
               )}
@@ -77,7 +79,7 @@ function RoutinePage() {
             <button
               onClick={() => deleteTask(t.id)}
               aria-label="Delete task"
-              className="text-muted-foreground/40 hover:text-destructive p-1.5 rounded-full hover:bg-destructive/5 transition-colors"
+              className="press text-muted-foreground/40 hover:text-destructive p-1.5 rounded-full hover:bg-destructive/5"
             >
               <Trash2 className="size-4" />
             </button>
@@ -97,7 +99,7 @@ function RoutinePage() {
       <button
         onClick={() => setOpen(true)}
         aria-label="Add task"
-        className="fixed bottom-24 right-1/2 translate-x-[calc(50%+7.5rem)] size-14 rounded-full bg-primary text-primary-foreground shadow-[0_8px_28px_-6px_rgba(37,99,235,0.45)] flex items-center justify-center active:scale-90 transition-all duration-200 hover:shadow-[0_12px_36px_-6px_rgba(37,99,235,0.55)]"
+        className="press fixed bottom-24 right-1/2 translate-x-[calc(50%+7.5rem)] size-14 rounded-full bg-primary text-primary-foreground shadow-[0_8px_28px_-6px_rgba(37,99,235,0.45)] flex items-center justify-center hover:shadow-[0_12px_36px_-6px_rgba(37,99,235,0.55)]"
       >
         <Plus className="size-6" strokeWidth={2.5} />
       </button>
@@ -167,7 +169,7 @@ function AddTaskSheet({ onClose }: { onClose: () => void }) {
           <button
             type="submit"
             disabled={!title.trim()}
-            className="w-full bg-primary text-primary-foreground rounded-[1.25rem] py-4 font-semibold shadow-[0_4px_16px_-4px_rgba(37,99,235,0.35)] disabled:opacity-45 disabled:shadow-none active:scale-[0.98] transition-all duration-200 mt-2"
+            className="press w-full bg-primary text-primary-foreground rounded-[1.25rem] py-4 font-semibold shadow-[0_4px_16px_-4px_rgba(37,99,235,0.35)] disabled:opacity-45 disabled:shadow-none mt-2"
           >
             Add task
           </button>

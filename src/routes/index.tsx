@@ -57,7 +57,7 @@ function Dashboard() {
       {next && (
         <Link
           to="/routine"
-          className="block bg-card border border-border/60 rounded-[1.5rem] p-5 shadow-[0_4px_20px_-8px_rgba(15,23,42,0.06)] active:scale-[0.99] transition-all duration-200 hover:shadow-[0_8px_28px_-8px_rgba(15,23,42,0.1)]"
+          className="press block bg-card border border-border/60 rounded-[1.5rem] p-5 shadow-[0_4px_20px_-8px_rgba(15,23,42,0.06)] hover:shadow-[0_8px_28px_-8px_rgba(15,23,42,0.1)]"
         >
           <div className="flex items-center justify-between mb-3">
             <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-primary flex items-center gap-1.5">
@@ -91,7 +91,7 @@ function Dashboard() {
 
       <Link
         to="/routine"
-        className="flex items-center justify-center gap-2.5 w-full bg-primary text-primary-foreground rounded-[1.25rem] py-4 font-semibold shadow-[0_4px_20px_-4px_rgba(37,99,235,0.35)] active:scale-[0.98] transition-all duration-200 hover:shadow-[0_6px_28px_-4px_rgba(37,99,235,0.45)]"
+        className="press flex items-center justify-center gap-2.5 w-full bg-primary text-primary-foreground rounded-[1.25rem] py-4 font-semibold shadow-[0_4px_20px_-4px_rgba(37,99,235,0.35)] hover:shadow-[0_6px_28px_-4px_rgba(37,99,235,0.45)]"
       >
         Open today's routine <ArrowRight className="size-4" />
       </Link>
