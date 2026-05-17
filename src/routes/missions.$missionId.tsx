@@ -44,7 +44,7 @@ function MissionDetailPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div className="flex items-center justify-between">
         <Link
           to="/missions"
@@ -67,17 +67,17 @@ function MissionDetailPage() {
         </button>
       </div>
 
-      <section className="bg-card border border-border/60 rounded-[1.75rem] p-5 shadow-[0_8px_32px_-12px_rgba(15,23,42,0.08)]">
-        <h2 className="font-bold text-foreground text-lg tracking-tight">{mission.title}</h2>
-        <div className="flex items-baseline justify-between mt-2">
-          <p className="text-xs text-muted-foreground font-mono">
+      <section className="bg-card border border-border/60 rounded-[1.75rem] p-6 shadow-[0_8px_32px_-12px_rgba(15,23,42,0.08)]">
+        <h2 className="font-bold text-foreground text-xl tracking-tight leading-tight">{mission.title}</h2>
+        <div className="flex items-baseline justify-between mt-3">
+          <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">
             {done}/{total} steps{mission.durationDays ? ` · ${mission.durationDays} days` : ""}
           </p>
-          <span className="text-sm font-bold text-primary">{pct}%</span>
+          <span className="text-2xl font-extrabold text-primary tabular-nums">{pct}%</span>
         </div>
-        <div className="h-2.5 rounded-full bg-secondary overflow-hidden mt-3">
+        <div className="h-4 rounded-full bg-secondary overflow-hidden mt-4">
           <div
-            className="h-full bg-primary rounded-full transition-all duration-700 ease-out"
+            className="h-full bg-gradient-to-r from-primary to-primary/80 rounded-full transition-all duration-700 ease-out"
             style={{ width: `${pct}%` }}
           />
         </div>

@@ -18,13 +18,13 @@ function MissionsPage() {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="space-y-6">
-      <section className="bg-card border border-border/60 rounded-[1.75rem] p-5 shadow-[0_8px_32px_-12px_rgba(15,23,42,0.08)]">
-        <h2 className="font-bold text-foreground text-lg tracking-tight">Missions</h2>
-        <p className="text-sm text-muted-foreground mt-1">Track progress toward your goals.</p>
+    <div className="space-y-8">
+      <section>
+        <h2 className="font-bold text-foreground text-2xl tracking-tight">Missions</h2>
+        <p className="text-sm text-muted-foreground mt-1.5 font-medium">Track progress toward your goals.</p>
       </section>
 
-      <ul className="space-y-3">
+      <ul className="space-y-4">
         {missions.map((m, i) => {
           const { total, done, pct } = missionProgress(m);
           return (
@@ -36,22 +36,28 @@ function MissionsPage() {
               <Link
                 to="/missions/$missionId"
                 params={{ missionId: m.id }}
-                className="press block bg-card border border-border/60 rounded-[1.25rem] p-4 shadow-[0_2px_12px_-4px_rgba(15,23,42,0.06)] hover:shadow-[0_4px_20px_-6px_rgba(15,23,42,0.1)] transition-all duration-300"
+                className="press block bg-card border border-border/60 rounded-[1.5rem] p-5 shadow-[0_2px_16px_-6px_rgba(15,23,42,0.06)] hover:shadow-[0_6px_28px_-8px_rgba(15,23,42,0.12)] transition-all duration-300"
               >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-foreground text-[0.95rem] truncate">{m.title}</h3>
-                    <p className="text-xs text-muted-foreground mt-0.5 font-mono">
+                <div className="flex items-center justify-between gap-3">
+                  <h3 className="font-bold text-foreground text-base tracking-tight truncate">{m.title}</h3>
+                  <span className="text-lg font-extrabold text-primary shrink-0 tabular-nums">{pct}%</span>
+                </div>
+
+                <div className="mt-4">
+                  <div className="h-3 rounded-full bg-secondary overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-primary to-primary/80 rounded-full transition-all duration-700 ease-out"
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between mt-2">
+                    <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">
                       {done}/{total} steps{m.durationDays ? ` · ${m.durationDays} days` : ""}
                     </p>
+                    {pct === 100 && (
+                      <span className="text-[10px] font-bold text-primary uppercase tracking-wider">Completed</span>
+                    )}
                   </div>
-                  <span className="text-sm font-bold text-primary shrink-0">{pct}%</span>
-                </div>
-                <div className="h-2 rounded-full bg-secondary overflow-hidden mt-3">
-                  <div
-                    className="h-full bg-primary rounded-full transition-all duration-700 ease-out"
-                    style={{ width: `${pct}%` }}
-                  />
                 </div>
               </Link>
             </li>
