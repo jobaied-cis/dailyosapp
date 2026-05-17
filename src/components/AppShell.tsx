@@ -38,9 +38,10 @@ export function AppShell() {
         </main>
 
         <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md px-5 pb-5 pt-3">
-          <div className="bg-card/80 backdrop-blur-xl border border-border/60 rounded-[1.25rem] shadow-[0_8px_32px_-8px_rgba(15,23,42,0.12)] grid grid-cols-2 p-1.5">
+          <div className="bg-card/80 backdrop-blur-xl border border-border/60 rounded-[1.25rem] shadow-[0_8px_32px_-8px_rgba(15,23,42,0.12)] grid grid-cols-3 p-1.5">
             <NavItem to="/" icon={<Home className="size-5" />} label="Home" exact />
             <NavItem to="/routine" icon={<ListChecks className="size-5" />} label="Routine" />
+            <NavItem to="/missions" icon={<Target className="size-5" />} label="Mission" />
           </div>
         </nav>
       </div>
