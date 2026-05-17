@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as RoutineRouteImport } from './routes/routine'
 import { Route as MissionsRouteImport } from './routes/missions'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as MissionsMissionIdRouteImport } from './routes/missions.$missionId'
 
 const RoutineRoute = RoutineRouteImport.update({
   id: '/routine',
@@ -28,34 +29,42 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MissionsMissionIdRoute = MissionsMissionIdRouteImport.update({
+  id: '/$missionId',
+  path: '/$missionId',
+  getParentRoute: () => MissionsRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/missions': typeof MissionsRoute
+  '/missions': typeof MissionsRouteWithChildren
   '/routine': typeof RoutineRoute
+  '/missions/$missionId': typeof MissionsMissionIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/missions': typeof MissionsRoute
+  '/missions': typeof MissionsRouteWithChildren
   '/routine': typeof RoutineRoute
+  '/missions/$missionId': typeof MissionsMissionIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/missions': typeof MissionsRoute
+  '/missions': typeof MissionsRouteWithChildren
   '/routine': typeof RoutineRoute
+  '/missions/$missionId': typeof MissionsMissionIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/missions' | '/routine'
+  fullPaths: '/' | '/missions' | '/routine' | '/missions/$missionId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/missions' | '/routine'
-  id: '__root__' | '/' | '/missions' | '/routine'
+  to: '/' | '/missions' | '/routine' | '/missions/$missionId'
+  id: '__root__' | '/' | '/missions' | '/routine' | '/missions/$missionId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  MissionsRoute: typeof MissionsRoute
+  MissionsRoute: typeof MissionsRouteWithChildren
   RoutineRoute: typeof RoutineRoute
 }
 
@@ -82,12 +91,31 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/missions/$missionId': {
+      id: '/missions/$missionId'
+      path: '/$missionId'
+      fullPath: '/missions/$missionId'
+      preLoaderRoute: typeof MissionsMissionIdRouteImport
+      parentRoute: typeof MissionsRoute
+    }
   }
 }
 
+interface MissionsRouteChildren {
+  MissionsMissionIdRoute: typeof MissionsMissionIdRoute
+}
+
+const MissionsRouteChildren: MissionsRouteChildren = {
+  MissionsMissionIdRoute: MissionsMissionIdRoute,
+}
+
+const MissionsRouteWithChildren = MissionsRoute._addFileChildren(
+  MissionsRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  MissionsRoute: MissionsRoute,
+  MissionsRoute: MissionsRouteWithChildren,
   RoutineRoute: RoutineRoute,
 }
 export const routeTree = rootRouteImport
