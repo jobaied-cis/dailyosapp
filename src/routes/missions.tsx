@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { Plus, Target, Trash2, X } from "lucide-react";
+import { Plus, Target, X } from "lucide-react";
 import { addMission, deleteMission, missionProgress, useMissions } from "@/lib/missions-store";
 
 export const Route = createFileRoute("/missions")({
