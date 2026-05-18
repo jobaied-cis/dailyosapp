@@ -10,6 +10,8 @@ export interface Mission {
   id: string;
   title: string;
   durationDays?: number;
+  /** ISO date string YYYY-MM-DD for Day 1 */
+  startDate?: string;
   createdAt: number;
   steps: MissionStep[];
 }
