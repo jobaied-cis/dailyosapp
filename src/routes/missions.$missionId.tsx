@@ -70,6 +70,11 @@ function MissionDetailPage() {
 
       <section className="bg-card border border-border/60 rounded-[1.75rem] p-6 shadow-[0_8px_32px_-12px_rgba(15,23,42,0.08)]">
         <h2 className="font-bold text-foreground text-xl tracking-tight leading-tight">{mission.title}</h2>
+        {mission.startDate && (
+          <p className="text-[11px] font-bold text-primary uppercase tracking-[0.14em] mt-2">
+            Starts {stepDate(mission, 0)?.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric", year: "numeric" })}
+          </p>
+        )}
         <div className="flex items-baseline justify-between mt-3">
           <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">
             {done}/{total} steps{mission.durationDays ? ` · ${mission.durationDays} days` : ""}
