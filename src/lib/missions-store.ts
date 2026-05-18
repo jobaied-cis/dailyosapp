@@ -10,6 +10,8 @@ export interface Mission {
   id: string;
   title: string;
   durationDays?: number;
+  /** ISO date string YYYY-MM-DD for Day 1 */
+  startDate?: string;
   createdAt: number;
   steps: MissionStep[];
 }
@@ -90,12 +92,13 @@ export function useMission(id: string): Mission | undefined {
   return useMissions().find((m) => m.id === id);
 }
 
-export function addMission(input: { title: string; durationDays?: number }) {
+export function addMission(input: { title: string; durationDays?: number; startDate?: string }) {
   ensureInit();
   const mission: Mission = {
     id: crypto.randomUUID(),
     title: input.title.trim(),
     durationDays: input.durationDays,
+    startDate: input.startDate,
     createdAt: Date.now(),
     steps: [],
   };
@@ -154,4 +157,14 @@ export function missionProgress(m: Mission) {
   const done = m.steps.filter((s) => s.completed).length;
   const pct = total ? Math.round((done / total) * 100) : 0;
   return { total, done, pct };
+}
+
+/** Compute the date for a given 0-based day index, based on mission.startDate. */
+export function stepDate(m: Mission, index: number): Date | null {
+  if (!m.startDate) return null;
+  const [y, mo, d] = m.startDate.split("-").map(Number);
+  if (!y || !mo || !d) return null;
+  const date = new Date(y, mo - 1, d);
+  date.setDate(date.getDate() + index);
+  return date;
 }

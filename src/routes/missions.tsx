@@ -100,6 +100,11 @@ function MissionsPage() {
 function AddMissionSheet({ onClose }: { onClose: () => void }) {
   const [title, setTitle] = useState("");
   const [duration, setDuration] = useState("");
+  const [startDate, setStartDate] = useState(() => {
+    const d = new Date();
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  });
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -107,6 +112,7 @@ function AddMissionSheet({ onClose }: { onClose: () => void }) {
     addMission({
       title,
       durationDays: duration ? Number(duration) : undefined,
+      startDate: startDate || undefined,
     });
     onClose();
   };
@@ -128,6 +134,14 @@ function AddMissionSheet({ onClose }: { onClose: () => void }) {
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g. Learn Java in 20 days"
               className="w-full bg-secondary rounded-xl px-4 py-3.5 text-foreground outline-none focus:ring-2 focus:ring-primary/30 placeholder:text-muted-foreground/60 font-medium"
+            />
+          </Field>
+          <Field label="Start date">
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="w-full bg-secondary rounded-xl px-4 py-3.5 text-foreground outline-none focus:ring-2 focus:ring-primary/30 font-medium"
             />
           </Field>
           <Field label="Duration in days (optional)">
