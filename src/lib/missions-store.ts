@@ -113,18 +113,26 @@ export function deleteMission(id: string) {
   persist(cache.filter((m) => m.id !== id));
 }
 
-export function addStep(missionId: string, title: string) {
+export function addStep(missionId: string, title: string, day: number = 1) {
   ensureInit();
   const step: MissionStep = {
     id: crypto.randomUUID(),
     title: title.trim(),
     completed: false,
+    day,
   };
   persist(
     cache.map((m) =>
       m.id === missionId ? { ...m, steps: [...m.steps, step] } : m,
     ),
   );
+}
+
+/** Resolve a step's day, falling back to its index for legacy steps. */
+export function stepDay(m: Mission, step: MissionStep): number {
+  if (typeof step.day === "number" && step.day >= 1) return step.day;
+  const idx = m.steps.findIndex((s) => s.id === step.id);
+  return idx >= 0 ? idx + 1 : 1;
 }
 
 export function toggleStep(missionId: string, stepId: string) {
