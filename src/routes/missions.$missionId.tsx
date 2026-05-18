@@ -85,7 +85,12 @@ function MissionDetailPage() {
       </section>
 
       <ul className="space-y-3">
-        {mission.steps.map((s, i) => (
+        {mission.steps.map((s, i) => {
+          const date = stepDate(mission, i);
+          const dayLabel = date
+            ? date.toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" })
+            : null;
+          return (
           <li
             key={s.id}
             style={{ animationDelay: `${Math.min(i * 40, 240)}ms` }}
@@ -105,6 +110,16 @@ function MissionDetailPage() {
               {s.completed && <Check className="size-3.5 animate-check-pop" strokeWidth={3} />}
             </button>
             <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-[10px] font-bold text-primary uppercase tracking-[0.12em]">
+                  Day {i + 1}
+                </span>
+                {dayLabel && (
+                  <span className="text-[10px] font-semibold text-muted-foreground tracking-wide">
+                    · {dayLabel}
+                  </span>
+                )}
+              </div>
               <h3
                 key={s.completed ? "done" : "todo"}
                 className={`font-semibold text-foreground text-[0.95rem] transition-colors duration-300 ${
