@@ -125,3 +125,62 @@ function MissionDetailPage() {
     </div>
   );
 }
+
+type StepRowProps = {
+  step: { id: string; title: string; completed: boolean };
+  index: number;
+  missionId: string;
+  date: Date | null;
+};
+
+function StepRow({ step, index, missionId, date }: StepRowProps) {
+  const dayLabel = date
+    ? date.toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" })
+    : null;
+  const liClass =
+    "group flex items-start gap-3.5 bg-card border border-border/60 rounded-[1.25rem] p-4 animate-list-item-in transition-all duration-300 " +
+    (step.completed ? "opacity-55 scale-[0.99]" : "");
+  const checkClass =
+    "press mt-0.5 size-7 rounded-full border-2 flex items-center justify-center shrink-0 " +
+    (step.completed
+      ? "bg-primary border-primary text-primary-foreground shadow-sm shadow-primary/25"
+      : "border-border hover:border-primary hover:bg-primary/5");
+  const titleClass =
+    "font-semibold text-foreground text-[0.95rem] transition-colors duration-300 " +
+    (step.completed ? "strike-anim text-muted-foreground" : "");
+
+  return (
+    <li
+      style={{ animationDelay: `${Math.min(index * 40, 240)}ms` }}
+      className={liClass}
+    >
+      <button
+        onClick={() => toggleStep(missionId, step.id)}
+        aria-label={step.completed ? "Mark incomplete" : "Mark complete"}
+        className={checkClass}
+      >
+        {step.completed && <Check className="size-3.5 animate-check-pop" strokeWidth={3} />}
+      </button>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-1">
+          <span className="text-[10px] font-bold text-primary uppercase tracking-[0.12em]">
+            Day {index + 1}
+          </span>
+          {dayLabel && (
+            <span className="text-[10px] font-semibold text-muted-foreground tracking-wide">
+              · {dayLabel}
+            </span>
+          )}
+        </div>
+        <h3 className={titleClass}>{step.title}</h3>
+      </div>
+      <button
+        onClick={() => deleteStep(missionId, step.id)}
+        aria-label="Delete step"
+        className="press text-muted-foreground/40 hover:text-destructive p-1.5 rounded-full hover:bg-destructive/5"
+      >
+        <X className="size-4" />
+      </button>
+    </li>
+  );
+}
