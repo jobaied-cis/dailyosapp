@@ -137,7 +137,8 @@ function MissionDetailPage() {
               <X className="size-4" />
             </button>
           </li>
-        ))}
+          );
+        })}
         {mission.steps.length === 0 && (
           <li className="text-center text-muted-foreground py-10">
             <p className="text-sm">No steps yet. Add the first one below.</p>
