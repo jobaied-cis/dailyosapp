@@ -4,6 +4,8 @@ export interface MissionStep {
   id: string;
   title: string;
   completed: boolean;
+  /** 1-based day this step belongs to */
+  day?: number;
 }
 
 export interface Mission {
