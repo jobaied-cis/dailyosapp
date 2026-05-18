@@ -92,12 +92,13 @@ export function useMission(id: string): Mission | undefined {
   return useMissions().find((m) => m.id === id);
 }
 
-export function addMission(input: { title: string; durationDays?: number }) {
+export function addMission(input: { title: string; durationDays?: number; startDate?: string }) {
   ensureInit();
   const mission: Mission = {
     id: crypto.randomUUID(),
     title: input.title.trim(),
     durationDays: input.durationDays,
+    startDate: input.startDate,
     createdAt: Date.now(),
     steps: [],
   };
