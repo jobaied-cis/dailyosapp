@@ -90,60 +90,15 @@ function MissionDetailPage() {
       </section>
 
       <ul className="space-y-3">
-        {mission.steps.map((s, i) => {
-          const date = stepDate(mission, i);
-          const dayLabel = date
-            ? date.toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" })
-            : null;
-          return (
-          <li
+        {mission.steps.map((s, i) => (
+          <StepRow
             key={s.id}
-            style={{ animationDelay: `${Math.min(i * 40, 240)}ms` }}
-            className={`group flex items-start gap-3.5 bg-card border border-border/60 rounded-[1.25rem] p-4 shadow-[0_2px_12px_-4px_rgba(15,23,42,0.06)] animate-list-item-in transition-all duration-300 ${
-              s.completed ? "opacity-55 scale-[0.99]" : ""
-            }`}
-          >
-            <button
-              onClick={() => toggleStep(mission.id, s.id)}
-              aria-label={s.completed ? "Mark incomplete" : "Mark complete"}
-              className={`press mt-0.5 size-7 rounded-full border-2 flex items-center justify-center shrink-0 ${
-                s.completed
-                  ? "bg-primary border-primary text-primary-foreground shadow-sm shadow-primary/25"
-                  : "border-border hover:border-primary hover:bg-primary/5"
-              }`}
-            >
-              {s.completed && <Check className="size-3.5 animate-check-pop" strokeWidth={3} />}
-            </button>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-[10px] font-bold text-primary uppercase tracking-[0.12em]">
-                  Day {i + 1}
-                </span>
-                {dayLabel && (
-                  <span className="text-[10px] font-semibold text-muted-foreground tracking-wide">
-                    · {dayLabel}
-                  </span>
-                )}
-              </div>
-              <h3
-                key={s.completed ? "done" : "todo"}
-                className={`font-semibold text-foreground text-[0.95rem] transition-colors duration-300 ${
-                  s.completed ? "strike-anim text-muted-foreground" : ""
-                }`}
-              >
-                {s.title}
-              </h3>
-            </div>
-            <button
-              onClick={() => deleteStep(mission.id, s.id)}
-              aria-label="Delete step"
-              className="press text-muted-foreground/40 hover:text-destructive p-1.5 rounded-full hover:bg-destructive/5"
-            >
-              <X className="size-4" />
-            </button>
-          </li>
-          );
-        })}
+            step={s}
+            index={i}
+            missionId={mission.id}
+            date={stepDate(mission, i)}
+          />
+        ))}
         {mission.steps.length === 0 && (
           <li className="text-center text-muted-foreground py-10">
             <p className="text-sm">No steps yet. Add the first one below.</p>
@@ -168,5 +123,64 @@ function MissionDetailPage() {
         </button>
       </form>
     </div>
+  );
+}
+
+type StepRowProps = {
+  step: { id: string; title: string; completed: boolean };
+  index: number;
+  missionId: string;
+  date: Date | null;
+};
+
+function StepRow({ step, index, missionId, date }: StepRowProps) {
+  const dayLabel = date
+    ? date.toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" })
+    : null;
+  const liClass =
+    "group flex items-start gap-3.5 bg-card border border-border/60 rounded-[1.25rem] p-4 animate-list-item-in transition-all duration-300 " +
+    (step.completed ? "opacity-55 scale-[0.99]" : "");
+  const checkClass =
+    "press mt-0.5 size-7 rounded-full border-2 flex items-center justify-center shrink-0 " +
+    (step.completed
+      ? "bg-primary border-primary text-primary-foreground shadow-sm shadow-primary/25"
+      : "border-border hover:border-primary hover:bg-primary/5");
+  const titleClass =
+    "font-semibold text-foreground text-[0.95rem] transition-colors duration-300 " +
+    (step.completed ? "strike-anim text-muted-foreground" : "");
+
+  return (
+    <li
+      style={{ animationDelay: `${Math.min(index * 40, 240)}ms` }}
+      className={liClass}
+    >
+      <button
+        onClick={() => toggleStep(missionId, step.id)}
+        aria-label={step.completed ? "Mark incomplete" : "Mark complete"}
+        className={checkClass}
+      >
+        {step.completed && <Check className="size-3.5 animate-check-pop" strokeWidth={3} />}
+      </button>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-1">
+          <span className="text-[10px] font-bold text-primary uppercase tracking-[0.12em]">
+            Day {index + 1}
+          </span>
+          {dayLabel && (
+            <span className="text-[10px] font-semibold text-muted-foreground tracking-wide">
+              · {dayLabel}
+            </span>
+          )}
+        </div>
+        <h3 className={titleClass}>{step.title}</h3>
+      </div>
+      <button
+        onClick={() => deleteStep(missionId, step.id)}
+        aria-label="Delete step"
+        className="press text-muted-foreground/40 hover:text-destructive p-1.5 rounded-full hover:bg-destructive/5"
+      >
+        <X className="size-4" />
+      </button>
+    </li>
   );
 }
