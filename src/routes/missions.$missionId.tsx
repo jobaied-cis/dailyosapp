@@ -155,18 +155,25 @@ type DayGroup = { day: number; steps: MissionStep[] };
 
 function groupByDay(mission: Mission | undefined): DayGroup[] {
   if (!mission) return [];
-  const map = new Map<number, MissionStep[]>();
-  (mission.steps ?? []).forEach((s) => {
+  const map = new Map<number, { step: MissionStep; index: number }[]>();
+  (mission.steps ?? []).forEach((s, index) => {
     const d = stepDay(mission, s);
     const arr = map.get(d) ?? [];
-    arr.push(s);
+    arr.push({ step: s, index });
     map.set(d, arr);
   });
   const maxStepDay = map.size ? Math.max(...map.keys()) : 0;
   const maxDay = Math.max(maxStepDay, mission.durationDays ?? 0, map.size ? 0 : 1);
   const result: DayGroup[] = [];
   for (let d = 1; d <= maxDay; d++) {
-    result.push({ day: d, steps: map.get(d) ?? [] });
+    const items = map.get(d) ?? [];
+    items.sort((a, b) => {
+      const ta = a.step.createdAt ?? 0;
+      const tb = b.step.createdAt ?? 0;
+      if (ta !== tb) return ta - tb;
+      return a.index - b.index;
+    });
+    result.push({ day: d, steps: items.map((i) => i.step) });
   }
   return result;
 }

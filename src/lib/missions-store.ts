@@ -6,6 +6,7 @@ export interface MissionStep {
   completed: boolean;
   /** 1-based day this step belongs to */
   day?: number;
+  createdAt?: number;
 }
 
 export interface Mission {
@@ -120,6 +121,7 @@ export function addStep(missionId: string, title: string, day: number = 1) {
     title: title.trim(),
     completed: false,
     day,
+    createdAt: Date.now(),
   };
   persist(
     cache.map((m) =>
