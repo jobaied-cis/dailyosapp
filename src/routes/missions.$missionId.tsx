@@ -112,8 +112,8 @@ function MissionDetailPage() {
             missionId={mission.id}
           />
         ))}
-        {grouped.length === 0 && (
-          <div className="text-center text-muted-foreground py-10">
+        {total === 0 && (
+          <div className="text-center text-muted-foreground py-6">
             <p className="text-sm">No steps yet. Add the first one below.</p>
           </div>
         )}
