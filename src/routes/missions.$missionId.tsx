@@ -219,11 +219,15 @@ function DaySection({ day, steps, date, missionId }: DaySectionProps) {
       </div>
 
       <div className="px-5 pb-5">
-        <ul className="space-y-2">
-          {steps.map((s, i) => (
-            <StepRow key={s.id} step={s} index={i} missionId={missionId} />
-          ))}
-        </ul>
+        {steps.length === 0 ? (
+          <p className="text-xs text-muted-foreground/70 italic">No steps for this day yet.</p>
+        ) : (
+          <ul className="space-y-2">
+            {steps.map((s, i) => (
+              <StepRow key={s.id} step={s} index={i} missionId={missionId} />
+            ))}
+          </ul>
+        )}
       </div>
     </section>
   );
