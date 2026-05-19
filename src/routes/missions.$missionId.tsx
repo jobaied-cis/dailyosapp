@@ -112,8 +112,8 @@ function MissionDetailPage() {
             missionId={mission.id}
           />
         ))}
-        {grouped.length === 0 && (
-          <div className="text-center text-muted-foreground py-10">
+        {total === 0 && (
+          <div className="text-center text-muted-foreground py-6">
             <p className="text-sm">No steps yet. Add the first one below.</p>
           </div>
         )}
@@ -156,15 +156,19 @@ type DayGroup = { day: number; steps: MissionStep[] };
 function groupByDay(mission: Mission | undefined): DayGroup[] {
   if (!mission) return [];
   const map = new Map<number, MissionStep[]>();
-  mission.steps.forEach((s) => {
+  (mission.steps ?? []).forEach((s) => {
     const d = stepDay(mission, s);
     const arr = map.get(d) ?? [];
     arr.push(s);
     map.set(d, arr);
   });
-  return Array.from(map.entries())
-    .sort((a, b) => a[0] - b[0])
-    .map(([day, steps]) => ({ day, steps }));
+  const maxStepDay = map.size ? Math.max(...map.keys()) : 0;
+  const maxDay = Math.max(maxStepDay, mission.durationDays ?? 0, map.size ? 0 : 1);
+  const result: DayGroup[] = [];
+  for (let d = 1; d <= maxDay; d++) {
+    result.push({ day: d, steps: map.get(d) ?? [] });
+  }
+  return result;
 }
 
 type DaySectionProps = {
@@ -215,11 +219,15 @@ function DaySection({ day, steps, date, missionId }: DaySectionProps) {
       </div>
 
       <div className="px-5 pb-5">
-        <ul className="space-y-2">
-          {steps.map((s, i) => (
-            <StepRow key={s.id} step={s} index={i} missionId={missionId} />
-          ))}
-        </ul>
+        {steps.length === 0 ? (
+          <p className="text-xs text-muted-foreground/70 italic">No steps for this day yet.</p>
+        ) : (
+          <ul className="space-y-2">
+            {steps.map((s, i) => (
+              <StepRow key={s.id} step={s} index={i} missionId={missionId} />
+            ))}
+          </ul>
+        )}
       </div>
     </section>
   );

@@ -128,11 +128,10 @@ export function addStep(missionId: string, title: string, day: number = 1) {
   );
 }
 
-/** Resolve a step's day, falling back to its index for legacy steps. */
-export function stepDay(m: Mission, step: MissionStep): number {
-  if (typeof step.day === "number" && step.day >= 1) return step.day;
-  const idx = m.steps.findIndex((s) => s.id === step.id);
-  return idx >= 0 ? idx + 1 : 1;
+/** Resolve a step's day. Defaults to Day 1 for legacy/missing data. */
+export function stepDay(_m: Mission, step: MissionStep): number {
+  if (typeof step.day === "number" && step.day >= 1) return Math.floor(step.day);
+  return 1;
 }
 
 export function toggleStep(missionId: string, stepId: string) {
