@@ -6,6 +6,7 @@ export interface MissionStep {
   completed: boolean;
   /** 1-based day this step belongs to */
   day?: number;
+  createdAt?: number;
 }
 
 export interface Mission {
