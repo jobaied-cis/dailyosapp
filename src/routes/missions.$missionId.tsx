@@ -176,28 +176,51 @@ type DaySectionProps = {
 
 function DaySection({ day, steps, date, missionId }: DaySectionProps) {
   const dateLabel = date
-    ? date.toLocaleDateString(undefined, { month: "short", day: "numeric", weekday: "long" })
+    ? date.toLocaleDateString(undefined, { month: "long", day: "numeric" })
+    : null;
+  const dayName = date
+    ? date.toLocaleDateString(undefined, { weekday: "long" })
     : null;
   const allDone = steps.length > 0 && steps.every((s) => s.completed);
 
   return (
-    <section className="bg-card border border-border/60 rounded-[1.5rem] p-5 shadow-[0_2px_16px_-6px_rgba(15,23,42,0.06)]">
-      <header className="flex items-baseline justify-between mb-4">
-        <div className="flex items-baseline gap-2.5">
-          <h3 className="text-lg font-extrabold text-foreground tracking-tight">Day {day}</h3>
-          {dateLabel && (
-            <span className="text-xs font-semibold text-muted-foreground">{dateLabel}</span>
-          )}
+    <section className="bg-card border border-border/50 rounded-2xl overflow-hidden shadow-sm">
+      <div className="relative px-5 pt-5 pb-3">
+        <div className="absolute left-0 top-4 bottom-4 w-1 rounded-r-full bg-primary/70" />
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <div className="flex items-baseline gap-2.5 mb-0.5">
+              <h3 className="text-2xl font-extrabold text-foreground tracking-tight leading-none">
+                Day {day}
+              </h3>
+              {allDone && (
+                <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-primary uppercase tracking-wider bg-primary/10 rounded-full px-2 py-0.5">
+                  <Check className="size-3" strokeWidth={3} />
+                  Done
+                </span>
+              )}
+            </div>
+            {dateLabel && dayName && (
+              <p className="text-sm font-semibold text-muted-foreground mt-1">
+                {dateLabel} <span className="text-border font-normal mx-1">·</span> {dayName}
+              </p>
+            )}
+          </div>
+          <div className="text-right shrink-0 mt-0.5">
+            <p className="text-xs font-bold text-muted-foreground/70 tabular-nums uppercase tracking-wider">
+              {steps.filter((s) => s.completed).length}/{steps.length}
+            </p>
+          </div>
         </div>
-        {allDone && (
-          <span className="text-[10px] font-bold text-primary uppercase tracking-wider">Done</span>
-        )}
-      </header>
-      <ul className="space-y-2.5">
-        {steps.map((s, i) => (
-          <StepRow key={s.id} step={s} index={i} missionId={missionId} />
-        ))}
-      </ul>
+      </div>
+
+      <div className="px-5 pb-5">
+        <ul className="space-y-2">
+          {steps.map((s, i) => (
+            <StepRow key={s.id} step={s} index={i} missionId={missionId} />
+          ))}
+        </ul>
+      </div>
     </section>
   );
 }
@@ -210,7 +233,7 @@ type StepRowProps = {
 
 function StepRow({ step, index, missionId }: StepRowProps) {
   const liClass =
-    "group flex items-center gap-3 bg-secondary/40 border border-border/40 rounded-[1rem] p-3 animate-list-item-in transition-all duration-300 " +
+    "group flex items-center gap-3 bg-muted/40 border border-border/30 rounded-xl p-3 animate-list-item-in transition-all duration-300 " +
     (step.completed ? "opacity-55" : "");
   const checkClass =
     "press size-6 rounded-full border-2 flex items-center justify-center shrink-0 " +
@@ -218,8 +241,8 @@ function StepRow({ step, index, missionId }: StepRowProps) {
       ? "bg-primary border-primary text-primary-foreground"
       : "border-border hover:border-primary hover:bg-primary/5");
   const titleClass =
-    "flex-1 font-medium text-foreground text-[0.92rem] transition-colors duration-300 " +
-    (step.completed ? "strike-anim text-muted-foreground" : "");
+    "flex-1 font-medium text-foreground text-[0.92rem] transition-colors duration-300 leading-snug " +
+    (step.completed ? "line-through text-muted-foreground" : "");
 
   return (
     <li style={{ animationDelay: `${Math.min(index * 30, 180)}ms` }} className={liClass}>
@@ -234,7 +257,7 @@ function StepRow({ step, index, missionId }: StepRowProps) {
       <button
         onClick={() => deleteStep(missionId, step.id)}
         aria-label="Delete step"
-        className="press text-muted-foreground/40 hover:text-destructive p-1 rounded-full hover:bg-destructive/5"
+        className="press opacity-0 group-hover:opacity-100 text-muted-foreground/40 hover:text-destructive p-1 rounded-full hover:bg-destructive/5 transition-opacity"
       >
         <X className="size-3.5" />
       </button>
