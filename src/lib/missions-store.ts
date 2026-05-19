@@ -121,6 +121,7 @@ export function addStep(missionId: string, title: string, day: number = 1) {
     title: title.trim(),
     completed: false,
     day,
+    createdAt: Date.now(),
   };
   persist(
     cache.map((m) =>
