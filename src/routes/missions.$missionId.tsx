@@ -176,18 +176,66 @@ function DaySection({ day, steps, date, missionId }: DaySectionProps) {
         </div>
       </div>
 
-      <div className="px-5 pb-5">
-        {steps.length === 0 ? (
-          <p className="text-xs text-muted-foreground/70 italic">No steps for this day yet.</p>
-        ) : (
+      <div className="px-5 pb-5 space-y-3">
+        {steps.length > 0 && (
           <ul className="space-y-2">
             {steps.map((s, i) => (
               <StepRow key={s.id} step={s} index={i} missionId={missionId} />
             ))}
           </ul>
         )}
+        <AddTopicForm missionId={missionId} day={day} hasSteps={steps.length > 0} />
       </div>
     </section>
+  );
+}
+
+function AddTopicForm({ missionId, day, hasSteps }: { missionId: string; day: number; hasSteps: boolean }) {
+  const [open, setOpen] = useState(false);
+  const [value, setValue] = useState("");
+
+  const submit = (e: FormEvent) => {
+    e.preventDefault();
+    if (!value.trim()) return;
+    addStep(missionId, value, day);
+    setValue("");
+    setOpen(false);
+  };
+
+  if (!open) {
+    return (
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="press w-full flex items-center justify-center gap-1.5 text-sm font-semibold text-primary bg-primary/5 hover:bg-primary/10 border border-dashed border-primary/30 rounded-xl py-2.5 transition-colors"
+      >
+        <Plus className="size-4" strokeWidth={2.5} />
+        {hasSteps ? "Add topic" : "Add first topic"}
+      </button>
+    );
+  }
+
+  return (
+    <form onSubmit={submit} className="flex items-center gap-2">
+      <input
+        autoFocus
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onBlur={() => {
+          if (!value.trim()) setOpen(false);
+        }}
+        placeholder={`Topic for Day ${day}…`}
+        className="flex-1 bg-background border border-border/60 rounded-xl px-3 py-2.5 text-foreground text-sm outline-none focus:ring-2 focus:ring-primary/30 placeholder:text-muted-foreground/60 font-medium"
+      />
+      <button
+        type="submit"
+        disabled={!value.trim()}
+        aria-label="Add topic"
+        className="press size-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center shrink-0 disabled:opacity-45"
+      >
+        <Plus className="size-4" strokeWidth={2.5} />
+      </button>
+    </form>
   );
 }
 
