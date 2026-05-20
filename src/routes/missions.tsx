@@ -145,10 +145,12 @@ function AddMissionSheet({ onClose }: { onClose: () => void }) {
               className="w-full bg-secondary rounded-xl px-4 py-3.5 text-foreground outline-none focus:ring-2 focus:ring-primary/30 font-medium"
             />
           </Field>
-          <Field label="Duration in days (optional)">
+          <Field label="Duration in days">
             <input
               type="number"
               min={1}
+              max={365}
+              required
               value={duration}
               onChange={(e) => setDuration(e.target.value)}
               placeholder="20"
