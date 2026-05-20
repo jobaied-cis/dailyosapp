@@ -99,7 +99,7 @@ function MissionsPage() {
 
 function AddMissionSheet({ onClose }: { onClose: () => void }) {
   const [title, setTitle] = useState("");
-  const [duration, setDuration] = useState("");
+  const [duration, setDuration] = useState("7");
   const [startDate, setStartDate] = useState(() => {
     const d = new Date();
     const pad = (n: number) => String(n).padStart(2, "0");
@@ -109,9 +109,10 @@ function AddMissionSheet({ onClose }: { onClose: () => void }) {
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
+    const days = Math.max(1, Math.min(365, Number(duration) || 7));
     addMission({
       title,
-      durationDays: duration ? Number(duration) : undefined,
+      durationDays: days,
       startDate: startDate || undefined,
     });
     onClose();
