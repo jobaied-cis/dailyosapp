@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { ArrowLeft, Check, Plus, Trash2, X } from "lucide-react";
+import type { FormEvent } from "react";
 import {
   addStep,
   deleteMission,
