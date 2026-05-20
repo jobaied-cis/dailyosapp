@@ -194,10 +194,16 @@ function AddTopicForm({ missionId, day, hasSteps }: { missionId: string; day: nu
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState("");
 
+  const lines = value
+    .split("\n")
+    .map((l) => l.trim())
+    .filter((l) => l.length > 0 && l.length <= 200)
+    .slice(0, 50);
+
   const submit = (e: FormEvent) => {
     e.preventDefault();
-    if (!value.trim()) return;
-    addStep(missionId, value, day);
+    if (lines.length === 0) return;
+    lines.forEach((title) => addStep(missionId, title, day));
     setValue("");
     setOpen(false);
   };
@@ -210,31 +216,52 @@ function AddTopicForm({ missionId, day, hasSteps }: { missionId: string; day: nu
         className="press w-full flex items-center justify-center gap-1.5 text-sm font-semibold text-primary bg-primary/5 hover:bg-primary/10 border border-dashed border-primary/30 rounded-xl py-2.5 transition-colors"
       >
         <Plus className="size-4" strokeWidth={2.5} />
-        {hasSteps ? "Add topic" : "Add first topic"}
+        {hasSteps ? "Add topics" : "Add first topics"}
       </button>
     );
   }
 
   return (
-    <form onSubmit={submit} className="flex items-center gap-2">
-      <input
+    <form onSubmit={submit} className="space-y-2">
+      <textarea
         autoFocus
         value={value}
         onChange={(e) => setValue(e.target.value)}
-        onBlur={() => {
-          if (!value.trim()) setOpen(false);
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+            e.preventDefault();
+            submit(e as unknown as FormEvent);
+          }
         }}
-        placeholder={`Topic for Day ${day}…`}
-        className="flex-1 bg-background border border-border/60 rounded-xl px-3 py-2.5 text-foreground text-sm outline-none focus:ring-2 focus:ring-primary/30 placeholder:text-muted-foreground/60 font-medium"
+        rows={Math.min(8, Math.max(3, value.split("\n").length))}
+        placeholder={`One topic per line for Day ${day}…\ne.g.\nRead chapter 1\nDo 5 exercises`}
+        maxLength={5000}
+        className="w-full bg-background border border-border/60 rounded-xl px-3 py-2.5 text-foreground text-sm outline-none focus:ring-2 focus:ring-primary/30 placeholder:text-muted-foreground/60 font-medium resize-none"
       />
-      <button
-        type="submit"
-        disabled={!value.trim()}
-        aria-label="Add topic"
-        className="press size-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center shrink-0 disabled:opacity-45"
-      >
-        <Plus className="size-4" strokeWidth={2.5} />
-      </button>
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-[11px] font-semibold text-muted-foreground/70">
+          {lines.length > 0 ? `${lines.length} topic${lines.length === 1 ? "" : "s"} ready` : "One topic per line"}
+        </p>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              setValue("");
+              setOpen(false);
+            }}
+            className="press text-xs font-semibold text-muted-foreground px-3 py-2 rounded-lg hover:bg-secondary"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={lines.length === 0}
+            className="press text-xs font-bold text-primary-foreground bg-primary px-4 py-2 rounded-lg disabled:opacity-45"
+          >
+            Add {lines.length > 1 ? `${lines.length} topics` : "topic"}
+          </button>
+        </div>
+      </div>
     </form>
   );
 }
