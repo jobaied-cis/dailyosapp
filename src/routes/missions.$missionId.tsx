@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { ArrowLeft, Check, Plus, Trash2, X } from "lucide-react";
+import type { FormEvent } from "react";
 import {
   addStep,
   deleteMission,
@@ -25,8 +26,6 @@ function MissionDetailPage() {
   const { missionId } = Route.useParams();
   const navigate = useNavigate();
   const mission = useMission(missionId);
-  const [newStep, setNewStep] = useState("");
-  const [targetDay, setTargetDay] = useState(1);
 
   const grouped = useMemo(() => groupByDay(mission), [mission]);
 
@@ -42,20 +41,6 @@ function MissionDetailPage() {
   }
 
   const { total, done, pct } = missionProgress(mission);
-  const maxDay = grouped.length
-    ? Math.max(...grouped.map((g) => g.day))
-    : 0;
-  const dayOptions = Array.from(
-    { length: Math.max(maxDay + 1, mission.durationDays ?? 1) },
-    (_, i) => i + 1,
-  );
-
-  const submit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newStep.trim()) return;
-    addStep(mission.id, newStep, targetDay);
-    setNewStep("");
-  };
 
   return (
     <div className="space-y-8">
@@ -90,7 +75,7 @@ function MissionDetailPage() {
         )}
         <div className="flex items-baseline justify-between mt-3">
           <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">
-            {done}/{total} steps{mission.durationDays ? ` · ${mission.durationDays} days` : ""}
+            {done}/{total} topics{mission.durationDays ? ` · ${mission.durationDays} days` : ""}
           </p>
           <span className="text-2xl font-extrabold text-primary tabular-nums">{pct}%</span>
         </div>
@@ -112,41 +97,7 @@ function MissionDetailPage() {
             missionId={mission.id}
           />
         ))}
-        {total === 0 && (
-          <div className="text-center text-muted-foreground py-6">
-            <p className="text-sm">No steps yet. Add the first one below.</p>
-          </div>
-        )}
       </div>
-
-      <form onSubmit={submit} className="flex items-center gap-2">
-        <select
-          value={targetDay}
-          onChange={(e) => setTargetDay(Number(e.target.value))}
-          aria-label="Day"
-          className="bg-card border border-border/60 rounded-[1.25rem] px-3 py-3.5 text-foreground font-semibold text-sm outline-none focus:ring-2 focus:ring-primary/30"
-        >
-          {dayOptions.map((d) => (
-            <option key={d} value={d}>
-              Day {d}
-            </option>
-          ))}
-        </select>
-        <input
-          value={newStep}
-          onChange={(e) => setNewStep(e.target.value)}
-          placeholder="Add a step…"
-          className="flex-1 bg-card border border-border/60 rounded-[1.25rem] px-4 py-3.5 text-foreground outline-none focus:ring-2 focus:ring-primary/30 placeholder:text-muted-foreground/60 font-medium text-[0.95rem]"
-        />
-        <button
-          type="submit"
-          disabled={!newStep.trim()}
-          aria-label="Add step"
-          className="press size-12 rounded-full bg-primary text-primary-foreground shadow-[0_4px_16px_-4px_rgba(37,99,235,0.35)] flex items-center justify-center shrink-0 disabled:opacity-45 disabled:shadow-none"
-        >
-          <Plus className="size-5" strokeWidth={2.5} />
-        </button>
-      </form>
     </div>
   );
 }
@@ -225,18 +176,66 @@ function DaySection({ day, steps, date, missionId }: DaySectionProps) {
         </div>
       </div>
 
-      <div className="px-5 pb-5">
-        {steps.length === 0 ? (
-          <p className="text-xs text-muted-foreground/70 italic">No steps for this day yet.</p>
-        ) : (
+      <div className="px-5 pb-5 space-y-3">
+        {steps.length > 0 && (
           <ul className="space-y-2">
             {steps.map((s, i) => (
               <StepRow key={s.id} step={s} index={i} missionId={missionId} />
             ))}
           </ul>
         )}
+        <AddTopicForm missionId={missionId} day={day} hasSteps={steps.length > 0} />
       </div>
     </section>
+  );
+}
+
+function AddTopicForm({ missionId, day, hasSteps }: { missionId: string; day: number; hasSteps: boolean }) {
+  const [open, setOpen] = useState(false);
+  const [value, setValue] = useState("");
+
+  const submit = (e: FormEvent) => {
+    e.preventDefault();
+    if (!value.trim()) return;
+    addStep(missionId, value, day);
+    setValue("");
+    setOpen(false);
+  };
+
+  if (!open) {
+    return (
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="press w-full flex items-center justify-center gap-1.5 text-sm font-semibold text-primary bg-primary/5 hover:bg-primary/10 border border-dashed border-primary/30 rounded-xl py-2.5 transition-colors"
+      >
+        <Plus className="size-4" strokeWidth={2.5} />
+        {hasSteps ? "Add topic" : "Add first topic"}
+      </button>
+    );
+  }
+
+  return (
+    <form onSubmit={submit} className="flex items-center gap-2">
+      <input
+        autoFocus
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onBlur={() => {
+          if (!value.trim()) setOpen(false);
+        }}
+        placeholder={`Topic for Day ${day}…`}
+        className="flex-1 bg-background border border-border/60 rounded-xl px-3 py-2.5 text-foreground text-sm outline-none focus:ring-2 focus:ring-primary/30 placeholder:text-muted-foreground/60 font-medium"
+      />
+      <button
+        type="submit"
+        disabled={!value.trim()}
+        aria-label="Add topic"
+        className="press size-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center shrink-0 disabled:opacity-45"
+      >
+        <Plus className="size-4" strokeWidth={2.5} />
+      </button>
+    </form>
   );
 }
 
