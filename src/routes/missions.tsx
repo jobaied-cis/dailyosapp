@@ -99,7 +99,7 @@ function MissionsPage() {
 
 function AddMissionSheet({ onClose }: { onClose: () => void }) {
   const [title, setTitle] = useState("");
-  const [duration, setDuration] = useState("");
+  const [duration, setDuration] = useState("7");
   const [startDate, setStartDate] = useState(() => {
     const d = new Date();
     const pad = (n: number) => String(n).padStart(2, "0");
@@ -109,9 +109,10 @@ function AddMissionSheet({ onClose }: { onClose: () => void }) {
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
+    const days = Math.max(1, Math.min(365, Number(duration) || 7));
     addMission({
       title,
-      durationDays: duration ? Number(duration) : undefined,
+      durationDays: days,
       startDate: startDate || undefined,
     });
     onClose();
@@ -144,10 +145,12 @@ function AddMissionSheet({ onClose }: { onClose: () => void }) {
               className="w-full bg-secondary rounded-xl px-4 py-3.5 text-foreground outline-none focus:ring-2 focus:ring-primary/30 font-medium"
             />
           </Field>
-          <Field label="Duration in days (optional)">
+          <Field label="Duration in days">
             <input
               type="number"
               min={1}
+              max={365}
+              required
               value={duration}
               onChange={(e) => setDuration(e.target.value)}
               placeholder="20"
