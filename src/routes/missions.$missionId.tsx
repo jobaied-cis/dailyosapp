@@ -26,8 +26,6 @@ function MissionDetailPage() {
   const { missionId } = Route.useParams();
   const navigate = useNavigate();
   const mission = useMission(missionId);
-  const [newStep, setNewStep] = useState("");
-  const [targetDay, setTargetDay] = useState(1);
 
   const grouped = useMemo(() => groupByDay(mission), [mission]);
 
@@ -43,20 +41,6 @@ function MissionDetailPage() {
   }
 
   const { total, done, pct } = missionProgress(mission);
-  const maxDay = grouped.length
-    ? Math.max(...grouped.map((g) => g.day))
-    : 0;
-  const dayOptions = Array.from(
-    { length: Math.max(maxDay + 1, mission.durationDays ?? 1) },
-    (_, i) => i + 1,
-  );
-
-  const submit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newStep.trim()) return;
-    addStep(mission.id, newStep, targetDay);
-    setNewStep("");
-  };
 
   return (
     <div className="space-y-8">
@@ -91,7 +75,7 @@ function MissionDetailPage() {
         )}
         <div className="flex items-baseline justify-between mt-3">
           <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">
-            {done}/{total} steps{mission.durationDays ? ` · ${mission.durationDays} days` : ""}
+            {done}/{total} topics{mission.durationDays ? ` · ${mission.durationDays} days` : ""}
           </p>
           <span className="text-2xl font-extrabold text-primary tabular-nums">{pct}%</span>
         </div>
@@ -113,41 +97,7 @@ function MissionDetailPage() {
             missionId={mission.id}
           />
         ))}
-        {total === 0 && (
-          <div className="text-center text-muted-foreground py-6">
-            <p className="text-sm">No steps yet. Add the first one below.</p>
-          </div>
-        )}
       </div>
-
-      <form onSubmit={submit} className="flex items-center gap-2">
-        <select
-          value={targetDay}
-          onChange={(e) => setTargetDay(Number(e.target.value))}
-          aria-label="Day"
-          className="bg-card border border-border/60 rounded-[1.25rem] px-3 py-3.5 text-foreground font-semibold text-sm outline-none focus:ring-2 focus:ring-primary/30"
-        >
-          {dayOptions.map((d) => (
-            <option key={d} value={d}>
-              Day {d}
-            </option>
-          ))}
-        </select>
-        <input
-          value={newStep}
-          onChange={(e) => setNewStep(e.target.value)}
-          placeholder="Add a step…"
-          className="flex-1 bg-card border border-border/60 rounded-[1.25rem] px-4 py-3.5 text-foreground outline-none focus:ring-2 focus:ring-primary/30 placeholder:text-muted-foreground/60 font-medium text-[0.95rem]"
-        />
-        <button
-          type="submit"
-          disabled={!newStep.trim()}
-          aria-label="Add step"
-          className="press size-12 rounded-full bg-primary text-primary-foreground shadow-[0_4px_16px_-4px_rgba(37,99,235,0.35)] flex items-center justify-center shrink-0 disabled:opacity-45 disabled:shadow-none"
-        >
-          <Plus className="size-5" strokeWidth={2.5} />
-        </button>
-      </form>
     </div>
   );
 }
