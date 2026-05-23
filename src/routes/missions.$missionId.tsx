@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { ArrowLeft, Check, Plus, Trash2, X } from "lucide-react";
 import type { FormEvent } from "react";
 import {
@@ -7,11 +7,8 @@ import {
   deleteMission,
   deleteStep,
   missionProgress,
-  stepDate,
-  stepDay,
   toggleStep,
   useMission,
-  type Mission,
   type MissionStep,
 } from "@/lib/missions-store";
 
@@ -27,8 +24,6 @@ function MissionDetailPage() {
   const navigate = useNavigate();
   const mission = useMission(missionId);
 
-  const grouped = useMemo(() => groupByDay(mission), [mission]);
-
   if (!mission) {
     return (
       <div className="text-center py-16">
@@ -41,6 +36,9 @@ function MissionDetailPage() {
   }
 
   const { total, done, pct } = missionProgress(mission);
+  const steps = [...mission.steps].sort(
+    (a, b) => (a.createdAt ?? 0) - (b.createdAt ?? 0),
+  );
 
   return (
     <div className="space-y-8">
@@ -68,14 +66,9 @@ function MissionDetailPage() {
 
       <section className="bg-card border border-border/60 rounded-[1.75rem] p-6 shadow-[0_8px_32px_-12px_rgba(15,23,42,0.08)]">
         <h2 className="font-bold text-foreground text-xl tracking-tight leading-tight">{mission.title}</h2>
-        {mission.startDate && (
-          <p className="text-[11px] font-bold text-primary uppercase tracking-[0.14em] mt-2">
-            Starts {stepDate(mission, 0)?.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric", year: "numeric" })}
-          </p>
-        )}
         <div className="flex items-baseline justify-between mt-3">
           <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">
-            {done}/{total} topics{mission.durationDays ? ` · ${mission.durationDays} days` : ""}
+            {done}/{total} topics
           </p>
           <span className="text-2xl font-extrabold text-primary tabular-nums">{pct}%</span>
         </div>
@@ -87,96 +80,7 @@ function MissionDetailPage() {
         </div>
       </section>
 
-      <div className="space-y-6">
-        {grouped.map((group) => (
-          <DaySection
-            key={group.day}
-            day={group.day}
-            steps={group.steps}
-            date={stepDate(mission, group.day - 1)}
-            missionId={mission.id}
-          />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-type DayGroup = { day: number; steps: MissionStep[] };
-
-function groupByDay(mission: Mission | undefined): DayGroup[] {
-  if (!mission) return [];
-  const map = new Map<number, { step: MissionStep; index: number }[]>();
-  (mission.steps ?? []).forEach((s, index) => {
-    const d = stepDay(mission, s);
-    const arr = map.get(d) ?? [];
-    arr.push({ step: s, index });
-    map.set(d, arr);
-  });
-  const maxStepDay = map.size ? Math.max(...map.keys()) : 0;
-  const maxDay = Math.max(maxStepDay, mission.durationDays ?? 0, map.size ? 0 : 1);
-  const result: DayGroup[] = [];
-  for (let d = 1; d <= maxDay; d++) {
-    const items = map.get(d) ?? [];
-    items.sort((a, b) => {
-      const ta = a.step.createdAt ?? 0;
-      const tb = b.step.createdAt ?? 0;
-      if (ta !== tb) return ta - tb;
-      return a.index - b.index;
-    });
-    result.push({ day: d, steps: items.map((i) => i.step) });
-  }
-  return result;
-}
-
-type DaySectionProps = {
-  day: number;
-  steps: MissionStep[];
-  date: Date | null;
-  missionId: string;
-};
-
-function DaySection({ day, steps, date, missionId }: DaySectionProps) {
-  const dateLabel = date
-    ? date.toLocaleDateString(undefined, { month: "long", day: "numeric" })
-    : null;
-  const dayName = date
-    ? date.toLocaleDateString(undefined, { weekday: "long" })
-    : null;
-  const allDone = steps.length > 0 && steps.every((s) => s.completed);
-
-  return (
-    <section className="bg-card border border-border/50 rounded-2xl overflow-hidden shadow-sm">
-      <div className="relative px-5 pt-5 pb-3">
-        <div className="absolute left-0 top-4 bottom-4 w-1 rounded-r-full bg-primary/70" />
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <div className="flex items-baseline gap-2.5 mb-0.5">
-              <h3 className="text-2xl font-extrabold text-foreground tracking-tight leading-none">
-                Day {day}
-              </h3>
-              {allDone && (
-                <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-primary uppercase tracking-wider bg-primary/10 rounded-full px-2 py-0.5">
-                  <Check className="size-3" strokeWidth={3} />
-                  Done
-                </span>
-              )}
-            </div>
-            {dateLabel && dayName && (
-              <p className="text-sm font-semibold text-muted-foreground mt-1">
-                {dateLabel} <span className="text-border font-normal mx-1">·</span> {dayName}
-              </p>
-            )}
-          </div>
-          <div className="text-right shrink-0 mt-0.5">
-            <p className="text-xs font-bold text-muted-foreground/70 tabular-nums uppercase tracking-wider">
-              {steps.filter((s) => s.completed).length}/{steps.length}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div className="px-5 pb-5 space-y-3">
+      <section className="space-y-3">
         {steps.length > 0 && (
           <ul className="space-y-2">
             {steps.map((s, i) => (
@@ -184,26 +88,26 @@ function DaySection({ day, steps, date, missionId }: DaySectionProps) {
             ))}
           </ul>
         )}
-        <AddTopicForm missionId={missionId} day={day} hasSteps={steps.length > 0} />
-      </div>
-    </section>
+        {steps.length === 0 && (
+          <p className="text-sm text-muted-foreground text-center py-6">
+            No topics yet. Add your first one below.
+          </p>
+        )}
+        <AddTopicForm missionId={missionId} hasSteps={steps.length > 0} />
+      </section>
+    </div>
   );
 }
 
-function AddTopicForm({ missionId, day, hasSteps }: { missionId: string; day: number; hasSteps: boolean }) {
+function AddTopicForm({ missionId, hasSteps }: { missionId: string; hasSteps: boolean }) {
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState("");
 
-  const lines = value
-    .split("\n")
-    .map((l) => l.trim())
-    .filter((l) => l.length > 0 && l.length <= 200)
-    .slice(0, 50);
-
   const submit = (e: FormEvent) => {
     e.preventDefault();
-    if (lines.length === 0) return;
-    lines.forEach((title) => addStep(missionId, title, day));
+    const title = value.trim();
+    if (!title) return;
+    addStep(missionId, title);
     setValue("");
     setOpen(false);
   };
@@ -216,52 +120,38 @@ function AddTopicForm({ missionId, day, hasSteps }: { missionId: string; day: nu
         className="press w-full flex items-center justify-center gap-1.5 text-sm font-semibold text-primary bg-primary/5 hover:bg-primary/10 border border-dashed border-primary/30 rounded-xl py-2.5 transition-colors"
       >
         <Plus className="size-4" strokeWidth={2.5} />
-        {hasSteps ? "Add topics" : "Add first topics"}
+        {hasSteps ? "Add topic" : "Add first topic"}
       </button>
     );
   }
 
   return (
-    <form onSubmit={submit} className="space-y-2">
-      <textarea
+    <form onSubmit={submit} className="flex items-center gap-2">
+      <input
         autoFocus
         value={value}
         onChange={(e) => setValue(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-            e.preventDefault();
-            submit(e as unknown as FormEvent);
-          }
-        }}
-        rows={Math.min(8, Math.max(3, value.split("\n").length))}
-        placeholder={`One topic per line for Day ${day}…\ne.g.\nRead chapter 1\nDo 5 exercises`}
-        maxLength={5000}
-        className="w-full bg-background border border-border/60 rounded-xl px-3 py-2.5 text-foreground text-sm outline-none focus:ring-2 focus:ring-primary/30 placeholder:text-muted-foreground/60 font-medium resize-none"
+        placeholder="Topic title…"
+        maxLength={200}
+        className="flex-1 bg-background border border-border/60 rounded-xl px-3 py-2.5 text-foreground text-sm outline-none focus:ring-2 focus:ring-primary/30 placeholder:text-muted-foreground/60 font-medium"
       />
-      <div className="flex items-center justify-between gap-2">
-        <p className="text-[11px] font-semibold text-muted-foreground/70">
-          {lines.length > 0 ? `${lines.length} topic${lines.length === 1 ? "" : "s"} ready` : "One topic per line"}
-        </p>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => {
-              setValue("");
-              setOpen(false);
-            }}
-            className="press text-xs font-semibold text-muted-foreground px-3 py-2 rounded-lg hover:bg-secondary"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            disabled={lines.length === 0}
-            className="press text-xs font-bold text-primary-foreground bg-primary px-4 py-2 rounded-lg disabled:opacity-45"
-          >
-            Add {lines.length > 1 ? `${lines.length} topics` : "topic"}
-          </button>
-        </div>
-      </div>
+      <button
+        type="button"
+        onClick={() => {
+          setValue("");
+          setOpen(false);
+        }}
+        className="press text-xs font-semibold text-muted-foreground px-3 py-2.5 rounded-lg hover:bg-secondary"
+      >
+        Cancel
+      </button>
+      <button
+        type="submit"
+        disabled={!value.trim()}
+        className="press text-xs font-bold text-primary-foreground bg-primary px-4 py-2.5 rounded-lg disabled:opacity-45"
+      >
+        Add
+      </button>
     </form>
   );
 }
