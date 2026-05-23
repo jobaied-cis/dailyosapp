@@ -1,15 +1,12 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
-import { ArrowLeft, Trash2, Plus } from "lucide-react";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
-import { Progress } from "@/components/ui/progress";
+import { ArrowLeft, Trash2 } from "lucide-react";
 import {
-  addStep,
+  addTask,
   deleteMission,
-  deleteStep,
+  deleteTask,
   missionProgress,
-  toggleStep,
+  toggleTask,
   useMission,
 } from "@/lib/missions-store";
 
@@ -36,15 +33,13 @@ function MissionDetailPage() {
   }
 
   const { total, done, pct } = missionProgress(mission);
-  const tasks = [...mission.steps].sort(
-    (a, b) => (a.createdAt ?? 0) - (b.createdAt ?? 0),
-  );
+  const tasks = [...mission.tasks].sort((a, b) => a.createdAt - b.createdAt);
 
   const handleAdd = (e: FormEvent) => {
     e.preventDefault();
-    const title = newTask.trim();
-    if (!title) return;
-    addStep(missionId, title);
+    const t = newTask.trim();
+    if (!t) return;
+    addTask(missionId, t);
     setNewTask("");
   };
 
@@ -66,79 +61,68 @@ function MissionDetailPage() {
             }
           }}
           aria-label="Delete mission"
-          className="text-muted-foreground/60 hover:text-destructive p-1.5 rounded-full hover:bg-destructive/5"
+          className="text-muted-foreground hover:text-destructive p-1.5 rounded-full"
         >
           <Trash2 className="size-4" />
         </button>
       </div>
 
-      <section className="bg-card border border-border/60 rounded-2xl p-5 shadow-sm">
-        <h1 className="font-bold text-foreground text-xl tracking-tight">
-          {mission.title}
-        </h1>
-        <div className="flex items-baseline justify-between mt-3">
-          <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">
-            {done}/{total} tasks completed
-          </p>
-          <span className="text-2xl font-extrabold text-primary tabular-nums">
-            {pct}%
-          </span>
-        </div>
-        <Progress value={pct} className="mt-3 h-3" />
+      <section className="bg-card border border-border/60 rounded-xl p-4">
+        <h1 className="font-bold text-foreground text-xl">{mission.title}</h1>
+        <p className="text-xs text-muted-foreground mt-2 font-semibold uppercase tracking-wider">
+          {done}/{total} tasks · {pct}%
+        </p>
       </section>
 
       <section className="space-y-3">
-        <h2 className="font-bold text-foreground text-base">
-          Tasks for this mission
-        </h2>
+        <h2 className="font-bold text-foreground text-base">Tasks</h2>
 
         <form onSubmit={handleAdd} className="flex gap-2">
-          <Input
+          <input
             value={newTask}
             onChange={(e) => setNewTask(e.target.value)}
-            placeholder="Add a new task…"
+            placeholder="Add a task…"
             maxLength={200}
+            className="flex-1 bg-secondary rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-primary/30 text-sm"
           />
           <button
             type="submit"
             disabled={!newTask.trim()}
-            className="inline-flex items-center gap-1 bg-primary text-primary-foreground font-semibold text-sm px-4 rounded-md disabled:opacity-45 hover:bg-primary/90 transition"
+            className="bg-primary text-primary-foreground font-semibold text-sm px-4 rounded-lg disabled:opacity-50"
           >
-            <Plus className="size-4" strokeWidth={2.5} />
             Add
           </button>
         </form>
 
         {tasks.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-8 border border-dashed border-border/60 rounded-xl">
-            No tasks yet. Add your first one above.
+            No tasks yet.
           </p>
         ) : (
           <ul className="space-y-2">
             {tasks.map((t) => (
               <li
                 key={t.id}
-                className="group flex items-center gap-3 bg-card border border-border/40 rounded-xl px-3 py-3"
+                className="flex items-center gap-3 bg-card border border-border/40 rounded-lg px-3 py-2.5"
               >
-                <Checkbox
+                <input
+                  type="checkbox"
                   checked={t.completed}
-                  onCheckedChange={() => toggleStep(missionId, t.id)}
-                  aria-label={t.completed ? "Mark incomplete" : "Mark complete"}
+                  onChange={() => toggleTask(missionId, t.id)}
+                  className="size-4 accent-primary cursor-pointer"
                 />
                 <span
                   className={
-                    "flex-1 text-sm font-medium leading-snug " +
-                    (t.completed
-                      ? "line-through text-muted-foreground"
-                      : "text-foreground")
+                    "flex-1 text-sm " +
+                    (t.completed ? "line-through text-muted-foreground" : "text-foreground")
                   }
                 >
                   {t.title}
                 </span>
                 <button
-                  onClick={() => deleteStep(missionId, t.id)}
+                  onClick={() => deleteTask(missionId, t.id)}
                   aria-label="Delete task"
-                  className="opacity-0 group-hover:opacity-100 text-muted-foreground/50 hover:text-destructive p-1 rounded-full hover:bg-destructive/5 transition"
+                  className="text-muted-foreground hover:text-destructive p-1 rounded"
                 >
                   <Trash2 className="size-4" />
                 </button>

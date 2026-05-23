@@ -1,41 +1,20 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 
-export interface MissionStep {
+export interface MissionTask {
   id: string;
   title: string;
   completed: boolean;
-  /** 1-based day this step belongs to */
-  day?: number;
-  createdAt?: number;
+  createdAt: number;
 }
 
 export interface Mission {
   id: string;
   title: string;
-  durationDays?: number;
-  /** ISO date string YYYY-MM-DD for Day 1 */
-  startDate?: string;
   createdAt: number;
-  steps: MissionStep[];
+  tasks: MissionTask[];
 }
 
-const STORAGE_KEY = "dailyos.missions.v1";
-
-const SEED: Mission[] = [
-  {
-    id: "m1",
-    title: "Learn Java in 20 days",
-    durationDays: 20,
-    createdAt: Date.now(),
-    steps: [
-      { id: "m1s1", title: "Install JDK & IDE", completed: true },
-      { id: "m1s2", title: "Variables & types", completed: true },
-      { id: "m1s3", title: "Control flow", completed: false },
-      { id: "m1s4", title: "OOP basics", completed: false },
-      { id: "m1s5", title: "Build a small project", completed: false },
-    ],
-  },
-];
+const STORAGE_KEY = "dailyos.missions.v2";
 
 const listeners = new Set<() => void>();
 let cache: Mission[] = [];
@@ -45,13 +24,24 @@ function load(): Mission[] {
   if (typeof window === "undefined") return [];
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(SEED));
-      return SEED;
-    }
-    return JSON.parse(raw) as Mission[];
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.map((m: any) => ({
+      id: String(m.id),
+      title: String(m.title ?? ""),
+      createdAt: Number(m.createdAt) || Date.now(),
+      tasks: Array.isArray(m.tasks)
+        ? m.tasks.map((t: any) => ({
+            id: String(t.id),
+            title: String(t.title ?? ""),
+            completed: Boolean(t.completed),
+            createdAt: Number(t.createdAt) || Date.now(),
+          }))
+        : [],
+    }));
   } catch {
-    return SEED;
+    return [];
   }
 }
 
@@ -95,15 +85,13 @@ export function useMission(id: string): Mission | undefined {
   return useMissions().find((m) => m.id === id);
 }
 
-export function addMission(input: { title: string; durationDays?: number; startDate?: string }) {
+export function addMission(title: string): string {
   ensureInit();
   const mission: Mission = {
     id: crypto.randomUUID(),
-    title: input.title.trim(),
-    durationDays: input.durationDays,
-    startDate: input.startDate,
+    title: title.trim(),
     createdAt: Date.now(),
-    steps: [],
+    tasks: [],
   };
   persist([...cache, mission]);
   return mission.id;
@@ -114,37 +102,30 @@ export function deleteMission(id: string) {
   persist(cache.filter((m) => m.id !== id));
 }
 
-export function addStep(missionId: string, title: string, day: number = 1) {
+export function addTask(missionId: string, title: string) {
   ensureInit();
-  const step: MissionStep = {
+  const task: MissionTask = {
     id: crypto.randomUUID(),
     title: title.trim(),
     completed: false,
-    day,
     createdAt: Date.now(),
   };
   persist(
     cache.map((m) =>
-      m.id === missionId ? { ...m, steps: [...m.steps, step] } : m,
+      m.id === missionId ? { ...m, tasks: [...m.tasks, task] } : m,
     ),
   );
 }
 
-/** Resolve a step's day. Defaults to Day 1 for legacy/missing data. */
-export function stepDay(_m: Mission, step: MissionStep): number {
-  if (typeof step.day === "number" && step.day >= 1) return Math.floor(step.day);
-  return 1;
-}
-
-export function toggleStep(missionId: string, stepId: string) {
+export function toggleTask(missionId: string, taskId: string) {
   ensureInit();
   persist(
     cache.map((m) =>
       m.id === missionId
         ? {
             ...m,
-            steps: m.steps.map((s) =>
-              s.id === stepId ? { ...s, completed: !s.completed } : s,
+            tasks: m.tasks.map((t) =>
+              t.id === taskId ? { ...t, completed: !t.completed } : t,
             ),
           }
         : m,
@@ -152,30 +133,20 @@ export function toggleStep(missionId: string, stepId: string) {
   );
 }
 
-export function deleteStep(missionId: string, stepId: string) {
+export function deleteTask(missionId: string, taskId: string) {
   ensureInit();
   persist(
     cache.map((m) =>
       m.id === missionId
-        ? { ...m, steps: m.steps.filter((s) => s.id !== stepId) }
+        ? { ...m, tasks: m.tasks.filter((t) => t.id !== taskId) }
         : m,
     ),
   );
 }
 
 export function missionProgress(m: Mission) {
-  const total = m.steps.length;
-  const done = m.steps.filter((s) => s.completed).length;
+  const total = m.tasks.length;
+  const done = m.tasks.filter((t) => t.completed).length;
   const pct = total ? Math.round((done / total) * 100) : 0;
   return { total, done, pct };
-}
-
-/** Compute the date for a given 0-based day index, based on mission.startDate. */
-export function stepDate(m: Mission, index: number): Date | null {
-  if (!m.startDate) return null;
-  const [y, mo, d] = m.startDate.split("-").map(Number);
-  if (!y || !mo || !d) return null;
-  const date = new Date(y, mo - 1, d);
-  date.setDate(date.getDate() + index);
-  return date;
 }
