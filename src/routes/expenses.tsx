@@ -88,6 +88,21 @@ function ExpensesPage() {
   const canPrev = currentIdx < availableMonths.length - 1;
   const canNext = currentIdx > 0;
 
+  if (showHistory) {
+    return (
+      <MonthHistory
+        entries={entries}
+        currentMonth={monthKey(Date.now())}
+        selectedMonth={selectedMonth}
+        onBack={() => setShowHistory(false)}
+        onSelect={(k) => {
+          setSelectedMonth(k);
+          setShowHistory(false);
+        }}
+      />
+    );
+  }
+
   return (
     <div className="space-y-6 pb-8">
       {/* Month selector */}
@@ -100,6 +115,7 @@ function ExpensesPage() {
         >
           <ChevronLeft className="size-5" />
         </button>
+        <div className="flex items-center gap-1">
         <div className="relative">
           <select
             value={selectedMonth}
