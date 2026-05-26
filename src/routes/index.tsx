@@ -57,8 +57,6 @@ function Dashboard() {
   const missions = useMissions();
   const total = tasks.length;
   const next = tasks.find((t) => !t.completed);
-  
-  const next = tasks.find((t) => !t.completed);
   const today = new Date().toLocaleDateString(undefined, {
     weekday: "long",
     month: "long",
