@@ -90,6 +90,19 @@ function ExpensesPage() {
 
 
   return (
+    <>
+    {showHistory ? (
+      <MonthHistory
+        entries={entries}
+        currentMonth={monthKey(Date.now())}
+        selectedMonth={selectedMonth}
+        onBack={() => setShowHistory(false)}
+        onSelect={(k) => {
+          setSelectedMonth(k);
+          setShowHistory(false);
+        }}
+      />
+    ) : (
     <div className="space-y-6 pb-8">
       {/* Month selector */}
       <div className="flex items-center justify-between bg-card border border-border/60 rounded-2xl px-2 py-2 shadow-[0_2px_12px_-4px_rgba(15,23,42,0.06)]">
