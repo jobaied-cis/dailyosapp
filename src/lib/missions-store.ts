@@ -2,6 +2,8 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 
 export interface MissionTask {
   id: string;
+  missionId: string;
+  day: number;
   title: string;
   completed: boolean;
   createdAt: number;
@@ -11,6 +13,7 @@ export interface Mission {
   id: string;
   title: string;
   createdAt: number;
+  days: number;
   tasks: MissionTask[];
 }
 
@@ -27,19 +30,27 @@ function load(): Mission[] {
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
-    return parsed.map((m: any) => ({
-      id: String(m.id),
-      title: String(m.title ?? ""),
-      createdAt: Number(m.createdAt) || Date.now(),
-      tasks: Array.isArray(m.tasks)
+    return parsed.map((m: any) => {
+      const id = String(m.id);
+      const tasks: MissionTask[] = Array.isArray(m.tasks)
         ? m.tasks.map((t: any) => ({
             id: String(t.id),
-            title: String(t.title ?? ""),
+            missionId: id,
+            day: Number(t.day) > 0 ? Number(t.day) : 1,
+            title: String(t.title ?? t.text ?? ""),
             completed: Boolean(t.completed),
             createdAt: Number(t.createdAt) || Date.now(),
           }))
-        : [],
-    }));
+        : [];
+      const maxDay = tasks.reduce((a, t) => Math.max(a, t.day), 1);
+      return {
+        id,
+        title: String(m.title ?? ""),
+        createdAt: Number(m.createdAt) || Date.now(),
+        days: Math.max(Number(m.days) || 1, maxDay),
+        tasks,
+      };
+    });
   } catch {
     return [];
   }
@@ -91,6 +102,7 @@ export function addMission(title: string): string {
     id: crypto.randomUUID(),
     title: title.trim(),
     createdAt: Date.now(),
+    days: 1,
     tasks: [],
   };
   persist([...cache, mission]);
@@ -102,10 +114,21 @@ export function deleteMission(id: string) {
   persist(cache.filter((m) => m.id !== id));
 }
 
-export function addTask(missionId: string, title: string) {
+export function addDay(missionId: string) {
+  ensureInit();
+  persist(
+    cache.map((m) =>
+      m.id === missionId ? { ...m, days: (m.days || 1) + 1 } : m,
+    ),
+  );
+}
+
+export function addTask(missionId: string, title: string, day: number = 1) {
   ensureInit();
   const task: MissionTask = {
     id: crypto.randomUUID(),
+    missionId,
+    day,
     title: title.trim(),
     completed: false,
     createdAt: Date.now(),
