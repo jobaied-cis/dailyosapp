@@ -57,12 +57,15 @@ function Dashboard() {
   const tasks = useTasks();
   const missions = useMissions();
   const total = tasks.length;
+  const done = tasks.filter((t) => t.completed).length;
+  const pct = total ? (done / total) * 100 : 0;
   const next = tasks.find((t) => !t.completed);
   const today = new Date().toLocaleDateString(undefined, {
     weekday: "long",
     month: "long",
     day: "numeric",
   });
+
 
   const mission = pickTodaysMission(missions);
   const currentDay = mission ? currentDayFor(mission) : 0;
