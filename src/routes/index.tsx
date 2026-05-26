@@ -56,7 +56,7 @@ function Dashboard() {
   const tasks = useTasks();
   const missions = useMissions();
   const total = tasks.length;
-  const done = tasks.filter((t) => t.completed).length;
+  const next = tasks.find((t) => !t.completed);
   
   const next = tasks.find((t) => !t.completed);
   const today = new Date().toLocaleDateString(undefined, {
