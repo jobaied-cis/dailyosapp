@@ -67,6 +67,16 @@ function ExpensesPage() {
   const [editing, setEditing] = useState<Expense | null>(null);
   const [selectedMonth, setSelectedMonth] = useState<string>(() => monthKey(Date.now()));
   const [showHistory, setShowHistory] = useState(false);
+  const [dailyLimit, setDailyLimitState] = useState<number>(() => getDailyLimit());
+  const [editingLimit, setEditingLimit] = useState(false);
+
+  // Today's expense calculation (all entries, not just selected month)
+  const todayKeyStr = dayKey(Date.now());
+  const todayExpense = entries
+    .filter((e) => e.type === "expense" && dayKey(e.createdAt) === todayKeyStr)
+    .reduce((s, e) => s + e.amount, 0);
+  const limitExceeded = dailyLimit > 0 && todayExpense > dailyLimit;
+  const limitPercent = dailyLimit > 0 ? Math.min((todayExpense / dailyLimit) * 100, 100) : 0;
 
   // Available months (always include current month even if empty)
   const availableMonths = (() => {
