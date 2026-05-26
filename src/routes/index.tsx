@@ -74,6 +74,18 @@ function Dashboard() {
     <div className="space-y-6">
       <p className="text-sm font-medium text-muted-foreground tracking-wide">{today}</p>
 
+      <section className="bg-card border border-border/60 rounded-[1.75rem] p-6 shadow-[0_8px_32px_-12px_rgba(15,23,42,0.08)] flex flex-col items-center">
+        <h2 className="font-bold text-foreground text-lg tracking-tight mb-4">Today's Routine Progress</h2>
+        <ProgressRing value={total ? done / total : 0}>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-foreground">{Math.round(pct)}%</div>
+            <div className="text-xs font-mono text-muted-foreground mt-1">{done}/{total}</div>
+          </div>
+        </ProgressRing>
+      </section>
+
+
+
 
       {next && (
         <Link
