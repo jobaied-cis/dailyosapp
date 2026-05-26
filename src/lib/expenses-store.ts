@@ -102,12 +102,12 @@ export function addIncome(input: { amount: number; title?: string }) {
   persist([entry, ...cache]);
 }
 
-export function updateExpense(id: string, input: { title: string; amount: number }) {
+export function updateExpense(id: string, input: { title: string; amount: number; category?: ExpenseCategory }) {
   ensureInit();
   persist(
     cache.map((e) =>
       e.id === id
-        ? { ...e, title: input.title.trim(), amount: input.amount }
+        ? { ...e, title: input.title.trim(), amount: input.amount, category: input.category ?? e.category }
         : e
     )
   );
