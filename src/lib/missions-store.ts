@@ -100,12 +100,13 @@ export function useMission(id: string): Mission | undefined {
   return useMissions().find((m) => m.id === id);
 }
 
-export function addMission(title: string): string {
+export function addMission(title: string, priority: number = 2): string {
   ensureInit();
   const now = Date.now();
   const mission: Mission = {
     id: crypto.randomUUID(),
     title: title.trim(),
+    priority,
     createdAt: now,
     startDate: now,
     days: 1,
