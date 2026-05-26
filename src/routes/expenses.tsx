@@ -1,7 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { useExpenses, addExpense, deleteExpense } from "@/lib/expenses-store";
-import { Plus, Trash2, Wallet, X } from "lucide-react";
+import {
+  useExpenses,
+  addExpense,
+  updateExpense,
+  deleteExpense,
+} from "@/lib/expenses-store";
+import { Plus, Trash2, Wallet, X, Pencil } from "lucide-react";
 
 export const Route = createFileRoute("/expenses")({
   head: () => ({
