@@ -12,6 +12,7 @@ export interface MissionTask {
 export interface Mission {
   id: string;
   title: string;
+  priority: number; // 1=High, 2=Medium, 3=Low
   createdAt: number;
   startDate: number;
   days: number;
