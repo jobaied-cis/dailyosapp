@@ -206,6 +206,8 @@ function ExpensesPage() {
         <EditExpenseSheet expense={editing} onClose={() => setEditing(null)} />
       )}
     </div>
+    )}
+    </>
   );
 }
 
