@@ -48,6 +48,7 @@ function load(): Mission[] {
       return {
         id,
         title: String(m.title ?? ""),
+        priority: Number(m.priority) || 2,
         createdAt: Number(m.createdAt) || Date.now(),
         startDate: Number(m.startDate) || Number(m.createdAt) || Date.now(),
         days: Math.max(Number(m.days) || 1, maxDay),
