@@ -75,31 +75,6 @@ function Dashboard() {
     <div className="space-y-6">
       <p className="text-sm font-medium text-muted-foreground tracking-wide">{today}</p>
 
-      {/* Today's Progress (Routine) */}
-      <section className="relative overflow-hidden bg-card border border-border/60 rounded-[1.75rem] p-6 shadow-[0_8px_32px_-12px_rgba(15,23,42,0.08)]">
-        <div className="absolute top-0 right-0 w-40 h-40 bg-primary/[0.04] rounded-full blur-3xl -translate-y-1/2 translate-x-1/4" />
-        <div className="flex items-center gap-6 relative">
-          <ProgressRing value={ratio} size={112} stroke={10}>
-            <div className="text-center">
-              <div className="text-[1.75rem] font-bold text-foreground leading-none">
-                {done}<span className="text-muted-foreground font-medium">/{total}</span>
-              </div>
-              <div className="text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground mt-1">done</div>
-            </div>
-          </ProgressRing>
-          <div className="flex-1">
-            <h2 className="text-lg font-bold text-foreground tracking-tight">Today's progress</h2>
-            <p className="text-sm font-medium text-primary mt-1.5 leading-relaxed">
-              {encouragement(ratio)}
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <div className="grid grid-cols-2 gap-3">
-        <StatCard label="Total" value={total} icon={<Circle className="size-4" />} color="bg-secondary text-secondary-foreground" />
-        <StatCard label="Completed" value={done} icon={<CheckCircle2 className="size-4" />} color="bg-primary/10 text-primary" />
-      </div>
 
       {next && (
         <Link
