@@ -21,6 +21,7 @@ export const Route = createFileRoute("/expenses")({
 function ExpensesPage() {
   const expenses = useExpenses();
   const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState<Expense | null>(null);
   const total = expenses.reduce((sum, e) => sum + e.amount, 0);
 
   return (
@@ -46,13 +47,22 @@ function ExpensesPage() {
               <h3 className="font-semibold text-foreground text-[0.95rem]">{e.title}</h3>
               <p className="text-sm font-mono font-medium text-muted-foreground mt-0.5">${e.amount.toFixed(2)}</p>
             </div>
-            <button
-              onClick={() => deleteExpense(e.id)}
-              aria-label="Delete expense"
-              className="press text-muted-foreground/40 hover:text-destructive p-1.5 rounded-full hover:bg-destructive/5"
-            >
-              <Trash2 className="size-4" />
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setEditing(e)}
+                aria-label="Edit expense"
+                className="press text-muted-foreground/40 hover:text-primary p-1.5 rounded-full hover:bg-primary/5"
+              >
+                <Pencil className="size-4" />
+              </button>
+              <button
+                onClick={() => deleteExpense(e.id)}
+                aria-label="Delete expense"
+                className="press text-muted-foreground/40 hover:text-destructive p-1.5 rounded-full hover:bg-destructive/5"
+              >
+                <Trash2 className="size-4" />
+              </button>
+            </div>
           </li>
         ))}
         {expenses.length === 0 && (
@@ -76,6 +86,12 @@ function ExpensesPage() {
       </button>
 
       {open && <AddExpenseSheet onClose={() => setOpen(false)} />}
+      {editing && (
+        <EditExpenseSheet
+          expense={editing}
+          onClose={() => setEditing(null)}
+        />
+      )}
     </div>
   );
 }
