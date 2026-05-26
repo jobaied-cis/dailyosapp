@@ -115,7 +115,6 @@ function ExpensesPage() {
         >
           <ChevronLeft className="size-5" />
         </button>
-        <div className="flex items-center gap-1">
         <div className="relative">
           <select
             value={selectedMonth}
