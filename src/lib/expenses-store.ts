@@ -76,13 +76,14 @@ export function useExpenses(): Expense[] {
     : [];
 }
 
-export function addExpense(input: { title: string; amount: number; type?: EntryType }) {
+export function addExpense(input: { title: string; amount: number; type?: EntryType; category?: ExpenseCategory }) {
   ensureInit();
   const expense: Expense = {
     id: crypto.randomUUID(),
     title: input.title.trim(),
     amount: input.amount,
     type: input.type ?? "expense",
+    category: input.category ?? "Others",
     createdAt: Date.now(),
   };
   persist([expense, ...cache]);
