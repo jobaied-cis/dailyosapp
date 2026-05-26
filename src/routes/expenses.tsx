@@ -1,7 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { useExpenses, addExpense, deleteExpense } from "@/lib/expenses-store";
-import { Plus, Trash2, Wallet, X } from "lucide-react";
+import {
+  useExpenses,
+  addExpense,
+  updateExpense,
+  deleteExpense,
+  type Expense,
+} from "@/lib/expenses-store";
+import { Plus, Trash2, Wallet, X, Pencil } from "lucide-react";
 
 export const Route = createFileRoute("/expenses")({
   head: () => ({
@@ -16,6 +22,7 @@ export const Route = createFileRoute("/expenses")({
 function ExpensesPage() {
   const expenses = useExpenses();
   const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState<Expense | null>(null);
   const total = expenses.reduce((sum, e) => sum + e.amount, 0);
 
   return (
@@ -41,13 +48,22 @@ function ExpensesPage() {
               <h3 className="font-semibold text-foreground text-[0.95rem]">{e.title}</h3>
               <p className="text-sm font-mono font-medium text-muted-foreground mt-0.5">${e.amount.toFixed(2)}</p>
             </div>
-            <button
-              onClick={() => deleteExpense(e.id)}
-              aria-label="Delete expense"
-              className="press text-muted-foreground/40 hover:text-destructive p-1.5 rounded-full hover:bg-destructive/5"
-            >
-              <Trash2 className="size-4" />
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setEditing(e)}
+                aria-label="Edit expense"
+                className="press text-muted-foreground/40 hover:text-primary p-1.5 rounded-full hover:bg-primary/5"
+              >
+                <Pencil className="size-4" />
+              </button>
+              <button
+                onClick={() => deleteExpense(e.id)}
+                aria-label="Delete expense"
+                className="press text-muted-foreground/40 hover:text-destructive p-1.5 rounded-full hover:bg-destructive/5"
+              >
+                <Trash2 className="size-4" />
+              </button>
+            </div>
           </li>
         ))}
         {expenses.length === 0 && (
@@ -71,6 +87,12 @@ function ExpensesPage() {
       </button>
 
       {open && <AddExpenseSheet onClose={() => setOpen(false)} />}
+      {editing && (
+        <EditExpenseSheet
+          expense={editing}
+          onClose={() => setEditing(null)}
+        />
+      )}
     </div>
   );
 }
@@ -136,5 +158,66 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-[0.12em]">{label}</span>
       <div className="mt-2">{children}</div>
     </label>
+  );
+}
+
+function EditExpenseSheet({
+  expense,
+  onClose,
+}: {
+  expense: Expense;
+  onClose: () => void;
+}) {
+  const [title, setTitle] = useState(expense.title);
+  const [amount, setAmount] = useState(String(expense.amount));
+
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const num = parseFloat(amount);
+    if (!title.trim() || Number.isNaN(num) || num <= 0) return;
+    updateExpense(expense.id, { title, amount: num });
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-foreground/25 backdrop-blur-md">
+      <div className="w-full max-w-md bg-card rounded-t-[1.75rem] p-6 shadow-[0_-8px_40px_-8px_rgba(15,23,42,0.15)] animate-in slide-in-from-bottom duration-300">
+        <div className="flex items-center justify-between mb-5">
+          <h3 className="text-lg font-bold text-foreground tracking-tight">Edit expense</h3>
+          <button onClick={onClose} aria-label="Close" className="text-muted-foreground hover:text-foreground p-1.5 rounded-full hover:bg-secondary transition-colors">
+            <X className="size-5" />
+          </button>
+        </div>
+        <form onSubmit={submit} className="space-y-4">
+          <Field label="Title">
+            <input
+              autoFocus
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="e.g. Breakfast, Bus, Lunch"
+              className="w-full bg-secondary rounded-xl px-4 py-3.5 text-foreground outline-none focus:ring-2 focus:ring-primary/30 placeholder:text-muted-foreground/60 font-medium"
+            />
+          </Field>
+          <Field label="Amount">
+            <input
+              type="number"
+              step="0.01"
+              min="0"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              placeholder="0.00"
+              className="w-full bg-secondary rounded-xl px-4 py-3.5 text-foreground outline-none focus:ring-2 focus:ring-primary/30 placeholder:text-muted-foreground/60 font-medium"
+            />
+          </Field>
+          <button
+            type="submit"
+            disabled={!title.trim() || !amount || Number.isNaN(parseFloat(amount)) || parseFloat(amount) <= 0}
+            className="press w-full bg-primary text-primary-foreground rounded-[1.25rem] py-4 font-semibold shadow-[0_4px_16px_-4px_rgba(37,99,235,0.35)] disabled:opacity-45 disabled:shadow-none mt-2"
+          >
+            Save Changes
+          </button>
+        </form>
+      </div>
+    </div>
   );
 }

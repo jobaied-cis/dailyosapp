@@ -80,6 +80,17 @@ export function addExpense(input: { title: string; amount: number }) {
   persist([expense, ...cache]);
 }
 
+export function updateExpense(id: string, input: { title: string; amount: number }) {
+  ensureInit();
+  persist(
+    cache.map((e) =>
+      e.id === id
+        ? { ...e, title: input.title.trim(), amount: input.amount }
+        : e
+    )
+  );
+}
+
 export function deleteExpense(id: string) {
   ensureInit();
   persist(cache.filter((e) => e.id !== id));
