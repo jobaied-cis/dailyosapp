@@ -30,6 +30,7 @@ function load(): Expense[] {
       title: String(e.title ?? ""),
       amount: Number(e.amount) || 0,
       type: e.type === "income" ? "income" : "expense",
+      category: (["Food", "Transport", "Study", "Others"].includes(e.category) ? e.category : "Others") as ExpenseCategory,
       createdAt: Number(e.createdAt) || Date.now(),
     }));
   } catch {
