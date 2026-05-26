@@ -144,6 +144,24 @@ export function addTask(missionId: string, title: string, day: number = 1) {
   );
 }
 
+export function updateTask(missionId: string, taskId: string, title: string) {
+  ensureInit();
+  const t = title.trim();
+  if (!t) return;
+  persist(
+    cache.map((m) =>
+      m.id === missionId
+        ? {
+            ...m,
+            tasks: m.tasks.map((task) =>
+              task.id === taskId ? { ...task, title: t } : task,
+            ),
+          }
+        : m,
+    ),
+  );
+}
+
 export function toggleTask(missionId: string, taskId: string) {
   ensureInit();
   persist(
