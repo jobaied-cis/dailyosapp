@@ -113,6 +113,13 @@ export function addMission(title: string): string {
   return mission.id;
 }
 
+export function updateMission(id: string, title: string) {
+  ensureInit();
+  const t = title.trim();
+  if (!t) return;
+  persist(cache.map((m) => (m.id === id ? { ...m, title: t } : m)));
+}
+
 export function deleteMission(id: string) {
   ensureInit();
   persist(cache.filter((m) => m.id !== id));
