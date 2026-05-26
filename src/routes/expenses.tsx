@@ -5,6 +5,7 @@ import {
   addExpense,
   updateExpense,
   deleteExpense,
+  type Expense,
 } from "@/lib/expenses-store";
 import { Plus, Trash2, Wallet, X, Pencil } from "lucide-react";
 
