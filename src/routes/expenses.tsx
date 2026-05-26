@@ -64,6 +64,7 @@ function ExpensesPage() {
   const [openIncome, setOpenIncome] = useState(false);
   const [editing, setEditing] = useState<Expense | null>(null);
   const [selectedMonth, setSelectedMonth] = useState<string>(() => monthKey(Date.now()));
+  const [showHistory, setShowHistory] = useState(false);
 
   // Available months (always include current month even if empty)
   const availableMonths = (() => {
