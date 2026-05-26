@@ -6,10 +6,12 @@ import {
   addIncome,
   updateExpense,
   deleteExpense,
+  getDailyLimit,
+  setDailyLimit,
   type Expense,
   type ExpenseCategory,
 } from "@/lib/expenses-store";
-import { Plus, Trash2, Wallet, X, Pencil, ArrowDownCircle, ArrowUpCircle, ChevronDown, ChevronLeft, ChevronRight, History as HistoryIcon, ArrowLeft } from "lucide-react";
+import { Plus, Trash2, Wallet, X, Pencil, ArrowDownCircle, ArrowUpCircle, ChevronDown, ChevronLeft, ChevronRight, History as HistoryIcon, ArrowLeft, AlertTriangle, Settings2 } from "lucide-react";
 
 function dayKey(ts: number) {
   const d = new Date(ts);
@@ -65,6 +67,16 @@ function ExpensesPage() {
   const [editing, setEditing] = useState<Expense | null>(null);
   const [selectedMonth, setSelectedMonth] = useState<string>(() => monthKey(Date.now()));
   const [showHistory, setShowHistory] = useState(false);
+  const [dailyLimit, setDailyLimitState] = useState<number>(() => getDailyLimit());
+  const [editingLimit, setEditingLimit] = useState(false);
+
+  // Today's expense calculation (all entries, not just selected month)
+  const todayKeyStr = dayKey(Date.now());
+  const todayExpense = entries
+    .filter((e) => e.type === "expense" && dayKey(e.createdAt) === todayKeyStr)
+    .reduce((s, e) => s + e.amount, 0);
+  const limitExceeded = dailyLimit > 0 && todayExpense > dailyLimit;
+  const limitPercent = dailyLimit > 0 ? Math.min((todayExpense / dailyLimit) * 100, 100) : 0;
 
   // Available months (always include current month even if empty)
   const availableMonths = (() => {
@@ -177,6 +189,104 @@ function ExpensesPage() {
             </p>
           </div>
         </div>
+      </section>
+
+      {/* Daily spending limit */}
+      <section className="bg-card border border-border/60 rounded-[1.25rem] p-4 shadow-[0_2px_12px_-4px_rgba(15,23,42,0.06)]">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <Settings2 className="size-4 text-muted-foreground" />
+            <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+              Daily Limit
+            </p>
+          </div>
+          {limitExceeded && (
+            <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-destructive/10 text-destructive">
+              <AlertTriangle className="size-3" />
+              Exceeded
+            </span>
+          )}
+        </div>
+
+        {editingLimit ? (
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              const input = (e.currentTarget.elements.namedItem("limit") as HTMLInputElement)?.value;
+              const num = parseFloat(input);
+              if (!Number.isNaN(num) && num >= 0) {
+                setDailyLimit(num);
+                setDailyLimitState(num);
+              }
+              setEditingLimit(false);
+            }}
+            className="flex items-center gap-2"
+          >
+            <span className="text-sm text-muted-foreground font-semibold">$</span>
+            <input
+              name="limit"
+              type="number"
+              step="1"
+              min="0"
+              defaultValue={dailyLimit || ""}
+              autoFocus
+              placeholder="0"
+              className="flex-1 bg-secondary rounded-xl px-3 py-2 text-foreground outline-none focus:ring-2 focus:ring-primary/30 placeholder:text-muted-foreground/60 font-semibold text-sm"
+            />
+            <button
+              type="submit"
+              className="press bg-primary text-primary-foreground rounded-xl px-3 py-2 text-xs font-bold"
+            >
+              Save
+            </button>
+            <button
+              type="button"
+              onClick={() => setEditingLimit(false)}
+              className="press text-muted-foreground hover:text-foreground rounded-xl px-2 py-2 text-xs font-bold"
+            >
+              Cancel
+            </button>
+          </form>
+        ) : (
+          <button
+            onClick={() => setEditingLimit(true)}
+            className="w-full text-left press"
+          >
+            {dailyLimit > 0 ? (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-muted-foreground">
+                    Today's spend
+                  </p>
+                  <p className={`text-sm font-extrabold ${limitExceeded ? "text-destructive" : "text-emerald-600"}`}>
+                    ${todayExpense.toFixed(0)} / ${dailyLimit.toFixed(0)}
+                  </p>
+                </div>
+                <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all duration-500 ${
+                      limitExceeded ? "bg-destructive" : "bg-emerald-500"
+                    }`}
+                    style={{ width: `${limitPercent}%` }}
+                  />
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Tap to set a daily spending limit
+              </p>
+            )}
+          </button>
+        )}
+
+        {limitExceeded && !editingLimit && (
+          <div className="mt-3 flex items-center gap-2 bg-destructive/10 rounded-xl px-3 py-2.5">
+            <AlertTriangle className="size-4 text-destructive shrink-0" />
+            <p className="text-xs font-semibold text-destructive">
+              You exceeded today's limit!
+            </p>
+          </div>
+        )}
       </section>
 
       {/* Action buttons */}
