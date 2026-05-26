@@ -9,7 +9,22 @@ import {
   type Expense,
   type ExpenseCategory,
 } from "@/lib/expenses-store";
-import { Plus, Trash2, Wallet, X, Pencil, ArrowDownCircle, ArrowUpCircle } from "lucide-react";
+import { Plus, Trash2, Wallet, X, Pencil, ArrowDownCircle, ArrowUpCircle, ChevronDown } from "lucide-react";
+
+function dayKey(ts: number) {
+  const d = new Date(ts);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+function formatDayLabel(key: string) {
+  const [y, m, d] = key.split("-").map(Number);
+  const date = new Date(y, m - 1, d);
+  const today = new Date();
+  const yest = new Date();
+  yest.setDate(today.getDate() - 1);
+  if (dayKey(today.getTime()) === key) return "Today";
+  if (dayKey(yest.getTime()) === key) return "Yesterday";
+  return date.toLocaleDateString(undefined, { month: "long", day: "numeric" });
+}
 
 const CATEGORY_EMOJI: Record<ExpenseCategory, string> = {
   Food: "🍔",
@@ -96,85 +111,152 @@ function ExpensesPage() {
         </button>
       </div>
 
-      {/* History */}
-      <ul className="space-y-3">
-        {entries.map((e, i) => {
-          const isIncome = e.type === "income";
-          return (
-            <li
-              key={e.id}
-              style={{ animationDelay: `${Math.min(i * 40, 240)}ms` }}
-              className="group flex items-center justify-between bg-card border border-border/60 rounded-[1.25rem] p-4 shadow-[0_2px_12px_-4px_rgba(15,23,42,0.06)] animate-list-item-in transition-all duration-300 hover:shadow-[0_4px_20px_-6px_rgba(15,23,42,0.1)]"
-            >
-              <div className="flex items-center gap-3 flex-1 min-w-0">
-                <div
-                  className={`size-9 shrink-0 rounded-full flex items-center justify-center ${
-                    isIncome ? "bg-emerald-500/10" : "bg-destructive/10"
-                  }`}
-                >
-                  {isIncome ? (
-                    <ArrowDownCircle className="size-5 text-emerald-600" />
-                  ) : (
-                    <ArrowUpCircle className="size-5 text-destructive" />
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-semibold text-foreground text-[0.95rem] truncate">
-                      {e.title}
-                    </h3>
-                    {!isIncome && (
-                      <span className="shrink-0 inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
-                        {CATEGORY_EMOJI[e.category]} {e.category}
-                      </span>
-                    )}
-                  </div>
-                  <p
-                    className={`text-sm font-mono font-semibold mt-0.5 ${
-                      isIncome ? "text-emerald-600" : "text-destructive"
-                    }`}
-                  >
-                    {isIncome ? "+" : "-"}${e.amount.toFixed(2)}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={() => setEditing(e)}
-                  aria-label="Edit entry"
-                  className="press text-muted-foreground/40 hover:text-primary p-1.5 rounded-full hover:bg-primary/5"
-                >
-                  <Pencil className="size-4" />
-                </button>
-                <button
-                  onClick={() => deleteExpense(e.id)}
-                  aria-label="Delete entry"
-                  className="press text-muted-foreground/40 hover:text-destructive p-1.5 rounded-full hover:bg-destructive/5"
-                >
-                  <Trash2 className="size-4" />
-                </button>
-              </div>
-            </li>
-          );
-        })}
-        {entries.length === 0 && (
-          <li className="text-center text-muted-foreground py-16">
-            <div className="inline-flex items-center justify-center size-16 rounded-full bg-secondary mb-5">
-              <Wallet className="size-7 text-muted-foreground" />
-            </div>
-            <p className="text-base font-semibold text-foreground">No entries yet</p>
-            <p className="text-sm text-muted-foreground mt-1.5">
-              Add money or an expense to get started.
-            </p>
-          </li>
-        )}
-      </ul>
+      {/* Day-grouped history */}
+      <DayGroupedHistory entries={entries} onEdit={setEditing} />
 
       {openExpense && <AddExpenseSheet onClose={() => setOpenExpense(false)} />}
       {openIncome && <AddIncomeSheet onClose={() => setOpenIncome(false)} />}
       {editing && (
         <EditExpenseSheet expense={editing} onClose={() => setEditing(null)} />
       )}
+    </div>
+  );
+}
+
+function DayGroupedHistory({
+  entries,
+  onEdit,
+}: {
+  entries: Expense[];
+  onEdit: (e: Expense) => void;
+}) {
+  const todayKey = dayKey(Date.now());
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+
+  if (entries.length === 0) {
+    return (
+      <div className="text-center text-muted-foreground py-16">
+        <div className="inline-flex items-center justify-center size-16 rounded-full bg-secondary mb-5">
+          <Wallet className="size-7 text-muted-foreground" />
+        </div>
+        <p className="text-base font-semibold text-foreground">No entries yet</p>
+        <p className="text-sm text-muted-foreground mt-1.5">
+          Add money or an expense to get started.
+        </p>
+      </div>
+    );
+  }
+
+  // Group by day, preserving sort (entries already newest-first)
+  const groupsMap = new Map<string, Expense[]>();
+  for (const e of entries) {
+    const k = dayKey(e.createdAt);
+    if (!groupsMap.has(k)) groupsMap.set(k, []);
+    groupsMap.get(k)!.push(e);
+  }
+  const groups = Array.from(groupsMap.entries()).sort((a, b) =>
+    a[0] < b[0] ? 1 : -1,
+  );
+
+  return (
+    <div className="space-y-3">
+      {groups.map(([key, items], gi) => {
+        const dayExpense = items
+          .filter((e) => e.type === "expense")
+          .reduce((s, e) => s + e.amount, 0);
+        const isOpen = collapsed[key] !== undefined ? !collapsed[key] : key === todayKey;
+        return (
+          <section
+            key={key}
+            style={{ animationDelay: `${Math.min(gi * 50, 240)}ms` }}
+            className="bg-card border border-border/60 rounded-[1.25rem] shadow-[0_2px_12px_-4px_rgba(15,23,42,0.06)] overflow-hidden animate-list-item-in"
+          >
+            <button
+              onClick={() => setCollapsed((c) => ({ ...c, [key]: !(c[key] !== undefined ? !c[key] : key === todayKey) }))}
+              className="press w-full flex items-center justify-between p-4 text-left"
+            >
+              <div>
+                <h3 className="font-bold text-foreground text-[0.95rem]">
+                  {formatDayLabel(key)}
+                </h3>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {items.length} {items.length === 1 ? "entry" : "entries"} · Total spent{" "}
+                  <span className="font-semibold text-destructive">
+                    ${dayExpense.toFixed(2)}
+                  </span>
+                </p>
+              </div>
+              <ChevronDown
+                className={`size-5 text-muted-foreground shrink-0 transition-transform duration-200 ${
+                  isOpen ? "rotate-180" : ""
+                }`}
+              />
+            </button>
+            {isOpen && (
+              <ul className="px-3 pb-3 space-y-2">
+                {items.map((e) => {
+                  const isIncome = e.type === "income";
+                  return (
+                    <li
+                      key={e.id}
+                      className="group flex items-center justify-between bg-secondary/40 rounded-2xl p-3"
+                    >
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <div
+                          className={`size-9 shrink-0 rounded-full flex items-center justify-center ${
+                            isIncome ? "bg-emerald-500/10" : "bg-destructive/10"
+                          }`}
+                        >
+                          {isIncome ? (
+                            <ArrowDownCircle className="size-5 text-emerald-600" />
+                          ) : (
+                            <ArrowUpCircle className="size-5 text-destructive" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <h4 className="font-semibold text-foreground text-[0.9rem] truncate">
+                              {e.title}
+                            </h4>
+                            {!isIncome && (
+                              <span className="shrink-0 inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+                                {CATEGORY_EMOJI[e.category]} {e.category}
+                              </span>
+                            )}
+                          </div>
+                          <p
+                            className={`text-sm font-mono font-semibold mt-0.5 ${
+                              isIncome ? "text-emerald-600" : "text-destructive"
+                            }`}
+                          >
+                            {isIncome ? "+" : "-"}${e.amount.toFixed(2)}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => onEdit(e)}
+                          aria-label="Edit entry"
+                          className="press text-muted-foreground/40 hover:text-primary p-1.5 rounded-full hover:bg-primary/5"
+                        >
+                          <Pencil className="size-4" />
+                        </button>
+                        <button
+                          onClick={() => deleteExpense(e.id)}
+                          aria-label="Delete entry"
+                          className="press text-muted-foreground/40 hover:text-destructive p-1.5 rounded-full hover:bg-destructive/5"
+                        >
+                          <Trash2 className="size-4" />
+                        </button>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </section>
+        );
+      })}
     </div>
   );
 }
