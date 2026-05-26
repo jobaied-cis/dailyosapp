@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { addTask, deleteTask, toggleTask, useTasks } from "@/lib/tasks-store";
 import { Check, ClipboardList, Plus, Trash2, X } from "lucide-react";
+import { ProgressRing } from "@/components/ProgressRing";
 
 export const Route = createFileRoute("/routine")({
   head: () => ({
