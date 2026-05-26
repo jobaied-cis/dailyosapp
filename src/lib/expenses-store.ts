@@ -96,6 +96,7 @@ export function addIncome(input: { amount: number; title?: string }) {
     title: (input.title ?? "Added money").trim() || "Added money",
     amount: input.amount,
     type: "income",
+    category: "Others",
     createdAt: Date.now(),
   };
   persist([entry, ...cache]);
