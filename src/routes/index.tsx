@@ -3,11 +3,9 @@ import { useTasks } from "@/lib/tasks-store";
 import {
   useMissions,
   missionProgress,
-  toggleTask,
   type Mission,
 } from "@/lib/missions-store";
 import { ProgressRing } from "@/components/ProgressRing";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   CheckCircle2,
   Circle,
@@ -72,71 +70,12 @@ function Dashboard() {
 
   const mission = pickTodaysMission(missions);
   const currentDay = mission ? currentDayFor(mission) : 0;
-  const todayTasks = mission ? mission.tasks.filter((t) => t.day === currentDay) : [];
-  const mp = mission ? missionProgress(mission) : null;
 
   return (
     <div className="space-y-6">
       <p className="text-sm font-medium text-muted-foreground tracking-wide">{today}</p>
 
-      {/* Today's Mission */}
-      <section className="bg-card border border-border/60 rounded-[1.5rem] p-5 shadow-[0_4px_20px_-8px_rgba(15,23,42,0.06)]">
-        <div className="flex items-center justify-between mb-3">
-          <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-primary flex items-center gap-1.5">
-            <Target className="size-3.5" /> Today's Mission
-          </span>
-          <Link to="/missions" className="text-xs font-semibold text-muted-foreground hover:text-foreground">
-            All
-          </Link>
-        </div>
-        {mission ? (
-          <Link to="/missions/$missionId" params={{ missionId: mission.id }} className="press block">
-            <h3 className="font-bold text-foreground text-[1.05rem]">{mission.title}</h3>
-            <p className="text-sm text-muted-foreground mt-1">
-              Day {currentDay} — {formatDayDate(mission.startDate, currentDay)}
-            </p>
-          </Link>
-        ) : (
-          <p className="text-sm text-muted-foreground">No active mission</p>
-        )}
-      </section>
-
-      {/* Today's Tasks (from mission) */}
-      {mission && (
-        <section className="bg-card border border-border/60 rounded-[1.5rem] p-5 shadow-[0_4px_20px_-8px_rgba(15,23,42,0.06)]">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
-              Today's Tasks
-            </span>
-            <span className="text-xs font-mono text-muted-foreground">
-              {todayTasks.filter((t) => t.completed).length}/{todayTasks.length}
-            </span>
-          </div>
-          {todayTasks.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No tasks for today.</p>
-          ) : (
-            <ul className="space-y-2">
-              {todayTasks.map((t) => (
-                <li key={t.id} className="flex items-center gap-3">
-                  <Checkbox
-                    checked={t.completed}
-                    onCheckedChange={() => toggleTask(mission.id, t.id)}
-                  />
-                  <span
-                    className={`text-sm flex-1 ${
-                      t.completed ? "line-through text-muted-foreground" : "text-foreground"
-                    }`}
-                  >
-                    {t.title}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
-      )}
-
-      {/* Today's Progress (existing routine) */}
+      {/* Today's Progress (Routine) */}
       <section className="relative overflow-hidden bg-card border border-border/60 rounded-[1.75rem] p-6 shadow-[0_8px_32px_-12px_rgba(15,23,42,0.08)]">
         <div className="absolute top-0 right-0 w-40 h-40 bg-primary/[0.04] rounded-full blur-3xl -translate-y-1/2 translate-x-1/4" />
         <div className="flex items-center gap-6 relative">
@@ -156,30 +95,6 @@ function Dashboard() {
           </div>
         </div>
       </section>
-
-      {/* Mission Progress */}
-      {mission && mp && (
-        <section className="bg-card border border-border/60 rounded-[1.5rem] p-5 shadow-[0_4px_20px_-8px_rgba(15,23,42,0.06)]">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
-              Mission Progress
-            </span>
-            <span className="text-xs font-mono text-muted-foreground">
-              {mp.done}/{mp.total}
-            </span>
-          </div>
-          <div className="flex items-baseline justify-between gap-3">
-            <h3 className="font-bold text-foreground truncate">{mission.title}</h3>
-            <span className="text-lg font-bold text-primary">{mp.pct}%</span>
-          </div>
-          <div className="mt-3 h-2 rounded-full bg-secondary overflow-hidden">
-            <div
-              className="h-full bg-primary transition-all duration-700"
-              style={{ width: `${mp.pct}%` }}
-            />
-          </div>
-        </section>
-      )}
 
       <div className="grid grid-cols-2 gap-3">
         <StatCard label="Total" value={total} icon={<Circle className="size-4" />} color="bg-secondary text-secondary-foreground" />
@@ -227,6 +142,28 @@ function Dashboard() {
       >
         Open today's routine <ArrowRight className="size-4" />
       </Link>
+
+      {/* Today's Mission (below Routine) */}
+      <section className="bg-card border border-border/60 rounded-[1.5rem] p-5 shadow-[0_4px_20px_-8px_rgba(15,23,42,0.06)]">
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-primary flex items-center gap-1.5">
+            <Target className="size-3.5" /> Today's Mission
+          </span>
+          <Link to="/missions" className="text-xs font-semibold text-muted-foreground hover:text-foreground">
+            All
+          </Link>
+        </div>
+        {mission ? (
+          <Link to="/missions/$missionId" params={{ missionId: mission.id }} className="press block">
+            <h3 className="font-bold text-foreground text-[1.05rem]">{mission.title}</h3>
+            <p className="text-sm text-muted-foreground mt-1">
+              Day {currentDay} — {formatDayDate(mission.startDate, currentDay)}
+            </p>
+          </Link>
+        ) : (
+          <p className="text-sm text-muted-foreground">No active mission</p>
+        )}
+      </section>
     </div>
   );
 }
