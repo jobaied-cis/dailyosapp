@@ -9,7 +9,22 @@ import {
   type Expense,
   type ExpenseCategory,
 } from "@/lib/expenses-store";
-import { Plus, Trash2, Wallet, X, Pencil, ArrowDownCircle, ArrowUpCircle } from "lucide-react";
+import { Plus, Trash2, Wallet, X, Pencil, ArrowDownCircle, ArrowUpCircle, ChevronDown } from "lucide-react";
+
+function dayKey(ts: number) {
+  const d = new Date(ts);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+function formatDayLabel(key: string) {
+  const [y, m, d] = key.split("-").map(Number);
+  const date = new Date(y, m - 1, d);
+  const today = new Date();
+  const yest = new Date();
+  yest.setDate(today.getDate() - 1);
+  if (dayKey(today.getTime()) === key) return "Today";
+  if (dayKey(yest.getTime()) === key) return "Yesterday";
+  return date.toLocaleDateString(undefined, { month: "long", day: "numeric" });
+}
 
 const CATEGORY_EMOJI: Record<ExpenseCategory, string> = {
   Food: "🍔",
