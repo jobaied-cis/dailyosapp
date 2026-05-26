@@ -5,10 +5,7 @@ import {
   missionProgress,
   type Mission,
 } from "@/lib/missions-store";
-import { ProgressRing } from "@/components/ProgressRing";
 import {
-  CheckCircle2,
-  Circle,
   ClipboardList,
   Flame,
   ArrowRight,
