@@ -9,7 +9,7 @@ import {
   type Expense,
   type ExpenseCategory,
 } from "@/lib/expenses-store";
-import { Plus, Trash2, Wallet, X, Pencil, ArrowDownCircle, ArrowUpCircle, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Trash2, Wallet, X, Pencil, ArrowDownCircle, ArrowUpCircle, ChevronDown, ChevronLeft, ChevronRight, History as HistoryIcon, ArrowLeft } from "lucide-react";
 
 function dayKey(ts: number) {
   const d = new Date(ts);
