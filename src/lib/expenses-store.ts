@@ -1,12 +1,14 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 
 export type EntryType = "income" | "expense";
+export type ExpenseCategory = "Food" | "Transport" | "Study" | "Others";
 
 export interface Expense {
   id: string;
   title: string;
   amount: number;
   type: EntryType;
+  category: ExpenseCategory;
   createdAt: number;
 }
 
@@ -28,6 +30,7 @@ function load(): Expense[] {
       title: String(e.title ?? ""),
       amount: Number(e.amount) || 0,
       type: e.type === "income" ? "income" : "expense",
+      category: (["Food", "Transport", "Study", "Others"].includes(e.category) ? e.category : "Others") as ExpenseCategory,
       createdAt: Number(e.createdAt) || Date.now(),
     }));
   } catch {
@@ -73,13 +76,14 @@ export function useExpenses(): Expense[] {
     : [];
 }
 
-export function addExpense(input: { title: string; amount: number; type?: EntryType }) {
+export function addExpense(input: { title: string; amount: number; type?: EntryType; category?: ExpenseCategory }) {
   ensureInit();
   const expense: Expense = {
     id: crypto.randomUUID(),
     title: input.title.trim(),
     amount: input.amount,
     type: input.type ?? "expense",
+    category: input.category ?? "Others",
     createdAt: Date.now(),
   };
   persist([expense, ...cache]);
@@ -92,17 +96,18 @@ export function addIncome(input: { amount: number; title?: string }) {
     title: (input.title ?? "Added money").trim() || "Added money",
     amount: input.amount,
     type: "income",
+    category: "Others",
     createdAt: Date.now(),
   };
   persist([entry, ...cache]);
 }
 
-export function updateExpense(id: string, input: { title: string; amount: number }) {
+export function updateExpense(id: string, input: { title: string; amount: number; category?: ExpenseCategory }) {
   ensureInit();
   persist(
     cache.map((e) =>
       e.id === id
-        ? { ...e, title: input.title.trim(), amount: input.amount }
+        ? { ...e, title: input.title.trim(), amount: input.amount, category: input.category ?? e.category }
         : e
     )
   );

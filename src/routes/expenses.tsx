@@ -7,8 +7,18 @@ import {
   updateExpense,
   deleteExpense,
   type Expense,
+  type ExpenseCategory,
 } from "@/lib/expenses-store";
 import { Plus, Trash2, Wallet, X, Pencil, ArrowDownCircle, ArrowUpCircle } from "lucide-react";
+
+const CATEGORY_EMOJI: Record<ExpenseCategory, string> = {
+  Food: "🍔",
+  Transport: "🚌",
+  Study: "📚",
+  Others: "📦",
+};
+
+const CATEGORIES: ExpenseCategory[] = ["Food", "Transport", "Study", "Others"];
 
 export const Route = createFileRoute("/expenses")({
   head: () => ({
@@ -109,9 +119,16 @@ function ExpensesPage() {
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-foreground text-[0.95rem] truncate">
-                    {e.title}
-                  </h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-semibold text-foreground text-[0.95rem] truncate">
+                      {e.title}
+                    </h3>
+                    {!isIncome && (
+                      <span className="shrink-0 inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+                        {CATEGORY_EMOJI[e.category]} {e.category}
+                      </span>
+                    )}
+                  </div>
                   <p
                     className={`text-sm font-mono font-semibold mt-0.5 ${
                       isIncome ? "text-emerald-600" : "text-destructive"
@@ -162,15 +179,44 @@ function ExpensesPage() {
   );
 }
 
+function CategorySelect({
+  value,
+  onChange,
+}: {
+  value: ExpenseCategory;
+  onChange: (c: ExpenseCategory) => void;
+}) {
+  return (
+    <div className="grid grid-cols-2 gap-2">
+      {CATEGORIES.map((cat) => (
+        <button
+          key={cat}
+          type="button"
+          onClick={() => onChange(cat)}
+          className={`press flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-semibold border transition-colors ${
+            value === cat
+              ? "bg-primary text-primary-foreground border-primary"
+              : "bg-secondary text-foreground border-transparent hover:bg-secondary/80"
+          }`}
+        >
+          <span>{CATEGORY_EMOJI[cat]}</span>
+          {cat}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 function AddExpenseSheet({ onClose }: { onClose: () => void }) {
   const [title, setTitle] = useState("");
   const [amount, setAmount] = useState("");
+  const [category, setCategory] = useState<ExpenseCategory>("Others");
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     const num = parseFloat(amount);
     if (!title.trim() || Number.isNaN(num) || num <= 0) return;
-    addExpense({ title, amount: num, type: "expense" });
+    addExpense({ title, amount: num, type: "expense", category });
     onClose();
   };
 
@@ -196,6 +242,9 @@ function AddExpenseSheet({ onClose }: { onClose: () => void }) {
             placeholder="0.00"
             className="w-full bg-secondary rounded-xl px-4 py-3.5 text-foreground outline-none focus:ring-2 focus:ring-primary/30 placeholder:text-muted-foreground/60 font-medium"
           />
+        </Field>
+        <Field label="Category">
+          <CategorySelect value={category} onChange={setCategory} />
         </Field>
         <button
           type="submit"
@@ -265,17 +314,19 @@ function EditExpenseSheet({
 }) {
   const [title, setTitle] = useState(expense.title);
   const [amount, setAmount] = useState(String(expense.amount));
+  const [category, setCategory] = useState<ExpenseCategory>(expense.category);
+  const isIncome = expense.type === "income";
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     const num = parseFloat(amount);
     if (!title.trim() || Number.isNaN(num) || num <= 0) return;
-    updateExpense(expense.id, { title, amount: num });
+    updateExpense(expense.id, { title, amount: num, category: isIncome ? undefined : category });
     onClose();
   };
 
   return (
-    <Sheet title={expense.type === "income" ? "Edit income" : "Edit expense"} onClose={onClose}>
+    <Sheet title={isIncome ? "Edit income" : "Edit expense"} onClose={onClose}>
       <form onSubmit={submit} className="space-y-4">
         <Field label="Title">
           <input
@@ -295,6 +346,11 @@ function EditExpenseSheet({
             className="w-full bg-secondary rounded-xl px-4 py-3.5 text-foreground outline-none focus:ring-2 focus:ring-primary/30 placeholder:text-muted-foreground/60 font-medium"
           />
         </Field>
+        {!isIncome && (
+          <Field label="Category">
+            <CategorySelect value={category} onChange={setCategory} />
+          </Field>
+        )}
         <button
           type="submit"
           disabled={!title.trim() || !amount || Number.isNaN(parseFloat(amount)) || parseFloat(amount) <= 0}
