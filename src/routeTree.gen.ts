@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as RoutineRouteImport } from './routes/routine'
 import { Route as MissionsRouteImport } from './routes/missions'
+import { Route as ExpensesRouteImport } from './routes/expenses'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as MissionsMissionIdRouteImport } from './routes/missions.$missionId'
 
@@ -22,6 +23,11 @@ const RoutineRoute = RoutineRouteImport.update({
 const MissionsRoute = MissionsRouteImport.update({
   id: '/missions',
   path: '/missions',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ExpensesRoute = ExpensesRouteImport.update({
+  id: '/expenses',
+  path: '/expenses',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -37,12 +43,14 @@ const MissionsMissionIdRoute = MissionsMissionIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/expenses': typeof ExpensesRoute
   '/missions': typeof MissionsRouteWithChildren
   '/routine': typeof RoutineRoute
   '/missions/$missionId': typeof MissionsMissionIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/expenses': typeof ExpensesRoute
   '/missions': typeof MissionsRouteWithChildren
   '/routine': typeof RoutineRoute
   '/missions/$missionId': typeof MissionsMissionIdRoute
@@ -50,20 +58,33 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/expenses': typeof ExpensesRoute
   '/missions': typeof MissionsRouteWithChildren
   '/routine': typeof RoutineRoute
   '/missions/$missionId': typeof MissionsMissionIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/missions' | '/routine' | '/missions/$missionId'
+  fullPaths:
+    | '/'
+    | '/expenses'
+    | '/missions'
+    | '/routine'
+    | '/missions/$missionId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/missions' | '/routine' | '/missions/$missionId'
-  id: '__root__' | '/' | '/missions' | '/routine' | '/missions/$missionId'
+  to: '/' | '/expenses' | '/missions' | '/routine' | '/missions/$missionId'
+  id:
+    | '__root__'
+    | '/'
+    | '/expenses'
+    | '/missions'
+    | '/routine'
+    | '/missions/$missionId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ExpensesRoute: typeof ExpensesRoute
   MissionsRoute: typeof MissionsRouteWithChildren
   RoutineRoute: typeof RoutineRoute
 }
@@ -82,6 +103,13 @@ declare module '@tanstack/react-router' {
       path: '/missions'
       fullPath: '/missions'
       preLoaderRoute: typeof MissionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/expenses': {
+      id: '/expenses'
+      path: '/expenses'
+      fullPath: '/expenses'
+      preLoaderRoute: typeof ExpensesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -115,9 +143,20 @@ const MissionsRouteWithChildren = MissionsRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ExpensesRoute: ExpensesRoute,
   MissionsRoute: MissionsRouteWithChildren,
   RoutineRoute: RoutineRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
