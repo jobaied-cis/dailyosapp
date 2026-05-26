@@ -20,9 +20,16 @@ function MissionsLayout() {
   return <MissionsListPage />;
 }
 
+const PRIORITY_LABELS: Record<number, { label: string; dot: string }> = {
+  1: { label: "High", dot: "bg-red-500" },
+  2: { label: "Medium", dot: "bg-yellow-500" },
+  3: { label: "Low", dot: "bg-green-500" },
+};
+
 function MissionsListPage() {
   const missions = useMissions();
   const [title, setTitle] = useState("");
+  const [priority, setPriority] = useState(2);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draftTitle, setDraftTitle] = useState("");
   const [confirmId, setConfirmId] = useState<string | null>(null);
@@ -31,8 +38,9 @@ function MissionsListPage() {
     e.preventDefault();
     const t = title.trim();
     if (!t) return;
-    addMission(t);
+    addMission(t, priority);
     setTitle("");
+    setPriority(2);
   };
 
   const startEdit = (m: { id: string; title: string }) => {
@@ -55,6 +63,8 @@ function MissionsListPage() {
     }
   };
 
+  const sortedMissions = [...missions].sort((a, b) => a.priority - b.priority);
+
   return (
     <div className="space-y-6 pb-12">
       <section>
@@ -69,6 +79,15 @@ function MissionsListPage() {
           placeholder="New mission title…"
           className="flex-1 bg-secondary rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-primary/30 text-sm"
         />
+        <select
+          value={priority}
+          onChange={(e) => setPriority(Number(e.target.value))}
+          className="bg-secondary rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30"
+        >
+          <option value={1}>High</option>
+          <option value={2}>Medium</option>
+          <option value={3}>Low</option>
+        </select>
         <button
           type="submit"
           disabled={!title.trim()}
@@ -78,15 +97,16 @@ function MissionsListPage() {
         </button>
       </form>
 
-      {missions.length === 0 ? (
+      {sortedMissions.length === 0 ? (
         <p className="text-center text-sm text-muted-foreground py-12 border border-dashed border-border/60 rounded-xl">
           No missions yet. Add one above.
         </p>
       ) : (
         <ul className="space-y-3">
-          {missions.map((m) => {
+          {sortedMissions.map((m) => {
             const { total, done, pct } = missionProgress(m);
             const isEditing = editingId === m.id;
+            const pri = PRIORITY_LABELS[m.priority] || PRIORITY_LABELS[2];
             return (
               <li key={m.id} className="relative group">
                 <Link
@@ -110,9 +130,15 @@ function MissionsListPage() {
                     )}
                     <span className="text-sm font-bold text-primary tabular-nums">{pct}%</span>
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {done}/{total} tasks
-                  </p>
+                  <div className="flex items-center justify-between mt-1">
+                    <p className="text-xs text-muted-foreground">
+                      {done}/{total} tasks
+                    </p>
+                    <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                      <span className={`w-2 h-2 rounded-full ${pri.dot}`} />
+                      {pri.label}
+                    </span>
+                  </div>
                 </Link>
                 <div className="absolute top-3 right-14 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
                   <button
