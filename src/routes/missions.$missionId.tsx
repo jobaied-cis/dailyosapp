@@ -105,9 +105,19 @@ function DaySection({ mission, day }: { mission: Mission; day: number }) {
     setValue("");
   };
 
+  const dayDate = new Date(mission.startDate + (day - 1) * 24 * 60 * 60 * 1000);
+  const dateLabel = dayDate.toLocaleDateString(undefined, {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+  });
+
   return (
     <section className="space-y-3">
-      <h2 className="font-bold text-foreground text-base">Day {day}</h2>
+      <div>
+        <h2 className="font-bold text-foreground text-base">Day {day}</h2>
+        <p className="text-xs text-muted-foreground">{dateLabel}</p>
+      </div>
 
       <form onSubmit={handleAdd} className="flex gap-2">
         <input

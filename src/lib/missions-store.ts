@@ -13,6 +13,7 @@ export interface Mission {
   id: string;
   title: string;
   createdAt: number;
+  startDate: number;
   days: number;
   tasks: MissionTask[];
 }
@@ -47,6 +48,7 @@ function load(): Mission[] {
         id,
         title: String(m.title ?? ""),
         createdAt: Number(m.createdAt) || Date.now(),
+        startDate: Number(m.startDate) || Number(m.createdAt) || Date.now(),
         days: Math.max(Number(m.days) || 1, maxDay),
         tasks,
       };
@@ -98,10 +100,12 @@ export function useMission(id: string): Mission | undefined {
 
 export function addMission(title: string): string {
   ensureInit();
+  const now = Date.now();
   const mission: Mission = {
     id: crypto.randomUUID(),
     title: title.trim(),
-    createdAt: Date.now(),
+    createdAt: now,
+    startDate: now,
     days: 1,
     tasks: [],
   };
