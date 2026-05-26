@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useTasks } from "@/lib/tasks-store";
+import { ProgressRing } from "@/components/ProgressRing";
 import {
   useMissions,
   missionProgress,
