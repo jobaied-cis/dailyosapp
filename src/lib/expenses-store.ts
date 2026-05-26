@@ -117,3 +117,22 @@ export function deleteExpense(id: string) {
   ensureInit();
   persist(cache.filter((e) => e.id !== id));
 }
+
+const DAILY_LIMIT_KEY = "dailyos.daily-limit.v1";
+
+export function getDailyLimit(): number {
+  if (typeof window === "undefined") return 0;
+  try {
+    const raw = localStorage.getItem(DAILY_LIMIT_KEY);
+    const n = raw ? Number(raw) : 0;
+    return Number.isFinite(n) && n > 0 ? n : 0;
+  } catch {
+    return 0;
+  }
+}
+
+export function setDailyLimit(value: number) {
+  if (typeof window !== "undefined") {
+    localStorage.setItem(DAILY_LIMIT_KEY, String(value));
+  }
+}
