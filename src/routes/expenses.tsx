@@ -9,7 +9,7 @@ import {
   type Expense,
   type ExpenseCategory,
 } from "@/lib/expenses-store";
-import { Plus, Trash2, Wallet, X, Pencil, ArrowDownCircle, ArrowUpCircle, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, Trash2, Wallet, X, Pencil, ArrowDownCircle, ArrowUpCircle, ChevronDown, ChevronLeft, ChevronRight, History as HistoryIcon, ArrowLeft } from "lucide-react";
 
 function dayKey(ts: number) {
   const d = new Date(ts);
@@ -64,6 +64,7 @@ function ExpensesPage() {
   const [openIncome, setOpenIncome] = useState(false);
   const [editing, setEditing] = useState<Expense | null>(null);
   const [selectedMonth, setSelectedMonth] = useState<string>(() => monthKey(Date.now()));
+  const [showHistory, setShowHistory] = useState(false);
 
   // Available months (always include current month even if empty)
   const availableMonths = (() => {
@@ -86,6 +87,21 @@ function ExpensesPage() {
   const currentIdx = availableMonths.indexOf(selectedMonth);
   const canPrev = currentIdx < availableMonths.length - 1;
   const canNext = currentIdx > 0;
+
+  if (showHistory) {
+    return (
+      <MonthHistory
+        entries={entries}
+        currentMonth={monthKey(Date.now())}
+        selectedMonth={selectedMonth}
+        onBack={() => setShowHistory(false)}
+        onSelect={(k) => {
+          setSelectedMonth(k);
+          setShowHistory(false);
+        }}
+      />
+    );
+  }
 
   return (
     <div className="space-y-6 pb-8">
@@ -122,6 +138,15 @@ function ExpensesPage() {
           <ChevronRight className="size-5" />
         </button>
       </div>
+
+      {/* History button */}
+      <button
+        onClick={() => setShowHistory(true)}
+        className="press w-full flex items-center justify-center gap-2 bg-secondary/60 hover:bg-secondary text-foreground rounded-2xl py-2.5 text-sm font-semibold border border-border/60"
+      >
+        <HistoryIcon className="size-4" />
+        View month history
+      </button>
 
       {/* Balance summary */}
       <section className="bg-card border border-border/60 rounded-[1.75rem] p-6 shadow-[0_8px_32px_-12px_rgba(15,23,42,0.08)] text-center">
@@ -541,5 +566,112 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-[0.12em]">{label}</span>
       <div className="mt-2">{children}</div>
     </label>
+  );
+}
+
+function MonthHistory({
+  entries,
+  currentMonth,
+  selectedMonth,
+  onBack,
+  onSelect,
+}: {
+  entries: Expense[];
+  currentMonth: string;
+  selectedMonth: string;
+  onBack: () => void;
+  onSelect: (k: string) => void;
+}) {
+  // Group entries by month
+  const byMonth = new Map<string, Expense[]>();
+  for (const e of entries) {
+    const k = monthKey(e.createdAt);
+    if (!byMonth.has(k)) byMonth.set(k, []);
+    byMonth.get(k)!.push(e);
+  }
+  // Always include current month
+  if (!byMonth.has(currentMonth)) byMonth.set(currentMonth, []);
+
+  const months = Array.from(byMonth.keys()).sort((a, b) => (a < b ? 1 : -1));
+
+  return (
+    <div className="space-y-5 pb-8">
+      <div className="flex items-center gap-2">
+        <button
+          onClick={onBack}
+          aria-label="Back"
+          className="press p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary"
+        >
+          <ArrowLeft className="size-5" />
+        </button>
+        <div>
+          <h2 className="font-bold text-foreground text-lg leading-tight">Month History</h2>
+          <p className="text-xs text-muted-foreground">Browse past months</p>
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        {months.map((k, i) => {
+          const items = byMonth.get(k) ?? [];
+          const income = items
+            .filter((e) => e.type === "income")
+            .reduce((s, e) => s + e.amount, 0);
+          const expense = items
+            .filter((e) => e.type === "expense")
+            .reduce((s, e) => s + e.amount, 0);
+          const balance = income - expense;
+          const isCurrent = k === currentMonth;
+          const isSelected = k === selectedMonth;
+          return (
+            <button
+              key={k}
+              onClick={() => onSelect(k)}
+              style={{ animationDelay: `${Math.min(i * 50, 240)}ms` }}
+              className={`press w-full text-left bg-card border rounded-[1.25rem] p-4 shadow-[0_2px_12px_-4px_rgba(15,23,42,0.06)] animate-list-item-in transition-colors ${
+                isSelected ? "border-primary/60 ring-2 ring-primary/20" : "border-border/60"
+              }`}
+            >
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <h3 className="font-bold text-foreground text-[0.95rem]">
+                    {formatMonthLabel(k)}
+                  </h3>
+                  {isCurrent && (
+                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+                      Active
+                    </span>
+                  )}
+                </div>
+                <p
+                  className={`text-base font-extrabold tracking-tight ${
+                    balance < 0 ? "text-destructive" : "text-foreground"
+                  }`}
+                >
+                  ${balance.toFixed(2)}
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="bg-secondary/60 rounded-xl p-2.5">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+                    Income
+                  </p>
+                  <p className="text-sm font-bold text-emerald-600 mt-0.5">
+                    +${income.toFixed(2)}
+                  </p>
+                </div>
+                <div className="bg-secondary/60 rounded-xl p-2.5">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+                    Expense
+                  </p>
+                  <p className="text-sm font-bold text-destructive mt-0.5">
+                    -${expense.toFixed(2)}
+                  </p>
+                </div>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 }
