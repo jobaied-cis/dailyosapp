@@ -137,35 +137,3 @@ function Dashboard() {
     </div>
   );
 }
-
-function encouragement(ratio: number): string {
-  if (ratio === 0) return "Let's get started";
-  if (ratio === 1) return "All done. Great job!";
-  if (ratio < 0.3) return "Let's get started";
-  if (ratio < 0.5) return "Keep it up";
-  if (ratio < 0.75) return "Good progress";
-  if (ratio < 1) return "Almost there";
-  return "All done. Great job!";
-}
-
-function StatCard({
-  label,
-  value,
-  icon,
-  color,
-}: {
-  label: string;
-  value: number;
-  icon: React.ReactNode;
-  color: string;
-}) {
-  return (
-    <div className="rounded-[1.25rem] p-5 border border-border/60 shadow-[0_4px_20px_-8px_rgba(15,23,42,0.06)] bg-card">
-      <div className={`inline-flex items-center justify-center size-8 rounded-full mb-3 ${color}`}>
-        {icon}
-      </div>
-      <div className="text-[11px] font-bold uppercase tracking-[0.1em] text-muted-foreground">{label}</div>
-      <div className="mt-1 text-[1.75rem] font-bold leading-none text-foreground">{value}</div>
-    </div>
-  );
-}
