@@ -1,6 +1,7 @@
 import { createFileRoute, Link, Outlet, useMatchRoute } from "@tanstack/react-router";
-import { useState, type FormEvent } from "react";
-import { addMission, missionProgress, useMissions } from "@/lib/missions-store";
+import { useState, type FormEvent, type KeyboardEvent } from "react";
+import { addMission, deleteMission, missionProgress, updateMission, useMissions } from "@/lib/missions-store";
+import { Pencil, Trash2 } from "lucide-react";
 
 export const Route = createFileRoute("/missions")({
   head: () => ({
@@ -22,6 +23,9 @@ function MissionsLayout() {
 function MissionsListPage() {
   const missions = useMissions();
   const [title, setTitle] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [draftTitle, setDraftTitle] = useState("");
+  const [confirmId, setConfirmId] = useState<string | null>(null);
 
   const handleAdd = (e: FormEvent) => {
     e.preventDefault();
@@ -29,6 +33,26 @@ function MissionsListPage() {
     if (!t) return;
     addMission(t);
     setTitle("");
+  };
+
+  const startEdit = (m: { id: string; title: string }) => {
+    setEditingId(m.id);
+    setDraftTitle(m.title);
+  };
+
+  const commitEdit = (id: string) => {
+    const t = draftTitle.trim();
+    if (t) updateMission(id, t);
+    setEditingId(null);
+    setDraftTitle("");
+  };
+
+  const handleKey = (e: KeyboardEvent<HTMLInputElement>, id: string) => {
+    if (e.key === "Enter") commitEdit(id);
+    if (e.key === "Escape") {
+      setEditingId(null);
+      setDraftTitle("");
+    }
   };
 
   return (
@@ -62,25 +86,90 @@ function MissionsListPage() {
         <ul className="space-y-3">
           {missions.map((m) => {
             const { total, done, pct } = missionProgress(m);
+            const isEditing = editingId === m.id;
             return (
-              <li key={m.id}>
+              <li key={m.id} className="relative group">
                 <Link
                   to="/missions/$missionId"
                   params={{ missionId: m.id }}
                   className="block bg-card border border-border/60 rounded-xl p-4 hover:border-primary/40 transition"
                 >
                   <div className="flex items-center justify-between gap-3">
-                    <h3 className="font-semibold text-foreground truncate">{m.title}</h3>
+                    {isEditing ? (
+                      <input
+                        autoFocus
+                        value={draftTitle}
+                        onChange={(e) => setDraftTitle(e.target.value)}
+                        onBlur={() => commitEdit(m.id)}
+                        onKeyDown={(e) => handleKey(e, m.id)}
+                        className="flex-1 bg-secondary rounded-md px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-primary/30"
+                        onClick={(e) => e.preventDefault()}
+                      />
+                    ) : (
+                      <h3 className="font-semibold text-foreground truncate">{m.title}</h3>
+                    )}
                     <span className="text-sm font-bold text-primary tabular-nums">{pct}%</span>
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
                     {done}/{total} tasks
                   </p>
                 </Link>
+                <div className="absolute top-3 right-14 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      startEdit(m);
+                    }}
+                    className="p-1.5 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground transition"
+                    aria-label="Edit mission"
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setConfirmId(m.id);
+                    }}
+                    className="p-1.5 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition"
+                    aria-label="Delete mission"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
               </li>
             );
           })}
         </ul>
+      )}
+
+      {confirmId && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+          <div className="bg-background border border-border rounded-xl p-6 max-w-sm w-full space-y-4">
+            <h3 className="font-semibold text-foreground">Delete Mission</h3>
+            <p className="text-sm text-muted-foreground">
+              Are you sure you want to delete this mission? This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setConfirmId(null)}
+                className="px-4 py-2 rounded-lg text-sm font-medium hover:bg-accent transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  deleteMission(confirmId);
+                  setConfirmId(null);
+                }}
+                className="px-4 py-2 rounded-lg text-sm font-medium bg-destructive text-destructive-foreground hover:bg-destructive/90 transition"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
