@@ -1,12 +1,14 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 
 export type EntryType = "income" | "expense";
+export type ExpenseCategory = "Food" | "Transport" | "Study" | "Others";
 
 export interface Expense {
   id: string;
   title: string;
   amount: number;
   type: EntryType;
+  category: ExpenseCategory;
   createdAt: number;
 }
 
