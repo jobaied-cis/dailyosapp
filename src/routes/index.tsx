@@ -57,7 +57,7 @@ function Dashboard() {
   const missions = useMissions();
   const total = tasks.length;
   const done = tasks.filter((t) => t.completed).length;
-  const ratio = total ? done / total : 0;
+  void total; void done;
   const next = tasks.find((t) => !t.completed);
   const today = new Date().toLocaleDateString(undefined, {
     weekday: "long",
