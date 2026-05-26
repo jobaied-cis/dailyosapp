@@ -568,3 +568,110 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
     </label>
   );
 }
+
+function MonthHistory({
+  entries,
+  currentMonth,
+  selectedMonth,
+  onBack,
+  onSelect,
+}: {
+  entries: Expense[];
+  currentMonth: string;
+  selectedMonth: string;
+  onBack: () => void;
+  onSelect: (k: string) => void;
+}) {
+  // Group entries by month
+  const byMonth = new Map<string, Expense[]>();
+  for (const e of entries) {
+    const k = monthKey(e.createdAt);
+    if (!byMonth.has(k)) byMonth.set(k, []);
+    byMonth.get(k)!.push(e);
+  }
+  // Always include current month
+  if (!byMonth.has(currentMonth)) byMonth.set(currentMonth, []);
+
+  const months = Array.from(byMonth.keys()).sort((a, b) => (a < b ? 1 : -1));
+
+  return (
+    <div className="space-y-5 pb-8">
+      <div className="flex items-center gap-2">
+        <button
+          onClick={onBack}
+          aria-label="Back"
+          className="press p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary"
+        >
+          <ArrowLeft className="size-5" />
+        </button>
+        <div>
+          <h2 className="font-bold text-foreground text-lg leading-tight">Month History</h2>
+          <p className="text-xs text-muted-foreground">Browse past months</p>
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        {months.map((k, i) => {
+          const items = byMonth.get(k) ?? [];
+          const income = items
+            .filter((e) => e.type === "income")
+            .reduce((s, e) => s + e.amount, 0);
+          const expense = items
+            .filter((e) => e.type === "expense")
+            .reduce((s, e) => s + e.amount, 0);
+          const balance = income - expense;
+          const isCurrent = k === currentMonth;
+          const isSelected = k === selectedMonth;
+          return (
+            <button
+              key={k}
+              onClick={() => onSelect(k)}
+              style={{ animationDelay: `${Math.min(i * 50, 240)}ms` }}
+              className={`press w-full text-left bg-card border rounded-[1.25rem] p-4 shadow-[0_2px_12px_-4px_rgba(15,23,42,0.06)] animate-list-item-in transition-colors ${
+                isSelected ? "border-primary/60 ring-2 ring-primary/20" : "border-border/60"
+              }`}
+            >
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <h3 className="font-bold text-foreground text-[0.95rem]">
+                    {formatMonthLabel(k)}
+                  </h3>
+                  {isCurrent && (
+                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+                      Active
+                    </span>
+                  )}
+                </div>
+                <p
+                  className={`text-base font-extrabold tracking-tight ${
+                    balance < 0 ? "text-destructive" : "text-foreground"
+                  }`}
+                >
+                  ${balance.toFixed(2)}
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="bg-secondary/60 rounded-xl p-2.5">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+                    Income
+                  </p>
+                  <p className="text-sm font-bold text-emerald-600 mt-0.5">
+                    +${income.toFixed(2)}
+                  </p>
+                </div>
+                <div className="bg-secondary/60 rounded-xl p-2.5">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+                    Expense
+                  </p>
+                  <p className="text-sm font-bold text-destructive mt-0.5">
+                    -${expense.toFixed(2)}
+                  </p>
+                </div>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
