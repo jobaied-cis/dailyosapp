@@ -12,7 +12,12 @@ import {
   ArrowRight,
   Sunrise,
   Target,
+  Wallet,
+  TrendingDown,
+  CalendarDays,
+  AlertTriangle,
 } from "lucide-react";
+import { useExpenses, getDailyLimit } from "@/lib/expenses-store";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -69,6 +74,36 @@ function Dashboard() {
 
   const mission = pickTodaysMission(missions);
   const currentDay = mission ? currentDayFor(mission) : 0;
+
+  const expenses = useExpenses();
+  const todayStart = startOfDay(Date.now());
+  const todayEnd = todayStart + 86400000;
+  const monthStartDate = new Date();
+  monthStartDate.setDate(1);
+  monthStartDate.setHours(0, 0, 0, 0);
+  const monthStart = monthStartDate.getTime();
+  const nextMonthDate = new Date(monthStartDate);
+  nextMonthDate.setMonth(nextMonthDate.getMonth() + 1);
+  const monthEnd = nextMonthDate.getTime();
+
+  const totalIncome = expenses
+    .filter((e) => e.type === "income")
+    .reduce((s, e) => s + e.amount, 0);
+  const totalExpenseAll = expenses
+    .filter((e) => e.type === "expense")
+    .reduce((s, e) => s + e.amount, 0);
+  const balance = totalIncome - totalExpenseAll;
+
+  const todayExpense = expenses
+    .filter((e) => e.type === "expense" && e.createdAt >= todayStart && e.createdAt < todayEnd)
+    .reduce((s, e) => s + e.amount, 0);
+
+  const monthExpense = expenses
+    .filter((e) => e.type === "expense" && e.createdAt >= monthStart && e.createdAt < monthEnd)
+    .reduce((s, e) => s + e.amount, 0);
+
+  const dailyLimit = getDailyLimit();
+  const limitExceeded = dailyLimit > 0 && todayExpense > dailyLimit;
 
   return (
     <div className="space-y-6">
@@ -149,6 +184,49 @@ function Dashboard() {
         ) : (
           <p className="text-sm text-muted-foreground">No active mission</p>
         )}
+      </section>
+
+      {/* Expense Summary */}
+      <section className="bg-card border border-border/60 rounded-[1.5rem] p-5 shadow-[0_4px_20px_-8px_rgba(15,23,42,0.06)]">
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-primary flex items-center gap-1.5">
+            <Wallet className="size-3.5" /> Expense Summary
+          </span>
+          <Link to="/expenses" className="text-xs font-semibold text-muted-foreground hover:text-foreground">
+            Details
+          </Link>
+        </div>
+        <div className="space-y-2.5">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground flex items-center gap-1.5">
+              <Wallet className="size-3.5 text-primary/70" /> Balance
+            </span>
+            <span className="text-sm font-bold text-foreground">{balance.toLocaleString()}৳</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground flex items-center gap-1.5">
+              <TrendingDown className="size-3.5 text-primary/70" /> Today
+            </span>
+            <span className="text-sm font-bold text-foreground flex items-center gap-1.5">
+              {todayExpense.toLocaleString()}৳
+              {dailyLimit > 0 && (
+                <span className="text-xs font-medium text-muted-foreground">/ {dailyLimit.toLocaleString()}৳</span>
+              )}
+              {limitExceeded && <AlertTriangle className="size-3.5 text-red-500" />}
+            </span>
+          </div>
+          {limitExceeded && (
+            <div className="flex items-center gap-1.5 text-xs font-semibold text-red-500">
+              <AlertTriangle className="size-3.5" /> Over limit
+            </div>
+          )}
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground flex items-center gap-1.5">
+              <CalendarDays className="size-3.5 text-primary/70" /> Month
+            </span>
+            <span className="text-sm font-bold text-foreground">{monthExpense.toLocaleString()}৳</span>
+          </div>
+        </div>
       </section>
     </div>
   );
