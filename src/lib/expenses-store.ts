@@ -1,9 +1,12 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 
+export type EntryType = "income" | "expense";
+
 export interface Expense {
   id: string;
   title: string;
   amount: number;
+  type: EntryType;
   createdAt: number;
 }
 
@@ -24,6 +27,7 @@ function load(): Expense[] {
       id: String(e.id),
       title: String(e.title ?? ""),
       amount: Number(e.amount) || 0,
+      type: e.type === "income" ? "income" : "expense",
       createdAt: Number(e.createdAt) || Date.now(),
     }));
   } catch {
@@ -69,15 +73,28 @@ export function useExpenses(): Expense[] {
     : [];
 }
 
-export function addExpense(input: { title: string; amount: number }) {
+export function addExpense(input: { title: string; amount: number; type?: EntryType }) {
   ensureInit();
   const expense: Expense = {
     id: crypto.randomUUID(),
     title: input.title.trim(),
     amount: input.amount,
+    type: input.type ?? "expense",
     createdAt: Date.now(),
   };
   persist([expense, ...cache]);
+}
+
+export function addIncome(input: { amount: number; title?: string }) {
+  ensureInit();
+  const entry: Expense = {
+    id: crypto.randomUUID(),
+    title: (input.title ?? "Added money").trim() || "Added money",
+    amount: input.amount,
+    type: "income",
+    createdAt: Date.now(),
+  };
+  persist([entry, ...cache]);
 }
 
 export function updateExpense(id: string, input: { title: string; amount: number }) {
