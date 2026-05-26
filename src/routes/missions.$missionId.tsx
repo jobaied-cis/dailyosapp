@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState, type FormEvent } from "react";
-import { ArrowLeft, Plus, Trash2 } from "lucide-react";
+import { useState, useRef, useEffect, type FormEvent } from "react";
+import { ArrowLeft, Check, Pencil, Plus, Trash2 } from "lucide-react";
 import {
   addDay,
   addTask,
@@ -8,8 +8,10 @@ import {
   deleteTask,
   missionProgress,
   toggleTask,
+  updateTask,
   useMission,
   type Mission,
+  type MissionTask,
 } from "@/lib/missions-store";
 
 export const Route = createFileRoute("/missions/$missionId")({
@@ -97,6 +99,11 @@ function DaySection({ mission, day }: { mission: Mission; day: number }) {
     .filter((t) => t.day === day)
     .sort((a, b) => a.createdAt - b.createdAt);
 
+  const dayTotal = tasks.length;
+  const dayDone = tasks.filter((t) => t.completed).length;
+  const dayPct = dayTotal ? Math.round((dayDone / dayTotal) * 100) : 0;
+  const allDone = dayTotal > 0 && dayDone === dayTotal;
+
   const handleAdd = (e: FormEvent) => {
     e.preventDefault();
     const t = value.trim();
@@ -115,8 +122,18 @@ function DaySection({ mission, day }: { mission: Mission; day: number }) {
   return (
     <section className="space-y-3">
       <div>
-        <h2 className="font-bold text-foreground text-base">Day {day}</h2>
-        <p className="text-xs text-muted-foreground">{dateLabel}</p>
+        <div className="flex items-center gap-2 flex-wrap">
+          <h2 className="font-bold text-foreground text-base">Day {day}</h2>
+          <span className="text-xs text-muted-foreground">({dateLabel})</span>
+          {allDone && (
+            <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider bg-primary/15 text-primary px-2 py-0.5 rounded-full">
+              <Check className="size-3" /> Done
+            </span>
+          )}
+        </div>
+        <p className="text-xs text-muted-foreground mt-0.5">
+          {dayDone}/{dayTotal} ({dayPct}%)
+        </p>
       </div>
 
       <form onSubmit={handleAdd} className="flex gap-2">
@@ -143,35 +160,91 @@ function DaySection({ mission, day }: { mission: Mission; day: number }) {
       ) : (
         <ul className="space-y-2">
           {tasks.map((t) => (
-            <li
-              key={t.id}
-              className="flex items-center gap-3 bg-card border border-border/40 rounded-lg px-3 py-2.5"
-            >
-              <input
-                type="checkbox"
-                checked={t.completed}
-                onChange={() => toggleTask(mission.id, t.id)}
-                className="size-4 accent-primary cursor-pointer"
-              />
-              <span
-                className={
-                  "flex-1 text-sm " +
-                  (t.completed ? "line-through text-muted-foreground" : "text-foreground")
-                }
-              >
-                {t.title}
-              </span>
-              <button
-                onClick={() => deleteTask(mission.id, t.id)}
-                aria-label="Delete task"
-                className="text-muted-foreground hover:text-destructive p-1 rounded"
-              >
-                <Trash2 className="size-4" />
-              </button>
-            </li>
+            <TaskRow key={t.id} missionId={mission.id} task={t} />
           ))}
         </ul>
       )}
     </section>
+  );
+}
+
+function TaskRow({ missionId, task }: { missionId: string; task: MissionTask }) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(task.title);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (editing) {
+      inputRef.current?.focus();
+      inputRef.current?.select();
+    }
+  }, [editing]);
+
+  useEffect(() => {
+    if (!editing) setDraft(task.title);
+  }, [task.title, editing]);
+
+  const commit = () => {
+    const v = draft.trim();
+    if (v && v !== task.title) {
+      updateTask(missionId, task.id, v);
+    } else {
+      setDraft(task.title);
+    }
+    setEditing(false);
+  };
+
+  return (
+    <li className="flex items-center gap-3 bg-card border border-border/40 rounded-lg px-3 py-2.5">
+      <input
+        type="checkbox"
+        checked={task.completed}
+        onChange={() => toggleTask(missionId, task.id)}
+        className="size-4 accent-primary cursor-pointer"
+      />
+      {editing ? (
+        <input
+          ref={inputRef}
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={commit}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") commit();
+            if (e.key === "Escape") {
+              setDraft(task.title);
+              setEditing(false);
+            }
+          }}
+          maxLength={200}
+          className="flex-1 bg-secondary rounded px-2 py-1 outline-none focus:ring-2 focus:ring-primary/30 text-sm"
+        />
+      ) : (
+        <button
+          onClick={() => setEditing(true)}
+          className={
+            "flex-1 text-left text-sm " +
+            (task.completed ? "line-through text-muted-foreground" : "text-foreground")
+          }
+        >
+          {task.title}
+        </button>
+      )}
+      {!editing && (
+        <button
+          onClick={() => setEditing(true)}
+          aria-label="Edit task"
+          className="text-muted-foreground hover:text-foreground p-1 rounded"
+        >
+          <Pencil className="size-4" />
+        </button>
+      )}
+      <button
+        onClick={() => deleteTask(missionId, task.id)}
+        aria-label="Delete task"
+        className="text-muted-foreground hover:text-destructive p-1 rounded"
+      >
+        <Trash2 className="size-4" />
+      </button>
+    </li>
   );
 }
