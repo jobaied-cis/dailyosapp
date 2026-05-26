@@ -63,21 +63,70 @@ function ExpensesPage() {
   const [openExpense, setOpenExpense] = useState(false);
   const [openIncome, setOpenIncome] = useState(false);
   const [editing, setEditing] = useState<Expense | null>(null);
+  const [selectedMonth, setSelectedMonth] = useState<string>(() => monthKey(Date.now()));
 
-  const totalIncome = entries
+  // Available months (always include current month even if empty)
+  const availableMonths = (() => {
+    const set = new Set<string>();
+    set.add(monthKey(Date.now()));
+    for (const e of entries) set.add(monthKey(e.createdAt));
+    return Array.from(set).sort((a, b) => (a < b ? 1 : -1));
+  })();
+
+  const monthEntries = entries.filter((e) => monthKey(e.createdAt) === selectedMonth);
+
+  const totalIncome = monthEntries
     .filter((e) => e.type === "income")
     .reduce((s, e) => s + e.amount, 0);
-  const totalExpense = entries
+  const totalExpense = monthEntries
     .filter((e) => e.type === "expense")
     .reduce((s, e) => s + e.amount, 0);
   const balance = totalIncome - totalExpense;
 
+  const currentIdx = availableMonths.indexOf(selectedMonth);
+  const canPrev = currentIdx < availableMonths.length - 1;
+  const canNext = currentIdx > 0;
+
   return (
     <div className="space-y-6 pb-8">
+      {/* Month selector */}
+      <div className="flex items-center justify-between bg-card border border-border/60 rounded-2xl px-2 py-2 shadow-[0_2px_12px_-4px_rgba(15,23,42,0.06)]">
+        <button
+          onClick={() => canPrev && setSelectedMonth(availableMonths[currentIdx + 1])}
+          disabled={!canPrev}
+          aria-label="Previous month"
+          className="press p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary disabled:opacity-30"
+        >
+          <ChevronLeft className="size-5" />
+        </button>
+        <div className="relative">
+          <select
+            value={selectedMonth}
+            onChange={(e) => setSelectedMonth(e.target.value)}
+            className="appearance-none bg-transparent text-center font-bold text-foreground tracking-tight text-[0.95rem] pr-5 pl-2 py-1 outline-none cursor-pointer"
+          >
+            {availableMonths.map((k) => (
+              <option key={k} value={k}>
+                {formatMonthLabel(k)}
+              </option>
+            ))}
+          </select>
+          <ChevronDown className="size-3.5 text-muted-foreground absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none" />
+        </div>
+        <button
+          onClick={() => canNext && setSelectedMonth(availableMonths[currentIdx - 1])}
+          disabled={!canNext}
+          aria-label="Next month"
+          className="press p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary disabled:opacity-30"
+        >
+          <ChevronRight className="size-5" />
+        </button>
+      </div>
+
       {/* Balance summary */}
       <section className="bg-card border border-border/60 rounded-[1.75rem] p-6 shadow-[0_8px_32px_-12px_rgba(15,23,42,0.08)] text-center">
         <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
-          Current Balance
+          {formatMonthLabel(selectedMonth)} · Balance
         </p>
         <p
           className={`text-4xl font-extrabold mt-1 tracking-tight ${
@@ -124,8 +173,8 @@ function ExpensesPage() {
         </button>
       </div>
 
-      {/* Day-grouped history */}
-      <DayGroupedHistory entries={entries} onEdit={setEditing} />
+      {/* Day-grouped history (filtered to selected month) */}
+      <DayGroupedHistory entries={monthEntries} onEdit={setEditing} />
 
       {openExpense && <AddExpenseSheet onClose={() => setOpenExpense(false)} />}
       {openIncome && <AddIncomeSheet onClose={() => setOpenIncome(false)} />}
@@ -152,7 +201,7 @@ function DayGroupedHistory({
         <div className="inline-flex items-center justify-center size-16 rounded-full bg-secondary mb-5">
           <Wallet className="size-7 text-muted-foreground" />
         </div>
-        <p className="text-base font-semibold text-foreground">No entries yet</p>
+        <p className="text-base font-semibold text-foreground">No entries this month</p>
         <p className="text-sm text-muted-foreground mt-1.5">
           Add money or an expense to get started.
         </p>
