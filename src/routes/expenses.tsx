@@ -160,3 +160,64 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
     </label>
   );
 }
+
+function EditExpenseSheet({
+  expense,
+  onClose,
+}: {
+  expense: Expense;
+  onClose: () => void;
+}) {
+  const [title, setTitle] = useState(expense.title);
+  const [amount, setAmount] = useState(String(expense.amount));
+
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const num = parseFloat(amount);
+    if (!title.trim() || Number.isNaN(num) || num <= 0) return;
+    updateExpense(expense.id, { title, amount: num });
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-foreground/25 backdrop-blur-md">
+      <div className="w-full max-w-md bg-card rounded-t-[1.75rem] p-6 shadow-[0_-8px_40px_-8px_rgba(15,23,42,0.15)] animate-in slide-in-from-bottom duration-300">
+        <div className="flex items-center justify-between mb-5">
+          <h3 className="text-lg font-bold text-foreground tracking-tight">Edit expense</h3>
+          <button onClick={onClose} aria-label="Close" className="text-muted-foreground hover:text-foreground p-1.5 rounded-full hover:bg-secondary transition-colors">
+            <X className="size-5" />
+          </button>
+        </div>
+        <form onSubmit={submit} className="space-y-4">
+          <Field label="Title">
+            <input
+              autoFocus
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="e.g. Breakfast, Bus, Lunch"
+              className="w-full bg-secondary rounded-xl px-4 py-3.5 text-foreground outline-none focus:ring-2 focus:ring-primary/30 placeholder:text-muted-foreground/60 font-medium"
+            />
+          </Field>
+          <Field label="Amount">
+            <input
+              type="number"
+              step="0.01"
+              min="0"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              placeholder="0.00"
+              className="w-full bg-secondary rounded-xl px-4 py-3.5 text-foreground outline-none focus:ring-2 focus:ring-primary/30 placeholder:text-muted-foreground/60 font-medium"
+            />
+          </Field>
+          <button
+            type="submit"
+            disabled={!title.trim() || !amount || Number.isNaN(parseFloat(amount)) || parseFloat(amount) <= 0}
+            className="press w-full bg-primary text-primary-foreground rounded-[1.25rem] py-4 font-semibold shadow-[0_4px_16px_-4px_rgba(37,99,235,0.35)] disabled:opacity-45 disabled:shadow-none mt-2"
+          >
+            Save Changes
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+}
