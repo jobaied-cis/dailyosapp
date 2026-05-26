@@ -139,6 +139,15 @@ function ExpensesPage() {
         </button>
       </div>
 
+      {/* History button */}
+      <button
+        onClick={() => setShowHistory(true)}
+        className="press w-full flex items-center justify-center gap-2 bg-secondary/60 hover:bg-secondary text-foreground rounded-2xl py-2.5 text-sm font-semibold border border-border/60"
+      >
+        <HistoryIcon className="size-4" />
+        View month history
+      </button>
+
       {/* Balance summary */}
       <section className="bg-card border border-border/60 rounded-[1.75rem] p-6 shadow-[0_8px_32px_-12px_rgba(15,23,42,0.08)] text-center">
         <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
