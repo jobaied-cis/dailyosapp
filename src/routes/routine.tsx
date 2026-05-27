@@ -268,7 +268,7 @@ function encouragement(pct: number): string {
 
 function AddTaskSheet({ onClose }: { onClose: () => void }) {
   const [time, setTime] = useState("08:00");
-  const [endTime, setEndTime] = useState("");
+  const [endTime, setEndTime] = useState("08:30");
   const [title, setTitle] = useState("");
   const [note, setNote] = useState("");
 
@@ -278,6 +278,7 @@ function AddTaskSheet({ onClose }: { onClose: () => void }) {
     addTask({ time, endTime: endTime || undefined, title, note });
     onClose();
   };
+
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-foreground/25 backdrop-blur-md">
