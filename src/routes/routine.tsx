@@ -107,11 +107,16 @@ function RoutinePage() {
     current.originalIndices.push(i);
   }
 
-  const statusText = allDone
-    ? "All done 🔥"
-    : missedCount > 0
-    ? `${missedCount} task${missedCount === 1 ? "" : "s"} missed ⚠️`
-    : "On track ✅";
+  const progressLabel =
+    allDone
+      ? "All done 🎉"
+      : missedCount > 0
+      ? "Behind schedule ⚠️"
+      : pct === 0
+      ? "Starting..."
+      : pct >= 75
+      ? "Almost there 🔥"
+      : "On track ✅";
 
   return (
     <div className="space-y-5">
@@ -141,18 +146,22 @@ function RoutinePage() {
         </div>
       </div>
 
-      {/* Progress bar */}
-      <div className="bg-card border border-border/60 rounded-[1.25rem] p-4 shadow-[0_8px_32px_-12px_rgba(15,23,42,0.08)]">
+      {/* Progress */}
+      <div className="bg-card border border-border/60 rounded-[1.25rem] p-5 shadow-[0_8px_32px_-12px_rgba(15,23,42,0.08)]">
+        <div className="flex items-center justify-between mb-4">
+          <span className="text-sm font-semibold text-foreground">Today&apos;s progress</span>
+          <span className="text-sm font-bold text-foreground">{Math.round(pct)}%</span>
+        </div>
         <div className="h-2.5 rounded-full bg-secondary overflow-hidden">
           <div
             className="h-full bg-primary rounded-full transition-all duration-700 ease-out"
             style={{ width: `${pct}%` }}
           />
         </div>
-        <p className={`text-xs font-semibold text-center mt-3 ${
-          allDone ? "text-primary" : missedCount > 0 ? "text-destructive" : "text-primary"
+        <p className={`text-xs font-medium text-center mt-3.5 ${
+          allDone ? "text-primary" : missedCount > 0 ? "text-destructive" : "text-muted-foreground"
         }`}>
-          {statusText}
+          {progressLabel}
         </p>
       </div>
 
