@@ -194,7 +194,13 @@ function Dashboard() {
         )}
       </section>
 
+      {/* Event Reminder */}
+      <p className="text-xs font-semibold text-muted-foreground text-center">
+        {reminderText}
+      </p>
+
       {/* Today's Events */}
+
       <section className="bg-card border border-border/60 rounded-[1.5rem] p-5 shadow-[0_4px_20px_-8px_rgba(15,23,42,0.06)]">
         <div className="flex items-center justify-between mb-3">
           <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-primary flex items-center gap-1.5">
