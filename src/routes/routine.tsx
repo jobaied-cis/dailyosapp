@@ -67,12 +67,24 @@ function RoutinePage() {
       </section>
 
       <ul className="space-y-3">
-        {tasks.map((t, i) => (
+        {tasks.map((t, i) => {
+          const { isActive, isMissed } = taskMeta[i];
+          return (
+          <Fragment key={t.id}>
+            {hereIndex === i && (
+              <li className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.18em] text-primary/70 px-1 select-none">
+                <span className="flex-1 h-px bg-primary/25" />
+                You are here
+                <span className="flex-1 h-px bg-primary/25" />
+              </li>
+            )}
           <li
-            key={t.id}
             style={{ animationDelay: `${Math.min(i * 40, 240)}ms` }}
-            className={`group flex items-start gap-3.5 bg-card border border-border/60 rounded-[1.25rem] p-4 shadow-[0_2px_12px_-4px_rgba(15,23,42,0.06)] animate-list-item-in transition-all duration-300 hover:shadow-[0_4px_20px_-6px_rgba(15,23,42,0.1)] ${
-              t.completed ? "opacity-55 scale-[0.99]" : ""
+            className={`group flex items-start gap-3.5 bg-card border rounded-[1.25rem] p-4 shadow-[0_2px_12px_-4px_rgba(15,23,42,0.06)] animate-list-item-in transition-all duration-300 hover:shadow-[0_4px_20px_-6px_rgba(15,23,42,0.1)] ${
+              t.completed ? "opacity-55 scale-[0.99] border-border/60" :
+              isActive ? "border-primary/60 shadow-[0_0_0_3px_rgba(37,99,235,0.12),0_4px_20px_-4px_rgba(37,99,235,0.25)]" :
+              isMissed ? "border-destructive/40 opacity-75" :
+              "border-border/60"
             }`}
           >
             <button
@@ -96,7 +108,19 @@ function RoutinePage() {
                 >
                   {t.title}
                 </h3>
-                <span className="text-xs font-mono font-medium text-muted-foreground shrink-0">{t.time}</span>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  {isActive && (
+                    <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-primary text-primary-foreground">
+                      Now
+                    </span>
+                  )}
+                  {isMissed && (
+                    <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-destructive/15 text-destructive">
+                      Missed
+                    </span>
+                  )}
+                  <span className="text-xs font-mono font-medium text-muted-foreground">{t.time}</span>
+                </div>
               </div>
               {t.note && (
                 <p className={`text-sm text-muted-foreground mt-1 leading-relaxed transition-opacity duration-300 ${t.completed ? "line-through opacity-70" : ""}`}>
@@ -112,7 +136,17 @@ function RoutinePage() {
               <Trash2 className="size-4" />
             </button>
           </li>
-        ))}
+          </Fragment>
+          );
+        })}
+        {hereIndex === -1 && tasks.length > 0 && (
+          <li className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.18em] text-primary/70 px-1 select-none">
+            <span className="flex-1 h-px bg-primary/25" />
+            You are here
+            <span className="flex-1 h-px bg-primary/25" />
+          </li>
+        )}
+
         {tasks.length === 0 && (
           <li className="text-center text-muted-foreground py-16">
             <div className="inline-flex items-center justify-center size-16 rounded-full bg-secondary mb-5">
