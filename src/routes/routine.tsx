@@ -342,6 +342,16 @@ function RoutinePage() {
       {editOpen && editingTask && (
         <EditTaskSheet task={editingTask} onClose={() => { setEditOpen(false); setEditingTask(null); }} />
       )}
+      {focusTask && (
+        <FocusMode
+          task={focusTask}
+          onClose={() => setFocusTask(null)}
+          onComplete={() => {
+            if (!focusTask.completed) toggleTask(focusTask.id);
+            setFocusTask(null);
+          }}
+        />
+      )}
     </div>
   );
 }
