@@ -80,6 +80,21 @@ function Dashboard() {
     .sort((a, b) => a.time.localeCompare(b.time));
   const showEvents = todaysEvents.slice(0, 3);
 
+  const eventCount = todaysEvents.length;
+  const hasHighPriorityToday = todaysEvents.some((e) => e.priority === "High");
+
+  let eventMessage = "";
+  if (eventCount === 0) {
+    eventMessage = "No events today. Relax 😌";
+  } else if (eventCount <= 2) {
+    eventMessage = `You have ${eventCount} event${eventCount > 1 ? "s" : ""} today`;
+  } else {
+    eventMessage = `Busy day! You have ${eventCount} events today 🔥`;
+  }
+  const reminderText = hasHighPriorityToday && eventCount > 0
+    ? `Important event today ⚠️ • ${eventMessage}`
+    : eventMessage;
+
   const mission = pickTodaysMission(missions);
   const currentDay = mission ? currentDayFor(mission) : 0;
 
