@@ -80,6 +80,21 @@ function Dashboard() {
     .sort((a, b) => a.time.localeCompare(b.time));
   const showEvents = todaysEvents.slice(0, 3);
 
+  const eventCount = todaysEvents.length;
+  const hasHighPriorityToday = todaysEvents.some((e) => e.priority === "High");
+
+  let eventMessage = "";
+  if (eventCount === 0) {
+    eventMessage = "No events today. Relax 😌";
+  } else if (eventCount <= 2) {
+    eventMessage = `You have ${eventCount} event${eventCount > 1 ? "s" : ""} today`;
+  } else {
+    eventMessage = `Busy day! You have ${eventCount} events today 🔥`;
+  }
+  const reminderText = hasHighPriorityToday && eventCount > 0
+    ? `Important event today ⚠️ • ${eventMessage}`
+    : eventMessage;
+
   const mission = pickTodaysMission(missions);
   const currentDay = mission ? currentDayFor(mission) : 0;
 
@@ -194,7 +209,13 @@ function Dashboard() {
         )}
       </section>
 
+      {/* Event Reminder */}
+      <p className="text-xs font-semibold text-muted-foreground text-center">
+        {reminderText}
+      </p>
+
       {/* Today's Events */}
+
       <section className="bg-card border border-border/60 rounded-[1.5rem] p-5 shadow-[0_4px_20px_-8px_rgba(15,23,42,0.06)]">
         <div className="flex items-center justify-between mb-3">
           <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-primary flex items-center gap-1.5">
