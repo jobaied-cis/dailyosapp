@@ -21,6 +21,16 @@ function formatGap(minutes: number): string {
   return `${m} min free`;
 }
 
+function formatDuration(minutes: number): string {
+  if (minutes <= 0) return "";
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  if (h > 0 && m > 0) return `${h}h ${m}m`;
+  if (h > 0) return `${h}h`;
+  return `${m}m`;
+}
+
+
 
 export const Route = createFileRoute("/routine")({
   head: () => ({
@@ -48,10 +58,10 @@ function RoutinePage() {
   }, []);
   const nowMin = now ? now.getHours() * 60 + now.getMinutes() : -1;
 
-  // Compute per-task time intelligence (inactive until clock is set)
-  const taskMeta = tasks.map((t, i) => {
+  // Compute per-task time intelligence based on start/end block
+  const taskMeta = tasks.map((t) => {
     const start = toMinutes(t.time);
-    const end = i < tasks.length - 1 ? toMinutes(tasks[i + 1].time) : 24 * 60;
+    const end = getTaskEndMinutes(t);
     const isActive = now !== null && !t.completed && nowMin >= start && nowMin < end;
     const isMissed = now !== null && !t.completed && nowMin >= end;
     return { start, end, isActive, isMissed };
@@ -60,6 +70,7 @@ function RoutinePage() {
   // Index where "You are here" divider should appear (only after clock is set)
   let hereIndex = now === null ? -2 : tasks.findIndex((t) => toMinutes(t.time) > nowMin);
   if (now !== null && hereIndex === -1 && tasks.length > 0 && nowMin < toMinutes(tasks[0].time)) hereIndex = 0;
+
 
   // Group sorted tasks into time sections
   type SectionItem = { label: string; icon: string; tasks: Task[]; originalIndices: number[] };
@@ -169,7 +180,16 @@ function RoutinePage() {
                               Upcoming
                             </span>
                           )}
-                          <span className="text-xs font-mono font-medium text-muted-foreground">{t.time}</span>
+                          <div className="flex flex-col items-end gap-0.5">
+                            <span className="text-xs font-mono font-medium text-muted-foreground">
+                              {t.endTime ? `${t.time} – ${t.endTime}` : t.time}
+                            </span>
+                            {t.endTime && (
+                              <span className="text-[10px] font-medium text-muted-foreground/60">
+                                {formatDuration(getTaskEndMinutes(t) - toMinutes(t.time))}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
                       {t.note && (
@@ -177,6 +197,7 @@ function RoutinePage() {
                           {t.note}
                         </p>
                       )}
+
                     </div>
                     <button
                       onClick={() => deleteTask(t.id)}
@@ -247,7 +268,7 @@ function encouragement(pct: number): string {
 
 function AddTaskSheet({ onClose }: { onClose: () => void }) {
   const [time, setTime] = useState("08:00");
-  const [endTime, setEndTime] = useState("");
+  const [endTime, setEndTime] = useState("08:30");
   const [title, setTitle] = useState("");
   const [note, setNote] = useState("");
 
@@ -257,6 +278,7 @@ function AddTaskSheet({ onClose }: { onClose: () => void }) {
     addTask({ time, endTime: endTime || undefined, title, note });
     onClose();
   };
+
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-foreground/25 backdrop-blur-md">
@@ -268,22 +290,25 @@ function AddTaskSheet({ onClose }: { onClose: () => void }) {
           </button>
         </div>
         <form onSubmit={submit} className="space-y-4">
-          <Field label="Time">
-            <input
-              type="time"
-              value={time}
-              onChange={(e) => setTime(e.target.value)}
-              className="w-full bg-secondary rounded-xl px-4 py-3.5 text-foreground outline-none focus:ring-2 focus:ring-primary/30 font-medium"
-            />
-          </Field>
-          <Field label="End time (optional)">
-            <input
-              type="time"
-              value={endTime}
-              onChange={(e) => setEndTime(e.target.value)}
-              className="w-full bg-secondary rounded-xl px-4 py-3.5 text-foreground outline-none focus:ring-2 focus:ring-primary/30 font-medium"
-            />
-          </Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Start">
+              <input
+                type="time"
+                value={time}
+                onChange={(e) => setTime(e.target.value)}
+                className="w-full bg-secondary rounded-xl px-4 py-3.5 text-foreground outline-none focus:ring-2 focus:ring-primary/30 font-medium"
+              />
+            </Field>
+            <Field label="End">
+              <input
+                type="time"
+                value={endTime}
+                onChange={(e) => setEndTime(e.target.value)}
+                className="w-full bg-secondary rounded-xl px-4 py-3.5 text-foreground outline-none focus:ring-2 focus:ring-primary/30 font-medium"
+              />
+            </Field>
+          </div>
+
           <Field label="Title">
             <input
               autoFocus
