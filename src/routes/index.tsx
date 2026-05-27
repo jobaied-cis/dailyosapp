@@ -62,6 +62,7 @@ function formatDayDate(startDate: number, day: number) {
 function Dashboard() {
   const tasks = useTasks();
   const missions = useMissions();
+  const events = useEvents();
   const total = tasks.length;
   const done = tasks.filter((t) => t.completed).length;
   const pct = total ? (done / total) * 100 : 0;
@@ -72,6 +73,12 @@ function Dashboard() {
     day: "numeric",
   });
 
+  const nowLocal = new Date();
+  const todayStr = `${nowLocal.getFullYear()}-${String(nowLocal.getMonth() + 1).padStart(2, "0")}-${String(nowLocal.getDate()).padStart(2, "0")}`;
+  const todaysEvents = events
+    .filter((e) => e.date === todayStr)
+    .sort((a, b) => a.time.localeCompare(b.time));
+  const showEvents = todaysEvents.slice(0, 3);
 
   const mission = pickTodaysMission(missions);
   const currentDay = mission ? currentDayFor(mission) : 0;
