@@ -276,6 +276,14 @@ function AddTaskSheet({ onClose }: { onClose: () => void }) {
               className="w-full bg-secondary rounded-xl px-4 py-3.5 text-foreground outline-none focus:ring-2 focus:ring-primary/30 font-medium"
             />
           </Field>
+          <Field label="End time (optional)">
+            <input
+              type="time"
+              value={endTime}
+              onChange={(e) => setEndTime(e.target.value)}
+              className="w-full bg-secondary rounded-xl px-4 py-3.5 text-foreground outline-none focus:ring-2 focus:ring-primary/30 font-medium"
+            />
+          </Field>
           <Field label="Title">
             <input
               autoFocus
