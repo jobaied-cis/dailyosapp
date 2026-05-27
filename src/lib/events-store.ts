@@ -36,6 +36,7 @@ function load(): EventItem[] {
       type: (e.type as EventType) ?? "Other",
       priority: (e.priority as EventPriority) ?? "Medium",
       completed: Boolean(e.completed),
+      notes: String(e.notes ?? ""),
     }));
   } catch {
     return [];
