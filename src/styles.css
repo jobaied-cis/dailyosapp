@@ -194,7 +194,7 @@
               opacity 180ms ease;
 }
 .press:active {
-  transform: scale(0.96);
+  transform: scale(0.95);
 }
 
 /* Smooth list item entrance */

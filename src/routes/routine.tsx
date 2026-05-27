@@ -176,7 +176,7 @@ function RoutinePage() {
             <div className="bg-card border border-primary/40 rounded-[1.25rem] p-5 shadow-[0_0_0_3px_rgba(37,99,235,0.08),0_8px_32px_-8px_rgba(37,99,235,0.2)] relative">
               <button
                 onClick={() => { setEditingTask(activeTask); setEditOpen(true); }}
-                className="absolute top-4 right-4 text-muted-foreground/50 hover:text-primary p-1.5 rounded-full hover:bg-primary/5 transition-colors"
+                className="press absolute top-4 right-4 text-muted-foreground/50 hover:text-primary p-1.5 rounded-full hover:bg-primary/5 transition-colors"
                 aria-label="Edit task"
               >
                 <Pencil className="size-4" />
@@ -395,7 +395,7 @@ function AddTaskSheet({ onClose }: { onClose: () => void }) {
       <div className="w-full max-w-md bg-card rounded-t-[1.75rem] p-6 shadow-[0_-8px_40px_-8px_rgba(15,23,42,0.15)] animate-in slide-in-from-bottom duration-300">
         <div className="flex items-center justify-between mb-5">
           <h3 className="text-lg font-bold text-foreground tracking-tight">New task</h3>
-          <button onClick={onClose} aria-label="Close" className="text-muted-foreground hover:text-foreground p-1.5 rounded-full hover:bg-secondary transition-colors">
+          <button onClick={onClose} aria-label="Close" className="press text-muted-foreground hover:text-foreground p-1.5 rounded-full hover:bg-secondary transition-colors">
             <X className="size-5" />
           </button>
         </div>
@@ -477,7 +477,7 @@ function EditTaskSheet({ task, onClose }: { task: Task; onClose: () => void }) {
       <div className="w-full max-w-md bg-card rounded-t-[1.75rem] p-6 shadow-[0_-8px_40px_-8px_rgba(15,23,42,0.15)] animate-in slide-in-from-bottom duration-300">
         <div className="flex items-center justify-between mb-5">
           <h3 className="text-lg font-bold text-foreground tracking-tight">Edit task</h3>
-          <button onClick={onClose} aria-label="Close" className="text-muted-foreground hover:text-foreground p-1.5 rounded-full hover:bg-secondary transition-colors">
+          <button onClick={onClose} aria-label="Close" className="press text-muted-foreground hover:text-foreground p-1.5 rounded-full hover:bg-secondary transition-colors">
             <X className="size-5" />
           </button>
         </div>
@@ -557,7 +557,7 @@ function FocusMode({ task, onClose, onComplete }: { task: Task; onClose: () => v
       <button
         onClick={onClose}
         aria-label="Exit focus"
-        className="absolute top-5 right-5 text-slate-400 hover:text-slate-100 p-2 rounded-full hover:bg-white/5"
+        className="press absolute top-5 right-5 text-slate-400 hover:text-slate-100 p-2 rounded-full hover:bg-white/5"
       >
         <X className="size-6" />
       </button>
