@@ -97,15 +97,15 @@ function EventsPage() {
         </div>
       </div>
 
-      {/* Add Event Form */}
+      {/* Add/Edit Event Form */}
       <form
-        onSubmit={handleAdd}
+        onSubmit={editingId ? handleUpdate : handleAdd}
         className="bg-card border border-border/60 rounded-[1.25rem] p-4 shadow-[0_2px_12px_-4px_rgba(15,23,42,0.06)] space-y-3"
       >
         <div className="flex items-center gap-2">
           <Plus className="size-4 text-muted-foreground" />
           <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
-            Add Event
+            {editingId ? "Edit Event" : "Add Event"}
           </p>
         </div>
 
