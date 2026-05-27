@@ -58,10 +58,10 @@ function RoutinePage() {
   }, []);
   const nowMin = now ? now.getHours() * 60 + now.getMinutes() : -1;
 
-  // Compute per-task time intelligence (inactive until clock is set)
-  const taskMeta = tasks.map((t, i) => {
+  // Compute per-task time intelligence based on start/end block
+  const taskMeta = tasks.map((t) => {
     const start = toMinutes(t.time);
-    const end = i < tasks.length - 1 ? toMinutes(tasks[i + 1].time) : 24 * 60;
+    const end = getTaskEndMinutes(t);
     const isActive = now !== null && !t.completed && nowMin >= start && nowMin < end;
     const isMissed = now !== null && !t.completed && nowMin >= end;
     return { start, end, isActive, isMissed };
@@ -70,6 +70,7 @@ function RoutinePage() {
   // Index where "You are here" divider should appear (only after clock is set)
   let hereIndex = now === null ? -2 : tasks.findIndex((t) => toMinutes(t.time) > nowMin);
   if (now !== null && hereIndex === -1 && tasks.length > 0 && nowMin < toMinutes(tasks[0].time)) hereIndex = 0;
+
 
   // Group sorted tasks into time sections
   type SectionItem = { label: string; icon: string; tasks: Task[]; originalIndices: number[] };
