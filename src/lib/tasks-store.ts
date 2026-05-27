@@ -79,11 +79,12 @@ export function toggleTask(id: string) {
   persist(cache.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t)));
 }
 
-export function addTask(input: { time: string; title: string; note?: string }) {
+export function addTask(input: { time: string; endTime?: string; title: string; note?: string }) {
   ensureInit();
   const task: Task = {
     id: crypto.randomUUID(),
     time: input.time,
+    endTime: input.endTime || undefined,
     title: input.title.trim(),
     note: input.note?.trim() || undefined,
     completed: false,
