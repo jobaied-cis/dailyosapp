@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useEvents, addEvent, deleteEvent } from "@/lib/events-store";
+import type { EventType, EventPriority } from "@/lib/events-store";
 import { CalendarDays, Clock, Plus, Trash2, Calendar } from "lucide-react";
 
 export const Route = createFileRoute("/events")({
@@ -13,19 +14,41 @@ export const Route = createFileRoute("/events")({
   component: EventsPage,
 });
 
+const eventTypes: EventType[] = ["Exam", "Meeting", "Class", "Personal", "Other"];
+const eventPriorities: EventPriority[] = ["High", "Medium", "Low"];
+
+function priorityColor(priority: EventPriority) {
+  switch (priority) {
+    case "High":
+      return "bg-destructive/15 text-destructive border-destructive/20";
+    case "Medium":
+      return "bg-amber-500/15 text-amber-600 border-amber-500/20";
+    case "Low":
+      return "bg-muted text-muted-foreground border-border";
+  }
+}
+
+function typeLabel(type: EventType) {
+  return type;
+}
+
 function EventsPage() {
   const events = useEvents();
   const [title, setTitle] = useState("");
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
+  const [type, setType] = useState<EventType>("Other");
+  const [priority, setPriority] = useState<EventPriority>("Medium");
 
   const handleAdd = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !date || !time) return;
-    addEvent({ title: title.trim(), date, time });
+    addEvent({ title: title.trim(), date, time, type, priority });
     setTitle("");
     setDate("");
     setTime("");
+    setType("Other");
+    setPriority("Medium");
   };
 
   const now = Date.now();
@@ -84,6 +107,31 @@ function EventsPage() {
           </div>
         </div>
 
+        <div className="grid grid-cols-2 gap-3">
+          <select
+            value={type}
+            onChange={(e) => setType(e.target.value as EventType)}
+            className="w-full bg-secondary rounded-xl px-3 py-2.5 text-foreground outline-none focus:ring-2 focus:ring-primary/30 font-semibold text-sm appearance-none"
+          >
+            {eventTypes.map((t) => (
+              <option key={t} value={t}>
+                {t}
+              </option>
+            ))}
+          </select>
+          <select
+            value={priority}
+            onChange={(e) => setPriority(e.target.value as EventPriority)}
+            className="w-full bg-secondary rounded-xl px-3 py-2.5 text-foreground outline-none focus:ring-2 focus:ring-primary/30 font-semibold text-sm appearance-none"
+          >
+            {eventPriorities.map((p) => (
+              <option key={p} value={p}>
+                {p}
+              </option>
+            ))}
+          </select>
+        </div>
+
         <button
           type="submit"
           disabled={!title.trim() || !date || !time}
@@ -132,9 +180,17 @@ function EventsPage() {
                     <CalendarDays className={`size-5 ${isPast ? "text-muted-foreground" : "text-primary"}`} />
                   </div>
                   <div className="min-w-0">
-                    <h4 className="font-semibold text-foreground text-[0.95rem] truncate">
-                      {evt.title}
-                    </h4>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <h4 className="font-semibold text-foreground text-[0.95rem] truncate">
+                        {evt.title}
+                      </h4>
+                      <span className="inline-flex items-center rounded-md border px-1.5 py-0.5 text-[10px] font-semibold bg-secondary text-muted-foreground border-border/60">
+                        {typeLabel(evt.type)}
+                      </span>
+                      <span className={`inline-flex items-center rounded-md border px-1.5 py-0.5 text-[10px] font-semibold ${priorityColor(evt.priority)}`}>
+                        {evt.priority}
+                      </span>
+                    </div>
                     <p className="text-xs text-muted-foreground mt-0.5">
                       {formattedDate} · {formattedTime}
                       {isPast && <span className="ml-1.5 text-destructive font-medium">(Past)</span>}
