@@ -1,5 +1,5 @@
 import { Link, Outlet, useLocation } from "@tanstack/react-router";
-import { Home, ListChecks, Moon, Sun, Target, Wallet } from "lucide-react";
+import { CalendarDays, Home, ListChecks, Moon, Sun, Target, Wallet } from "lucide-react";
 import { useTheme } from "@/lib/theme-store";
 
 export function AppShell() {
