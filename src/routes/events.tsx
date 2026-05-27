@@ -219,6 +219,11 @@ function EventsPage() {
                     <p className="text-xs text-muted-foreground mt-0.5">
                       {formattedDate} · {formattedTime}
                     </p>
+                    {evt.notes && (
+                      <p className="text-[11px] text-muted-foreground/80 mt-1 line-clamp-2">
+                        {evt.notes}
+                      </p>
+                    )}
                   </div>
                 </div>
                 <button
