@@ -12,9 +12,10 @@ export interface EventItem {
   type: EventType;
   priority: EventPriority;
   completed: boolean;
+  notes: string;
 }
 
-const STORAGE_KEY = "dailyos.events.v3";
+const STORAGE_KEY = "dailyos.events.v4";
 
 const listeners = new Set<() => void>();
 let cache: EventItem[] = [];
@@ -35,6 +36,7 @@ function load(): EventItem[] {
       type: (e.type as EventType) ?? "Other",
       priority: (e.priority as EventPriority) ?? "Medium",
       completed: Boolean(e.completed),
+      notes: String(e.notes ?? ""),
     }));
   } catch {
     return [];
@@ -125,6 +127,7 @@ export function addEvent(input: {
   time: string;
   type: EventType;
   priority: EventPriority;
+  notes: string;
 }) {
   ensureInit();
   const event: EventItem = {
@@ -135,6 +138,7 @@ export function addEvent(input: {
     type: input.type,
     priority: input.priority,
     completed: false,
+    notes: input.notes.trim(),
   };
   persist([...cache, event]);
 }

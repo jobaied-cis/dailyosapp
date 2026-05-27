@@ -40,16 +40,18 @@ function EventsPage() {
   const [time, setTime] = useState("");
   const [type, setType] = useState<EventType>("Other");
   const [priority, setPriority] = useState<EventPriority>("Medium");
+  const [notes, setNotes] = useState("");
 
   const handleAdd = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !date || !time) return;
-    addEvent({ title: title.trim(), date, time, type, priority });
+    addEvent({ title: title.trim(), date, time, type, priority, notes });
     setTitle("");
     setDate("");
     setTime("");
     setType("Other");
     setPriority("Medium");
+    setNotes("");
   };
 
   const now = Date.now();
@@ -133,6 +135,14 @@ function EventsPage() {
           </select>
         </div>
 
+        <textarea
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          placeholder="Add notes (e.g. bring calculator, revise chapter 3)"
+          rows={2}
+          className="w-full bg-secondary rounded-xl px-3 py-2.5 text-foreground outline-none focus:ring-2 focus:ring-primary/30 placeholder:text-muted-foreground/60 font-medium text-sm resize-none"
+        />
+
         <button
           type="submit"
           disabled={!title.trim() || !date || !time}
@@ -209,6 +219,11 @@ function EventsPage() {
                     <p className="text-xs text-muted-foreground mt-0.5">
                       {formattedDate} · {formattedTime}
                     </p>
+                    {evt.notes && (
+                      <p className="text-[11px] text-muted-foreground/80 mt-1 line-clamp-2">
+                        {evt.notes}
+                      </p>
+                    )}
                   </div>
                 </div>
                 <button
