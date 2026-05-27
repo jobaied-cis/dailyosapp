@@ -154,7 +154,7 @@ function RoutinePage() {
         </div>
         <div className="h-2.5 rounded-full bg-secondary overflow-hidden">
           <div
-            className="h-full bg-primary rounded-full transition-all duration-700 ease-out"
+            className="h-full bg-primary rounded-full transition-all duration-[400ms] ease-in-out"
             style={{ width: `${pct}%` }}
           />
         </div>
