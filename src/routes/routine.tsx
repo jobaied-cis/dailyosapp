@@ -143,12 +143,17 @@ function RoutinePage() {
                         <div className="flex items-center gap-1.5 shrink-0">
                           {isActive && (
                             <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-primary text-primary-foreground">
-                              Now
+                              Now 🔥
                             </span>
                           )}
                           {isMissed && (
                             <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-destructive/15 text-destructive">
                               Missed
+                            </span>
+                          )}
+                          {!t.completed && !isActive && !isMissed && now !== null && (
+                            <span className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-secondary text-muted-foreground">
+                              Upcoming
                             </span>
                           )}
                           <span className="text-xs font-mono font-medium text-muted-foreground">{t.time}</span>
