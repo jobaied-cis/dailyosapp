@@ -180,7 +180,16 @@ function RoutinePage() {
                               Upcoming
                             </span>
                           )}
-                          <span className="text-xs font-mono font-medium text-muted-foreground">{t.time}</span>
+                          <div className="flex flex-col items-end gap-0.5">
+                            <span className="text-xs font-mono font-medium text-muted-foreground">
+                              {t.endTime ? `${t.time} – ${t.endTime}` : t.time}
+                            </span>
+                            {t.endTime && (
+                              <span className="text-[10px] font-medium text-muted-foreground/60">
+                                {formatDuration(getTaskEndMinutes(t) - toMinutes(t.time))}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
                       {t.note && (
@@ -188,6 +197,7 @@ function RoutinePage() {
                           {t.note}
                         </p>
                       )}
+
                     </div>
                     <button
                       onClick={() => deleteTask(t.id)}
