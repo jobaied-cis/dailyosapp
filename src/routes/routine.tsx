@@ -557,47 +557,49 @@ function FocusMode({ task, onClose, onComplete }: { task: Task; onClose: () => v
       <button
         onClick={onClose}
         aria-label="Exit focus"
-        className="press absolute top-5 right-5 text-slate-400 hover:text-slate-100 p-2 rounded-full hover:bg-white/5"
+        className="press absolute top-5 right-5 text-slate-400 hover:text-slate-100 p-2 rounded-full hover:bg-white/5 animate-in fade-in zoom-in-95 duration-300 delay-100"
       >
         <X className="size-6" />
       </button>
 
-      <h2 className="text-xl md:text-2xl font-semibold text-slate-300 text-center mb-12 max-w-md">
-        {task.title}
-      </h2>
+      <div className="flex flex-col items-center animate-in zoom-in-95 fade-in duration-500">
+        <h2 className="text-xl md:text-2xl font-semibold text-slate-300 text-center mb-12 max-w-md">
+          {task.title}
+        </h2>
 
-      <div className="text-6xl md:text-8xl font-mono font-bold tabular-nums tracking-tight text-white">
-        {hh}:{mm}:{ss}
-      </div>
+        <div className="text-6xl md:text-8xl font-mono font-bold tabular-nums tracking-tight text-white">
+          {hh}:{mm}:{ss}
+        </div>
 
-      {timesUp && (
-        <p className="mt-6 text-lg font-semibold text-orange-400">Time's up ⏰</p>
-      )}
-
-      <div className="flex items-center gap-3 mt-14">
-        {!paused ? (
-          <button
-            onClick={() => setPaused(true)}
-            disabled={timesUp}
-            className="press inline-flex items-center gap-2 bg-white/10 hover:bg-white/15 text-white font-semibold px-5 py-3 rounded-full disabled:opacity-40"
-          >
-            <Pause className="size-4" /> Pause
-          </button>
-        ) : (
-          <button
-            onClick={() => setPaused(false)}
-            disabled={timesUp}
-            className="press inline-flex items-center gap-2 bg-white/10 hover:bg-white/15 text-white font-semibold px-5 py-3 rounded-full disabled:opacity-40"
-          >
-            <Play className="size-4" /> Resume
-          </button>
+        {timesUp && (
+          <p className="mt-6 text-lg font-semibold text-orange-400">Time&apos;s up ⏰</p>
         )}
-        <button
-          onClick={onComplete}
-          className="press inline-flex items-center gap-2 bg-primary text-primary-foreground font-semibold px-6 py-3 rounded-full shadow-[0_8px_28px_-6px_rgba(37,99,235,0.5)]"
-        >
-          <Check className="size-4" strokeWidth={3} /> Complete
-        </button>
+
+        <div className="flex items-center gap-3 mt-14">
+          {!paused ? (
+            <button
+              onClick={() => setPaused(true)}
+              disabled={timesUp}
+              className="press inline-flex items-center gap-2 bg-white/10 hover:bg-white/15 text-white font-semibold px-5 py-3 rounded-full disabled:opacity-40"
+            >
+              <Pause className="size-4" /> Pause
+            </button>
+          ) : (
+            <button
+              onClick={() => setPaused(false)}
+              disabled={timesUp}
+              className="press inline-flex items-center gap-2 bg-white/10 hover:bg-white/15 text-white font-semibold px-5 py-3 rounded-full disabled:opacity-40"
+            >
+              <Play className="size-4" /> Resume
+            </button>
+          )}
+          <button
+            onClick={onComplete}
+            className="press inline-flex items-center gap-2 bg-primary text-primary-foreground font-semibold px-6 py-3 rounded-full shadow-[0_8px_28px_-6px_rgba(37,99,235,0.5)]"
+          >
+            <Check className="size-4" strokeWidth={3} /> Complete
+          </button>
+        </div>
       </div>
     </div>
   );
