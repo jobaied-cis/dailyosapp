@@ -183,6 +183,12 @@ function RoutinePage() {
                 <p className="text-2xl font-bold text-primary mt-3">
                   ⏳ {formatDuration(remaining)} left
                 </p>
+                <button
+                  onClick={() => setFocusTask(activeTask)}
+                  className="press mt-4 inline-flex items-center gap-2 bg-primary text-primary-foreground font-semibold px-5 py-2.5 rounded-full text-sm shadow-[0_4px_16px_-4px_rgba(37,99,235,0.4)] hover:shadow-[0_6px_20px_-4px_rgba(37,99,235,0.5)]"
+                >
+                  <Play className="size-4" strokeWidth={2.5} /> Start Focus
+                </button>
               </div>
             </div>
           );
