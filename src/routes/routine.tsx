@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, Fragment } from "react";
-import { addTask, deleteTask, toggleTask, useTasks, type Task } from "@/lib/tasks-store";
+import { addTask, deleteTask, editTask, toggleTask, useTasks, type Task } from "@/lib/tasks-store";
 import { useStreak } from "@/lib/streak-store";
-import { Check, ClipboardList, Plus, Trash2, X } from "lucide-react";
+import { Check, ClipboardList, Pencil, Plus, Trash2, X } from "lucide-react";
 
 function toMinutes(hhmm: string): number {
   const [h, m] = hhmm.split(":").map(Number);
@@ -46,6 +46,8 @@ export const Route = createFileRoute("/routine")({
 function RoutinePage() {
   const tasks = useTasks();
   const [open, setOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
   const total = tasks.length;
   const done = tasks.filter((t) => t.completed).length;
   const pct = total ? (done / total) * 100 : 0;
@@ -153,6 +155,43 @@ function RoutinePage() {
         </p>
       </div>
 
+      {/* Current Task */}
+      {now !== null && (() => {
+        const activeIndex = taskMeta.findIndex((m) => m.isActive);
+        const activeTask = activeIndex >= 0 ? tasks[activeIndex] : null;
+        if (activeTask) {
+          const end = getTaskEndMinutes(activeTask);
+          const remaining = Math.max(0, end - nowMin);
+          return (
+            <div className="bg-card border border-primary/40 rounded-[1.25rem] p-5 shadow-[0_0_0_3px_rgba(37,99,235,0.08),0_8px_32px_-8px_rgba(37,99,235,0.2)] relative">
+              <button
+                onClick={() => { setEditingTask(activeTask); setEditOpen(true); }}
+                className="absolute top-4 right-4 text-muted-foreground/50 hover:text-primary p-1.5 rounded-full hover:bg-primary/5 transition-colors"
+                aria-label="Edit task"
+              >
+                <Pencil className="size-4" />
+              </button>
+              <div className="text-center">
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary px-2 py-1 rounded-full bg-primary/10">
+                  Now 🔥
+                </span>
+                <h3 className="text-lg font-bold text-foreground mt-3">{activeTask.title}</h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {activeTask.endTime ? `${activeTask.time} – ${activeTask.endTime}` : activeTask.time}
+                </p>
+                <p className="text-2xl font-bold text-primary mt-3">
+                  ⏳ {formatDuration(remaining)} left
+                </p>
+              </div>
+            </div>
+          );
+        }
+        return (
+          <div className="bg-card/60 border border-border/40 rounded-[1.25rem] p-5 text-center">
+            <p className="text-sm text-muted-foreground">No active task right now 😌</p>
+          </div>
+        );
+      })()}
 
       <ul className="space-y-3">
         {sections.map((section) => (
@@ -293,6 +332,9 @@ function RoutinePage() {
       </button>
 
       {open && <AddTaskSheet onClose={() => setOpen(false)} />}
+      {editOpen && editingTask && (
+        <EditTaskSheet task={editingTask} onClose={() => { setEditOpen(false); setEditingTask(null); }} />
+      )}
     </div>
   );
 }
@@ -380,5 +422,77 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-[0.12em]">{label}</span>
       <div className="mt-2">{children}</div>
     </label>
+  );
+}
+
+function EditTaskSheet({ task, onClose }: { task: Task; onClose: () => void }) {
+  const [time, setTime] = useState(task.time);
+  const [endTime, setEndTime] = useState(task.endTime || "");
+  const [title, setTitle] = useState(task.title);
+  const [note, setNote] = useState(task.note || "");
+
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!title.trim()) return;
+    editTask(task.id, { time, endTime: endTime || undefined, title, note });
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-foreground/25 backdrop-blur-md">
+      <div className="w-full max-w-md bg-card rounded-t-[1.75rem] p-6 shadow-[0_-8px_40px_-8px_rgba(15,23,42,0.15)] animate-in slide-in-from-bottom duration-300">
+        <div className="flex items-center justify-between mb-5">
+          <h3 className="text-lg font-bold text-foreground tracking-tight">Edit task</h3>
+          <button onClick={onClose} aria-label="Close" className="text-muted-foreground hover:text-foreground p-1.5 rounded-full hover:bg-secondary transition-colors">
+            <X className="size-5" />
+          </button>
+        </div>
+        <form onSubmit={submit} className="space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Start">
+              <input
+                type="time"
+                value={time}
+                onChange={(e) => setTime(e.target.value)}
+                className="w-full bg-secondary rounded-xl px-4 py-3.5 text-foreground outline-none focus:ring-2 focus:ring-primary/30 font-medium"
+              />
+            </Field>
+            <Field label="End">
+              <input
+                type="time"
+                value={endTime}
+                onChange={(e) => setEndTime(e.target.value)}
+                className="w-full bg-secondary rounded-xl px-4 py-3.5 text-foreground outline-none focus:ring-2 focus:ring-primary/30 font-medium"
+              />
+            </Field>
+          </div>
+
+          <Field label="Title">
+            <input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="e.g. Morning run"
+              className="w-full bg-secondary rounded-xl px-4 py-3.5 text-foreground outline-none focus:ring-2 focus:ring-primary/30 placeholder:text-muted-foreground/60 font-medium"
+            />
+          </Field>
+          <Field label="Note (optional)">
+            <textarea
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              rows={2}
+              placeholder="Anything to remember…"
+              className="w-full bg-secondary rounded-xl px-4 py-3.5 text-foreground outline-none focus:ring-2 focus:ring-primary/30 placeholder:text-muted-foreground/60 resize-none font-medium"
+            />
+          </Field>
+          <button
+            type="submit"
+            disabled={!title.trim()}
+            className="press w-full bg-primary text-primary-foreground rounded-[1.25rem] py-4 font-semibold shadow-[0_4px_16px_-4px_rgba(37,99,235,0.35)] disabled:opacity-45 disabled:shadow-none mt-2"
+          >
+            Save changes
+          </button>
+        </form>
+      </div>
+    </div>
   );
 }
