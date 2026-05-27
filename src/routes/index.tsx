@@ -194,6 +194,65 @@ function Dashboard() {
         )}
       </section>
 
+      {/* Today's Events */}
+      <section className="bg-card border border-border/60 rounded-[1.5rem] p-5 shadow-[0_4px_20px_-8px_rgba(15,23,42,0.06)]">
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-primary flex items-center gap-1.5">
+            <CalendarDays className="size-3.5" /> Today's Events
+          </span>
+          <Link to="/events" className="text-xs font-semibold text-muted-foreground hover:text-foreground">
+            All
+          </Link>
+        </div>
+        {showEvents.length > 0 ? (
+          <div className="space-y-3">
+            {showEvents.map((evt) => {
+              const [h, m] = evt.time.split(":");
+              const hour = parseInt(h, 10);
+              const ampm = hour >= 12 ? "PM" : "AM";
+              const displayHour = hour % 12 || 12;
+              const timeStr = `${displayHour}:${m} ${ampm}`;
+              return (
+                <div key={evt.id} className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span className="text-xs font-mono font-medium text-muted-foreground shrink-0">
+                      {timeStr}
+                    </span>
+                    <span className="text-sm font-semibold text-foreground truncate">
+                      {evt.title}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <span className="inline-flex items-center rounded-md border px-1.5 py-0.5 text-[10px] font-semibold bg-secondary text-muted-foreground border-border/60">
+                      {evt.type}
+                    </span>
+                    <span className={`inline-flex items-center rounded-md border px-1.5 py-0.5 text-[10px] font-semibold ${
+                      evt.priority === "High"
+                        ? "bg-destructive/15 text-destructive border-destructive/20"
+                        : evt.priority === "Medium"
+                        ? "bg-amber-500/15 text-amber-600 border-amber-500/20"
+                        : "bg-muted text-muted-foreground border-border"
+                    }`}>
+                      {evt.priority}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+            {todaysEvents.length > 3 && (
+              <Link
+                to="/events"
+                className="press block text-center text-xs font-semibold text-primary mt-2"
+              >
+                View All
+              </Link>
+            )}
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">No events today</p>
+        )}
+      </section>
+
       {/* Expense Summary */}
       <section className="bg-card border border-border/60 rounded-[1.5rem] p-5 shadow-[0_4px_20px_-8px_rgba(15,23,42,0.06)]">
         <div className="flex items-center justify-between mb-3">
