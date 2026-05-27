@@ -281,6 +281,11 @@ function EventsPage() {
                     <p className="text-xs text-muted-foreground mt-0.5">
                       {formattedDate} · {formattedTime}
                     </p>
+                    {!isCompleted && !isMissed && (
+                      <p className="text-[11px] text-primary/80 mt-0.5 font-medium">
+                        {formatCountdown(evtDate.getTime() - now)}
+                      </p>
+                    )}
                     {evt.notes && (
                       <p className="text-[11px] text-muted-foreground/80 mt-1 line-clamp-2">
                         {evt.notes}
