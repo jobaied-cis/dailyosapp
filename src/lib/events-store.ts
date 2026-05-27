@@ -12,9 +12,10 @@ export interface EventItem {
   type: EventType;
   priority: EventPriority;
   completed: boolean;
+  notes: string;
 }
 
-const STORAGE_KEY = "dailyos.events.v3";
+const STORAGE_KEY = "dailyos.events.v4";
 
 const listeners = new Set<() => void>();
 let cache: EventItem[] = [];
