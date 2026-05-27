@@ -68,6 +68,14 @@ function RoutinePage() {
     return { start, end, isActive, isMissed };
   });
 
+  // Daily summary
+  const missedCount = taskMeta.filter((m) => m.isMissed).length;
+  const plannedMin = tasks.reduce((sum, t) => sum + Math.max(0, getTaskEndMinutes(t) - toMinutes(t.time)), 0);
+  const lastEnd = tasks.length ? Math.max(...tasks.map((t) => getTaskEndMinutes(t))) : 0;
+  const endOfDay = now !== null && tasks.length > 0 && nowMin >= lastEnd;
+  const allDone = total > 0 && done === total;
+  const streak = useStreak(allDone, endOfDay && !allDone);
+
   // Index where "You are here" divider should appear (only after clock is set)
   let hereIndex = now === null ? -2 : tasks.findIndex((t) => toMinutes(t.time) > nowMin);
   if (now !== null && hereIndex === -1 && tasks.length > 0 && nowMin < toMinutes(tasks[0].time)) hereIndex = 0;
@@ -96,13 +104,26 @@ function RoutinePage() {
     current.originalIndices.push(i);
   }
 
+  const statusText = allDone
+    ? "All done 🔥"
+    : missedCount > 0
+    ? `${missedCount} task${missedCount === 1 ? "" : "s"} missed ⚠️`
+    : "On track ✅";
+
   return (
     <div className="space-y-6">
 
       <section className="bg-card border border-border/60 rounded-[1.75rem] p-5 shadow-[0_8px_32px_-12px_rgba(15,23,42,0.08)]">
         <div className="flex items-baseline justify-between mb-3">
           <h2 className="font-bold text-foreground text-lg tracking-tight">Today's routine</h2>
-          <span className="text-sm font-mono font-medium text-muted-foreground">{done}/{total}</span>
+          <div className="flex items-center gap-2">
+            {streak > 0 && (
+              <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-orange-500/10 text-orange-600 dark:text-orange-400">
+                🔥 {streak} day streak
+              </span>
+            )}
+            <span className="text-sm font-mono font-medium text-muted-foreground">{done}/{total}</span>
+          </div>
         </div>
         <div className="h-2.5 rounded-full bg-secondary overflow-hidden">
           <div
@@ -110,10 +131,20 @@ function RoutinePage() {
             style={{ width: `${pct}%` }}
           />
         </div>
-        <p className="text-xs font-semibold text-primary mt-3 animate-fade-in-up">
-          {encouragement(pct)}
-        </p>
+        <div className="flex items-center justify-between mt-3 gap-3">
+          <p className={`text-xs font-semibold animate-fade-in-up ${
+            allDone ? "text-primary" : missedCount > 0 ? "text-destructive" : "text-primary"
+          }`}>
+            {statusText}
+          </p>
+          {total > 0 && (
+            <p className="text-[11px] font-medium text-muted-foreground tabular-nums">
+              Done: {done} · Missed: {missedCount} · Planned: {formatDuration(plannedMin) || "0m"}
+            </p>
+          )}
+        </div>
       </section>
+
 
       <ul className="space-y-3">
         {sections.map((section) => (
