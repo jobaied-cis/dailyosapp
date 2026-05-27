@@ -127,6 +127,7 @@ export function addEvent(input: {
   time: string;
   type: EventType;
   priority: EventPriority;
+  notes: string;
 }) {
   ensureInit();
   const event: EventItem = {
@@ -137,6 +138,7 @@ export function addEvent(input: {
     type: input.type,
     priority: input.priority,
     completed: false,
+    notes: input.notes.trim(),
   };
   persist([...cache, event]);
 }
