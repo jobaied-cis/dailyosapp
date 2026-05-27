@@ -41,17 +41,45 @@ function EventsPage() {
   const [type, setType] = useState<EventType>("Other");
   const [priority, setPriority] = useState<EventPriority>("Medium");
   const [notes, setNotes] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
 
-  const handleAdd = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!title.trim() || !date || !time) return;
-    addEvent({ title: title.trim(), date, time, type, priority, notes });
+  const resetForm = () => {
     setTitle("");
     setDate("");
     setTime("");
     setType("Other");
     setPriority("Medium");
     setNotes("");
+    setEditingId(null);
+  };
+
+  const handleAdd = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!title.trim() || !date || !time) return;
+    addEvent({ title: title.trim(), date, time, type, priority, notes });
+    resetForm();
+  };
+
+  const handleEdit = (evt: import("@/lib/events-store").EventItem) => {
+    setTitle(evt.title);
+    setDate(evt.date);
+    setTime(evt.time);
+    setType(evt.type);
+    setPriority(evt.priority);
+    setNotes(evt.notes);
+    setEditingId(evt.id);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleUpdate = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingId || !title.trim() || !date || !time) return;
+    updateEvent(editingId, { title: title.trim(), date, time, type, priority, notes });
+    resetForm();
+  };
+
+  const handleCancel = () => {
+    resetForm();
   };
 
   const now = Date.now();
