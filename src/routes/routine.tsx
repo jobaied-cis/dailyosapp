@@ -47,7 +47,8 @@ function RoutinePage() {
   let hereIndex = tasks.findIndex((t) => toMinutes(t.time) > nowMin);
   if (hereIndex === -1 && tasks.length > 0 && nowMin < toMinutes(tasks[0].time)) hereIndex = 0;
 
-
+  return (
+    <div className="space-y-6">
 
       <section className="bg-card border border-border/60 rounded-[1.75rem] p-5 shadow-[0_8px_32px_-12px_rgba(15,23,42,0.08)]">
         <div className="flex items-baseline justify-between mb-3">
