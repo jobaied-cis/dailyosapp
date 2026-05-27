@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { useEvents, addEvent, deleteEvent } from "@/lib/events-store";
+import { useEvents, addEvent, deleteEvent, toggleEventCompletion, getEventStatus } from "@/lib/events-store";
 import type { EventType, EventPriority } from "@/lib/events-store";
+import { Checkbox } from "@/components/ui/checkbox";
 import { CalendarDays, Clock, Plus, Trash2, Calendar } from "lucide-react";
 
 export const Route = createFileRoute("/events")({
@@ -155,6 +156,7 @@ function EventsPage() {
           </div>
         ) : (
           events.map((evt, i) => {
+            const status = getEventStatus(evt, now);
             const evtDate = new Date(`${evt.date}T${evt.time}`);
             const isPast = evtDate.getTime() < now;
             const formattedDate = evtDate.toLocaleDateString(undefined, {
@@ -166,22 +168,30 @@ function EventsPage() {
               hour: "2-digit",
               minute: "2-digit",
             });
+            const isCompleted = status === "completed";
+            const isMissed = status === "missed";
 
             return (
               <div
                 key={evt.id}
                 style={{ animationDelay: `${Math.min(i * 50, 240)}ms` }}
                 className={`bg-card border border-border/60 rounded-[1.25rem] shadow-[0_2px_12px_-4px_rgba(15,23,42,0.06)] p-4 flex items-center justify-between animate-list-item-in ${
-                  isPast ? "opacity-60" : ""
+                  isCompleted || isMissed ? "opacity-60" : ""
                 }`}
               >
                 <div className="flex items-center gap-3 min-w-0">
+                  <Checkbox
+                    checked={evt.completed}
+                    onCheckedChange={() => toggleEventCompletion(evt.id)}
+                    aria-label={isCompleted ? "Mark as incomplete" : "Mark as completed"}
+                    className="shrink-0"
+                  />
                   <div className={`size-10 rounded-2xl flex items-center justify-center shrink-0 ${isPast ? "bg-muted" : "bg-primary/10"}`}>
                     <CalendarDays className={`size-5 ${isPast ? "text-muted-foreground" : "text-primary"}`} />
                   </div>
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      <h4 className="font-semibold text-foreground text-[0.95rem] truncate">
+                      <h4 className={`font-semibold text-foreground text-[0.95rem] truncate ${isCompleted ? "line-through" : ""}`}>
                         {evt.title}
                       </h4>
                       <span className="inline-flex items-center rounded-md border px-1.5 py-0.5 text-[10px] font-semibold bg-secondary text-muted-foreground border-border/60">
@@ -190,10 +200,14 @@ function EventsPage() {
                       <span className={`inline-flex items-center rounded-md border px-1.5 py-0.5 text-[10px] font-semibold ${priorityColor(evt.priority)}`}>
                         {evt.priority}
                       </span>
+                      {isMissed && (
+                        <span className="inline-flex items-center rounded-md border px-1.5 py-0.5 text-[10px] font-semibold bg-destructive/15 text-destructive border-destructive/20">
+                          Missed
+                        </span>
+                      )}
                     </div>
                     <p className="text-xs text-muted-foreground mt-0.5">
                       {formattedDate} · {formattedTime}
-                      {isPast && <span className="ml-1.5 text-destructive font-medium">(Past)</span>}
                     </p>
                   </div>
                 </div>

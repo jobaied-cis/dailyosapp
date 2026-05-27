@@ -2,6 +2,7 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 
 export type EventType = "Exam" | "Meeting" | "Class" | "Personal" | "Other";
 export type EventPriority = "High" | "Medium" | "Low";
+export type EventStatus = "upcoming" | "completed" | "missed";
 
 export interface EventItem {
   id: string;
@@ -10,9 +11,10 @@ export interface EventItem {
   time: string; // HH:MM
   type: EventType;
   priority: EventPriority;
+  completed: boolean;
 }
 
-const STORAGE_KEY = "dailyos.events.v2";
+const STORAGE_KEY = "dailyos.events.v3";
 
 const listeners = new Set<() => void>();
 let cache: EventItem[] = [];
@@ -32,6 +34,7 @@ function load(): EventItem[] {
       time: String(e.time ?? ""),
       type: (e.type as EventType) ?? "Other",
       priority: (e.priority as EventPriority) ?? "Medium",
+      completed: Boolean(e.completed),
     }));
   } catch {
     return [];
@@ -79,24 +82,40 @@ const priorityWeight: Record<EventPriority, number> = {
   Low: 2,
 };
 
+export function getEventStatus(item: EventItem, now: number): EventStatus {
+  if (item.completed) return "completed";
+  const t = toEventDateTime(item);
+  if (t < now) return "missed";
+  return "upcoming";
+}
+
+const statusWeight: Record<EventStatus, number> = {
+  upcoming: 0,
+  completed: 1,
+  missed: 2,
+};
+
 export function useEvents(): EventItem[] {
   const events = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   const [hydrated, setHydrated] = useState(false);
   useEffect(() => setHydrated(true), []);
   if (!hydrated) return [];
+  const now = Date.now();
   return [...events].sort((a, b) => {
+    const sa = getEventStatus(a, now);
+    const sb = getEventStatus(b, now);
+    if (sa !== sb) return statusWeight[sa] - statusWeight[sb];
+    // Same status
     const ta = toEventDateTime(a);
     const tb = toEventDateTime(b);
-    const now = Date.now();
-    const aPast = ta < now;
-    const bPast = tb < now;
-    if (aPast && !bPast) return 1;
-    if (!aPast && bPast) return -1;
-    if (aPast && bPast) return tb - ta; // newer past first
-    const pa = priorityWeight[a.priority];
-    const pb = priorityWeight[b.priority];
-    if (pa !== pb) return pa - pb;
-    return ta - tb;
+    if (sa === "upcoming") {
+      const pa = priorityWeight[a.priority];
+      const pb = priorityWeight[b.priority];
+      if (pa !== pb) return pa - pb;
+      return ta - tb; // nearest upcoming first
+    }
+    // completed or missed: newest first
+    return tb - ta;
   });
 }
 
@@ -115,6 +134,7 @@ export function addEvent(input: {
     time: input.time,
     type: input.type,
     priority: input.priority,
+    completed: false,
   };
   persist([...cache, event]);
 }
@@ -124,3 +144,11 @@ export function deleteEvent(id: string) {
   persist(cache.filter((e) => e.id !== id));
 }
 
+export function toggleEventCompletion(id: string) {
+  ensureInit();
+  persist(
+    cache.map((e) =>
+      e.id === id ? { ...e, completed: !e.completed } : e
+    )
+  );
+}
