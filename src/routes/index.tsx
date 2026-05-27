@@ -6,6 +6,7 @@ import {
   missionProgress,
   type Mission,
 } from "@/lib/missions-store";
+import { useEvents } from "@/lib/events-store";
 import {
   ClipboardList,
   Flame,
