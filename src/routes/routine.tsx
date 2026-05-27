@@ -111,39 +111,47 @@ function RoutinePage() {
     : "On track ✅";
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
 
-      <section className="bg-card border border-border/60 rounded-[1.75rem] p-5 shadow-[0_8px_32px_-12px_rgba(15,23,42,0.08)]">
-        <div className="flex items-baseline justify-between mb-3">
-          <h2 className="font-bold text-foreground text-lg tracking-tight">Today's routine</h2>
-          <div className="flex items-center gap-2">
-            {streak > 0 && (
-              <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-orange-500/10 text-orange-600 dark:text-orange-400">
-                🔥 {streak} day streak
-              </span>
-            )}
-            <span className="text-sm font-mono font-medium text-muted-foreground">{done}/{total}</span>
-          </div>
+      {/* Streak */}
+      {streak > 0 && (
+        <div className="flex items-center justify-center">
+          <span className="text-sm font-bold px-3 py-1 rounded-full bg-orange-500/10 text-orange-600 dark:text-orange-400">
+            🔥 {streak} day streak
+          </span>
         </div>
+      )}
+
+      {/* Summary cards */}
+      <div className="grid grid-cols-3 gap-3">
+        <div className="bg-card border border-border/60 rounded-2xl p-4 text-center">
+          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground mb-1">Done</p>
+          <p className="text-2xl font-bold text-foreground">{done}</p>
+        </div>
+        <div className="bg-card border border-border/60 rounded-2xl p-4 text-center">
+          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground mb-1">Left</p>
+          <p className="text-2xl font-bold text-foreground">{total - done}</p>
+        </div>
+        <div className="bg-card border border-border/60 rounded-2xl p-4 text-center">
+          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground mb-1">Planned</p>
+          <p className="text-2xl font-bold text-foreground">{formatDuration(plannedMin) || "0m"}</p>
+        </div>
+      </div>
+
+      {/* Progress bar */}
+      <div className="bg-card border border-border/60 rounded-[1.25rem] p-4 shadow-[0_8px_32px_-12px_rgba(15,23,42,0.08)]">
         <div className="h-2.5 rounded-full bg-secondary overflow-hidden">
           <div
             className="h-full bg-primary rounded-full transition-all duration-700 ease-out"
             style={{ width: `${pct}%` }}
           />
         </div>
-        <div className="flex items-center justify-between mt-3 gap-3">
-          <p className={`text-xs font-semibold animate-fade-in-up ${
-            allDone ? "text-primary" : missedCount > 0 ? "text-destructive" : "text-primary"
-          }`}>
-            {statusText}
-          </p>
-          {total > 0 && (
-            <p className="text-[11px] font-medium text-muted-foreground tabular-nums">
-              Done: {done} · Missed: {missedCount} · Planned: {formatDuration(plannedMin) || "0m"}
-            </p>
-          )}
-        </div>
-      </section>
+        <p className={`text-xs font-semibold text-center mt-3 ${
+          allDone ? "text-primary" : missedCount > 0 ? "text-destructive" : "text-primary"
+        }`}>
+          {statusText}
+        </p>
+      </div>
 
 
       <ul className="space-y-3">
