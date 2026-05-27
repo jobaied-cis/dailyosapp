@@ -231,9 +231,9 @@ function RoutinePage() {
                   )}
                   <li
                     style={{ animationDelay: `${Math.min(i * 40, 240)}ms` }}
-                    className={`group bg-card border rounded-[1.25rem] shadow-[0_2px_12px_-4px_rgba(15,23,42,0.06)] animate-list-item-in transition-all duration-500 hover:shadow-[0_4px_20px_-6px_rgba(15,23,42,0.1)] ${
+                    className={`group bg-card border rounded-[1.25rem] shadow-[0_2px_12px_-4px_rgba(15,23,42,0.06)] animate-list-item-in transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_-6px_rgba(15,23,42,0.12)] active:translate-y-0 active:shadow-[0_2px_12px_-4px_rgba(15,23,42,0.06)] ${
                       t.completed ? "opacity-50 scale-[0.99] border-border/60" :
-                      isActive ? "border-primary/60 shadow-[0_0_0_3px_rgba(37,99,235,0.12),0_4px_20px_-4px_rgba(37,99,235,0.25)]" :
+                      isActive ? "border-primary/60 shadow-[0_0_0_3px_rgba(37,99,235,0.12),0_4px_20px_-4px_rgba(37,99,235,0.25)] hover:shadow-[0_0_0_3px_rgba(37,99,235,0.12),0_8px_24px_-4px_rgba(37,99,235,0.3)]" :
                       isMissed ? "border-destructive/40 opacity-75" :
                       "border-border/60"
                     }`}
