@@ -247,13 +247,14 @@ function encouragement(pct: number): string {
 
 function AddTaskSheet({ onClose }: { onClose: () => void }) {
   const [time, setTime] = useState("08:00");
+  const [endTime, setEndTime] = useState("");
   const [title, setTitle] = useState("");
   const [note, setNote] = useState("");
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
-    addTask({ time, title, note });
+    addTask({ time, endTime: endTime || undefined, title, note });
     onClose();
   };
 
