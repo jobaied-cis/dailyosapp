@@ -171,13 +171,24 @@ function EventsPage() {
           className="w-full bg-secondary rounded-xl px-3 py-2.5 text-foreground outline-none focus:ring-2 focus:ring-primary/30 placeholder:text-muted-foreground/60 font-medium text-sm resize-none"
         />
 
-        <button
-          type="submit"
-          disabled={!title.trim() || !date || !time}
-          className="press w-full bg-primary text-primary-foreground rounded-2xl py-3 font-semibold shadow-[0_4px_16px_-4px_rgba(37,99,235,0.35)] disabled:opacity-40 disabled:shadow-none"
-        >
-          Add Event
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            type="submit"
+            disabled={!title.trim() || !date || !time}
+            className="press flex-1 bg-primary text-primary-foreground rounded-2xl py-3 font-semibold shadow-[0_4px_16px_-4px_rgba(37,99,235,0.35)] disabled:opacity-40 disabled:shadow-none"
+          >
+            {editingId ? "Update Event" : "Add Event"}
+          </button>
+          {editingId && (
+            <button
+              type="button"
+              onClick={handleCancel}
+              className="press px-5 py-3 rounded-2xl font-semibold text-muted-foreground bg-secondary hover:bg-secondary/80"
+            >
+              Cancel
+            </button>
+          )}
+        </div>
       </form>
 
       {/* Event List */}
@@ -254,13 +265,22 @@ function EventsPage() {
                     )}
                   </div>
                 </div>
-                <button
-                  onClick={() => deleteEvent(evt.id)}
-                  aria-label="Delete event"
-                  className="press p-2 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                >
-                  <Trash2 className="size-4" />
-                </button>
+                <div className="flex items-center gap-1 shrink-0">
+                  <button
+                    onClick={() => handleEdit(evt)}
+                    aria-label="Edit event"
+                    className="press p-2 rounded-xl text-muted-foreground hover:text-primary hover:bg-primary/10"
+                  >
+                    <Pencil className="size-4" />
+                  </button>
+                  <button
+                    onClick={() => deleteEvent(evt.id)}
+                    aria-label="Delete event"
+                    className="press p-2 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                  >
+                    <Trash2 className="size-4" />
+                  </button>
+                </div>
               </div>
             );
           })
