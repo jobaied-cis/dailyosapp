@@ -33,6 +33,23 @@ function typeLabel(type: EventType) {
   return type;
 }
 
+function formatCountdown(diffMs: number): string {
+  if (diffMs <= 0) return "Starts now";
+  const minutes = Math.floor(diffMs / 60000);
+  const hours = Math.floor(diffMs / 3600000);
+  const days = Math.floor(diffMs / 86400000);
+
+  if (days >= 1) {
+    return `Starts in ${days} day${days > 1 ? "s" : ""}`;
+  }
+  if (hours >= 1) {
+    const remMin = Math.floor((diffMs % 3600000) / 60000);
+    if (remMin > 0) return `Starts in ${hours}h ${remMin}m`;
+    return `Starts in ${hours}h`;
+  }
+  return `Starts in ${minutes}m`;
+}
+
 function EventsPage() {
   const events = useEvents();
   const [title, setTitle] = useState("");
