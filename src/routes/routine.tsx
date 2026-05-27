@@ -26,8 +26,27 @@ function RoutinePage() {
   const done = tasks.filter((t) => t.completed).length;
   const pct = total ? (done / total) * 100 : 0;
 
-  return (
-    <div className="space-y-6">
+  // Real-time clock — re-render every 30s
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 30_000);
+    return () => clearInterval(id);
+  }, []);
+  const nowMin = now.getHours() * 60 + now.getMinutes();
+
+  // Compute per-task time intelligence
+  const taskMeta = tasks.map((t, i) => {
+    const start = toMinutes(t.time);
+    const end = i < tasks.length - 1 ? toMinutes(tasks[i + 1].time) : 24 * 60;
+    const isActive = !t.completed && nowMin >= start && nowMin < end;
+    const isMissed = !t.completed && nowMin >= end;
+    return { start, end, isActive, isMissed };
+  });
+
+  // Index where "You are here" divider should appear (before first task whose start > now)
+  let hereIndex = tasks.findIndex((t) => toMinutes(t.time) > nowMin);
+  if (hereIndex === -1 && tasks.length > 0 && nowMin < toMinutes(tasks[0].time)) hereIndex = 0;
+
 
 
       <section className="bg-card border border-border/60 rounded-[1.75rem] p-5 shadow-[0_8px_32px_-12px_rgba(15,23,42,0.08)]">
