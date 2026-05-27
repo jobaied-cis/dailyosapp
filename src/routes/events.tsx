@@ -135,6 +135,14 @@ function EventsPage() {
           </select>
         </div>
 
+        <textarea
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          placeholder="Add notes (e.g. bring calculator, revise chapter 3)"
+          rows={2}
+          className="w-full bg-secondary rounded-xl px-3 py-2.5 text-foreground outline-none focus:ring-2 focus:ring-primary/30 placeholder:text-muted-foreground/60 font-medium text-sm resize-none"
+        />
+
         <button
           type="submit"
           disabled={!title.trim() || !date || !time}
