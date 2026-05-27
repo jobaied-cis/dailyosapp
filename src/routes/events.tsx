@@ -1,9 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { useEvents, addEvent, deleteEvent, toggleEventCompletion, getEventStatus } from "@/lib/events-store";
+import { useEvents, addEvent, deleteEvent, toggleEventCompletion, updateEvent, getEventStatus } from "@/lib/events-store";
 import type { EventType, EventPriority } from "@/lib/events-store";
 import { Checkbox } from "@/components/ui/checkbox";
-import { CalendarDays, Clock, Plus, Trash2, Calendar } from "lucide-react";
+import { CalendarDays, Clock, Plus, Trash2, Calendar, Pencil } from "lucide-react";
 
 export const Route = createFileRoute("/events")({
   head: () => ({
