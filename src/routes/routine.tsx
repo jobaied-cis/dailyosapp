@@ -183,10 +183,23 @@ function RoutinePage() {
                       aria-label="Delete task"
                       className="press text-muted-foreground/40 hover:text-destructive p-1.5 rounded-full hover:bg-destructive/5"
                     >
-                      <Trash2 className="size-4" />
-                    </button>
-                  </li>
-                </Fragment>
+                    <Trash2 className="size-4" />
+                  </button>
+                </li>
+                {i < tasks.length - 1 && (() => {
+                  const currentEnd = getTaskEndMinutes(t);
+                  const nextStart = toMinutes(tasks[i + 1].time);
+                  const gapMin = nextStart - currentEnd;
+                  if (gapMin <= 15) return null;
+                  return (
+                    <li className="flex items-center gap-2 text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground/50 px-1 select-none py-1">
+                      <span className="flex-1 h-px bg-border/30" />
+                      {formatGap(gapMin)}
+                      <span className="flex-1 h-px bg-border/30" />
+                    </li>
+                  );
+                })()}
+              </Fragment>
               );
             })}
           </Fragment>
