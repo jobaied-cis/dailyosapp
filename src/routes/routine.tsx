@@ -48,6 +48,7 @@ function RoutinePage() {
   const [open, setOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [focusTask, setFocusTask] = useState<Task | null>(null);
   const total = tasks.length;
   const done = tasks.filter((t) => t.completed).length;
   const pct = total ? (done / total) * 100 : 0;
