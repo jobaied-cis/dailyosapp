@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useEvents, addEvent, deleteEvent, toggleEventCompletion, updateEvent, getEventStatus } from "@/lib/events-store";
 import type { EventType, EventPriority } from "@/lib/events-store";
 import { Checkbox } from "@/components/ui/checkbox";
