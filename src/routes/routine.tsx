@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, Fragment } from "react";
-import { addTask, deleteTask, toggleTask, useTasks } from "@/lib/tasks-store";
+import { addTask, deleteTask, toggleTask, useTasks, type Task } from "@/lib/tasks-store";
 import { Check, ClipboardList, Plus, Trash2, X } from "lucide-react";
 
 function toMinutes(hhmm: string): number {
