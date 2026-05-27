@@ -513,3 +513,75 @@ function EditTaskSheet({ task, onClose }: { task: Task; onClose: () => void }) {
     </div>
   );
 }
+
+function FocusMode({ task, onClose, onComplete }: { task: Task; onClose: () => void; onComplete: () => void }) {
+  const initial = (() => {
+    const end = task.endTime ? toMinutes(task.endTime) : toMinutes(task.time) + 30;
+    const now = new Date();
+    const nowSec = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+    return Math.max(0, end * 60 - nowSec);
+  })();
+  const [remaining, setRemaining] = useState(initial);
+  const [paused, setPaused] = useState(false);
+
+  useEffect(() => {
+    if (paused) return;
+    const id = setInterval(() => setRemaining((r) => Math.max(0, r - 1)), 1000);
+    return () => clearInterval(id);
+  }, [paused]);
+
+  const hh = String(Math.floor(remaining / 3600)).padStart(2, "0");
+  const mm = String(Math.floor((remaining % 3600) / 60)).padStart(2, "0");
+  const ss = String(remaining % 60).padStart(2, "0");
+  const timesUp = remaining === 0;
+
+  return (
+    <div className="fixed inset-0 z-[60] bg-slate-950 text-slate-100 flex flex-col items-center justify-center px-6 animate-in fade-in duration-300">
+      <button
+        onClick={onClose}
+        aria-label="Exit focus"
+        className="absolute top-5 right-5 text-slate-400 hover:text-slate-100 p-2 rounded-full hover:bg-white/5"
+      >
+        <X className="size-6" />
+      </button>
+
+      <h2 className="text-xl md:text-2xl font-semibold text-slate-300 text-center mb-12 max-w-md">
+        {task.title}
+      </h2>
+
+      <div className="text-6xl md:text-8xl font-mono font-bold tabular-nums tracking-tight text-white">
+        {hh}:{mm}:{ss}
+      </div>
+
+      {timesUp && (
+        <p className="mt-6 text-lg font-semibold text-orange-400">Time's up ⏰</p>
+      )}
+
+      <div className="flex items-center gap-3 mt-14">
+        {!paused ? (
+          <button
+            onClick={() => setPaused(true)}
+            disabled={timesUp}
+            className="press inline-flex items-center gap-2 bg-white/10 hover:bg-white/15 text-white font-semibold px-5 py-3 rounded-full disabled:opacity-40"
+          >
+            <Pause className="size-4" /> Pause
+          </button>
+        ) : (
+          <button
+            onClick={() => setPaused(false)}
+            disabled={timesUp}
+            className="press inline-flex items-center gap-2 bg-white/10 hover:bg-white/15 text-white font-semibold px-5 py-3 rounded-full disabled:opacity-40"
+          >
+            <Play className="size-4" /> Resume
+          </button>
+        )}
+        <button
+          onClick={onComplete}
+          className="press inline-flex items-center gap-2 bg-primary text-primary-foreground font-semibold px-6 py-3 rounded-full shadow-[0_8px_28px_-6px_rgba(37,99,235,0.5)]"
+        >
+          <Check className="size-4" strokeWidth={3} /> Complete
+        </button>
+      </div>
+    </div>
+  );
+}
