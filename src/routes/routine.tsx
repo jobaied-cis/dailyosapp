@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, Fragment } from "react";
-import { addTask, deleteTask, toggleTask, useTasks, type Task } from "@/lib/tasks-store";
+import { addTask, deleteTask, editTask, toggleTask, useTasks, type Task } from "@/lib/tasks-store";
 import { useStreak } from "@/lib/streak-store";
-import { Check, ClipboardList, Plus, Trash2, X } from "lucide-react";
+import { Check, ClipboardList, Pencil, Plus, Trash2, X } from "lucide-react";
 
 function toMinutes(hhmm: string): number {
   const [h, m] = hhmm.split(":").map(Number);
@@ -46,6 +46,8 @@ export const Route = createFileRoute("/routine")({
 function RoutinePage() {
   const tasks = useTasks();
   const [open, setOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
   const total = tasks.length;
   const done = tasks.filter((t) => t.completed).length;
   const pct = total ? (done / total) * 100 : 0;
@@ -153,6 +155,43 @@ function RoutinePage() {
         </p>
       </div>
 
+      {/* Current Task */}
+      {now !== null && (() => {
+        const activeIndex = taskMeta.findIndex((m) => m.isActive);
+        const activeTask = activeIndex >= 0 ? tasks[activeIndex] : null;
+        if (activeTask) {
+          const end = getTaskEndMinutes(activeTask);
+          const remaining = Math.max(0, end - nowMin);
+          return (
+            <div className="bg-card border border-primary/40 rounded-[1.25rem] p-5 shadow-[0_0_0_3px_rgba(37,99,235,0.08),0_8px_32px_-8px_rgba(37,99,235,0.2)] relative">
+              <button
+                onClick={() => { setEditingTask(activeTask); setEditOpen(true); }}
+                className="absolute top-4 right-4 text-muted-foreground/50 hover:text-primary p-1.5 rounded-full hover:bg-primary/5 transition-colors"
+                aria-label="Edit task"
+              >
+                <Pencil className="size-4" />
+              </button>
+              <div className="text-center">
+                <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary px-2 py-1 rounded-full bg-primary/10">
+                  Now 🔥
+                </span>
+                <h3 className="text-lg font-bold text-foreground mt-3">{activeTask.title}</h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {activeTask.endTime ? `${activeTask.time} – ${activeTask.endTime}` : activeTask.time}
+                </p>
+                <p className="text-2xl font-bold text-primary mt-3">
+                  ⏳ {formatDuration(remaining)} left
+                </p>
+              </div>
+            </div>
+          );
+        }
+        return (
+          <div className="bg-card/60 border border-border/40 rounded-[1.25rem] p-5 text-center">
+            <p className="text-sm text-muted-foreground">No active task right now 😌</p>
+          </div>
+        );
+      })()}
 
       <ul className="space-y-3">
         {sections.map((section) => (
@@ -293,6 +332,9 @@ function RoutinePage() {
       </button>
 
       {open && <AddTaskSheet onClose={() => setOpen(false)} />}
+      {editOpen && editingTask && (
+        <EditTaskSheet task={editingTask} onClose={() => { setEditOpen(false); setEditingTask(null); }} />
+      )}
     </div>
   );
 }
