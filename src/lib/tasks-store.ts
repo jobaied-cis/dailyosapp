@@ -101,3 +101,19 @@ export function resetDay() {
   ensureInit();
   persist(cache.map((t) => ({ ...t, completed: false })));
 }
+
+export function editTask(id: string, updates: Partial<Omit<Task, "id" | "completed">>) {
+  ensureInit();
+  persist(
+    cache.map((t) => {
+      if (t.id !== id) return t;
+      return {
+        ...t,
+        time: updates.time ?? t.time,
+        endTime: updates.endTime !== undefined ? (updates.endTime || undefined) : t.endTime,
+        title: updates.title !== undefined ? updates.title.trim() : t.title,
+        note: updates.note !== undefined ? (updates.note?.trim() || undefined) : t.note,
+      };
+    }),
+  );
+}
