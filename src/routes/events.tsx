@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useEvents, addEvent, deleteEvent, toggleEventCompletion, updateEvent, getEventStatus } from "@/lib/events-store";
 import type { EventType, EventPriority } from "@/lib/events-store";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -33,6 +33,23 @@ function typeLabel(type: EventType) {
   return type;
 }
 
+function formatCountdown(diffMs: number): string {
+  if (diffMs <= 0) return "Starts now";
+  const minutes = Math.floor(diffMs / 60000);
+  const hours = Math.floor(diffMs / 3600000);
+  const days = Math.floor(diffMs / 86400000);
+
+  if (days >= 1) {
+    return `Starts in ${days} day${days > 1 ? "s" : ""}`;
+  }
+  if (hours >= 1) {
+    const remMin = Math.floor((diffMs % 3600000) / 60000);
+    if (remMin > 0) return `Starts in ${hours}h ${remMin}m`;
+    return `Starts in ${hours}h`;
+  }
+  return `Starts in ${minutes}m`;
+}
+
 function EventsPage() {
   const events = useEvents();
   const [title, setTitle] = useState("");
@@ -42,6 +59,12 @@ function EventsPage() {
   const [priority, setPriority] = useState<EventPriority>("Medium");
   const [notes, setNotes] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [tick, setTick] = useState(0);
+
+  useEffect(() => {
+    const id = setInterval(() => setTick((t) => t + 1), 60000);
+    return () => clearInterval(id);
+  }, []);
 
   const resetForm = () => {
     setTitle("");
@@ -258,6 +281,11 @@ function EventsPage() {
                     <p className="text-xs text-muted-foreground mt-0.5">
                       {formattedDate} · {formattedTime}
                     </p>
+                    {!isCompleted && !isMissed && (
+                      <p className="text-[11px] text-primary/80 mt-0.5 font-medium">
+                        {formatCountdown(evtDate.getTime() - now)}
+                      </p>
+                    )}
                     {evt.notes && (
                       <p className="text-[11px] text-muted-foreground/80 mt-1 line-clamp-2">
                         {evt.notes}
