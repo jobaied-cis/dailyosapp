@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as RoutineRouteImport } from './routes/routine'
 import { Route as MissionsRouteImport } from './routes/missions'
 import { Route as ExpensesRouteImport } from './routes/expenses'
+import { Route as EventsRouteImport } from './routes/events'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as MissionsMissionIdRouteImport } from './routes/missions.$missionId'
 
@@ -30,6 +31,11 @@ const ExpensesRoute = ExpensesRouteImport.update({
   path: '/expenses',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EventsRoute = EventsRouteImport.update({
+  id: '/events',
+  path: '/events',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -43,6 +49,7 @@ const MissionsMissionIdRoute = MissionsMissionIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/events': typeof EventsRoute
   '/expenses': typeof ExpensesRoute
   '/missions': typeof MissionsRouteWithChildren
   '/routine': typeof RoutineRoute
@@ -50,6 +57,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/events': typeof EventsRoute
   '/expenses': typeof ExpensesRoute
   '/missions': typeof MissionsRouteWithChildren
   '/routine': typeof RoutineRoute
@@ -58,6 +66,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/events': typeof EventsRoute
   '/expenses': typeof ExpensesRoute
   '/missions': typeof MissionsRouteWithChildren
   '/routine': typeof RoutineRoute
@@ -67,15 +76,23 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/events'
     | '/expenses'
     | '/missions'
     | '/routine'
     | '/missions/$missionId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/expenses' | '/missions' | '/routine' | '/missions/$missionId'
+  to:
+    | '/'
+    | '/events'
+    | '/expenses'
+    | '/missions'
+    | '/routine'
+    | '/missions/$missionId'
   id:
     | '__root__'
     | '/'
+    | '/events'
     | '/expenses'
     | '/missions'
     | '/routine'
@@ -84,6 +101,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  EventsRoute: typeof EventsRoute
   ExpensesRoute: typeof ExpensesRoute
   MissionsRoute: typeof MissionsRouteWithChildren
   RoutineRoute: typeof RoutineRoute
@@ -110,6 +128,13 @@ declare module '@tanstack/react-router' {
       path: '/expenses'
       fullPath: '/expenses'
       preLoaderRoute: typeof ExpensesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/events': {
+      id: '/events'
+      path: '/events'
+      fullPath: '/events'
+      preLoaderRoute: typeof EventsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -143,6 +168,7 @@ const MissionsRouteWithChildren = MissionsRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  EventsRoute: EventsRoute,
   ExpensesRoute: ExpensesRoute,
   MissionsRoute: MissionsRouteWithChildren,
   RoutineRoute: RoutineRoute,
