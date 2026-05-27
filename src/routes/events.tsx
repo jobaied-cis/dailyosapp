@@ -59,6 +59,12 @@ function EventsPage() {
   const [priority, setPriority] = useState<EventPriority>("Medium");
   const [notes, setNotes] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [tick, setTick] = useState(0);
+
+  useEffect(() => {
+    const id = setInterval(() => setTick((t) => t + 1), 60000);
+    return () => clearInterval(id);
+  }, []);
 
   const resetForm = () => {
     setTitle("");
