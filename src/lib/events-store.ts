@@ -156,3 +156,29 @@ export function toggleEventCompletion(id: string) {
     )
   );
 }
+
+export function updateEvent(id: string, input: {
+  title: string;
+  date: string;
+  time: string;
+  type: EventType;
+  priority: EventPriority;
+  notes: string;
+}) {
+  ensureInit();
+  persist(
+    cache.map((e) =>
+      e.id === id
+        ? {
+            ...e,
+            title: input.title.trim(),
+            date: input.date,
+            time: input.time,
+            type: input.type,
+            priority: input.priority,
+            notes: input.notes.trim(),
+          }
+        : e
+    )
+  );
+}

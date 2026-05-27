@@ -1,9 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { useEvents, addEvent, deleteEvent, toggleEventCompletion, getEventStatus } from "@/lib/events-store";
+import { useEvents, addEvent, deleteEvent, toggleEventCompletion, updateEvent, getEventStatus } from "@/lib/events-store";
 import type { EventType, EventPriority } from "@/lib/events-store";
 import { Checkbox } from "@/components/ui/checkbox";
-import { CalendarDays, Clock, Plus, Trash2, Calendar } from "lucide-react";
+import { CalendarDays, Clock, Plus, Trash2, Calendar, Pencil } from "lucide-react";
 
 export const Route = createFileRoute("/events")({
   head: () => ({
@@ -41,17 +41,45 @@ function EventsPage() {
   const [type, setType] = useState<EventType>("Other");
   const [priority, setPriority] = useState<EventPriority>("Medium");
   const [notes, setNotes] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
 
-  const handleAdd = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!title.trim() || !date || !time) return;
-    addEvent({ title: title.trim(), date, time, type, priority, notes });
+  const resetForm = () => {
     setTitle("");
     setDate("");
     setTime("");
     setType("Other");
     setPriority("Medium");
     setNotes("");
+    setEditingId(null);
+  };
+
+  const handleAdd = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!title.trim() || !date || !time) return;
+    addEvent({ title: title.trim(), date, time, type, priority, notes });
+    resetForm();
+  };
+
+  const handleEdit = (evt: import("@/lib/events-store").EventItem) => {
+    setTitle(evt.title);
+    setDate(evt.date);
+    setTime(evt.time);
+    setType(evt.type);
+    setPriority(evt.priority);
+    setNotes(evt.notes);
+    setEditingId(evt.id);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleUpdate = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingId || !title.trim() || !date || !time) return;
+    updateEvent(editingId, { title: title.trim(), date, time, type, priority, notes });
+    resetForm();
+  };
+
+  const handleCancel = () => {
+    resetForm();
   };
 
   const now = Date.now();
@@ -69,15 +97,15 @@ function EventsPage() {
         </div>
       </div>
 
-      {/* Add Event Form */}
+      {/* Add/Edit Event Form */}
       <form
-        onSubmit={handleAdd}
+        onSubmit={editingId ? handleUpdate : handleAdd}
         className="bg-card border border-border/60 rounded-[1.25rem] p-4 shadow-[0_2px_12px_-4px_rgba(15,23,42,0.06)] space-y-3"
       >
         <div className="flex items-center gap-2">
           <Plus className="size-4 text-muted-foreground" />
           <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
-            Add Event
+            {editingId ? "Edit Event" : "Add Event"}
           </p>
         </div>
 
@@ -143,13 +171,24 @@ function EventsPage() {
           className="w-full bg-secondary rounded-xl px-3 py-2.5 text-foreground outline-none focus:ring-2 focus:ring-primary/30 placeholder:text-muted-foreground/60 font-medium text-sm resize-none"
         />
 
-        <button
-          type="submit"
-          disabled={!title.trim() || !date || !time}
-          className="press w-full bg-primary text-primary-foreground rounded-2xl py-3 font-semibold shadow-[0_4px_16px_-4px_rgba(37,99,235,0.35)] disabled:opacity-40 disabled:shadow-none"
-        >
-          Add Event
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            type="submit"
+            disabled={!title.trim() || !date || !time}
+            className="press flex-1 bg-primary text-primary-foreground rounded-2xl py-3 font-semibold shadow-[0_4px_16px_-4px_rgba(37,99,235,0.35)] disabled:opacity-40 disabled:shadow-none"
+          >
+            {editingId ? "Update Event" : "Add Event"}
+          </button>
+          {editingId && (
+            <button
+              type="button"
+              onClick={handleCancel}
+              className="press px-5 py-3 rounded-2xl font-semibold text-muted-foreground bg-secondary hover:bg-secondary/80"
+            >
+              Cancel
+            </button>
+          )}
+        </div>
       </form>
 
       {/* Event List */}
@@ -226,13 +265,22 @@ function EventsPage() {
                     )}
                   </div>
                 </div>
-                <button
-                  onClick={() => deleteEvent(evt.id)}
-                  aria-label="Delete event"
-                  className="press p-2 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                >
-                  <Trash2 className="size-4" />
-                </button>
+                <div className="flex items-center gap-1 shrink-0">
+                  <button
+                    onClick={() => handleEdit(evt)}
+                    aria-label="Edit event"
+                    className="press p-2 rounded-xl text-muted-foreground hover:text-primary hover:bg-primary/10"
+                  >
+                    <Pencil className="size-4" />
+                  </button>
+                  <button
+                    onClick={() => deleteEvent(evt.id)}
+                    aria-label="Delete event"
+                    className="press p-2 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                  >
+                    <Trash2 className="size-4" />
+                  </button>
+                </div>
               </div>
             );
           })
