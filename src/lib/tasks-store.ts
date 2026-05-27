@@ -3,6 +3,7 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 export interface Task {
   id: string;
   time: string; // "HH:MM"
+  endTime?: string; // "HH:MM" optional
   title: string;
   note?: string;
   completed: boolean;
@@ -78,11 +79,12 @@ export function toggleTask(id: string) {
   persist(cache.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t)));
 }
 
-export function addTask(input: { time: string; title: string; note?: string }) {
+export function addTask(input: { time: string; endTime?: string; title: string; note?: string }) {
   ensureInit();
   const task: Task = {
     id: crypto.randomUUID(),
     time: input.time,
+    endTime: input.endTime || undefined,
     title: input.title.trim(),
     note: input.note?.trim() || undefined,
     completed: false,

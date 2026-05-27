@@ -8,6 +8,19 @@ function toMinutes(hhmm: string): number {
   return (h || 0) * 60 + (m || 0);
 }
 
+function getTaskEndMinutes(t: Task): number {
+  if (t.endTime) return toMinutes(t.endTime);
+  return toMinutes(t.time) + 30;
+}
+
+function formatGap(minutes: number): string {
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  if (h > 0 && m > 0) return `${h}h ${m}m free`;
+  if (h > 0) return `${h}h free`;
+  return `${m} min free`;
+}
+
 
 export const Route = createFileRoute("/routine")({
   head: () => ({
@@ -170,10 +183,23 @@ function RoutinePage() {
                       aria-label="Delete task"
                       className="press text-muted-foreground/40 hover:text-destructive p-1.5 rounded-full hover:bg-destructive/5"
                     >
-                      <Trash2 className="size-4" />
-                    </button>
-                  </li>
-                </Fragment>
+                    <Trash2 className="size-4" />
+                  </button>
+                </li>
+                {i < tasks.length - 1 && (() => {
+                  const currentEnd = getTaskEndMinutes(t);
+                  const nextStart = toMinutes(tasks[i + 1].time);
+                  const gapMin = nextStart - currentEnd;
+                  if (gapMin <= 15) return null;
+                  return (
+                    <li className="flex items-center gap-2 text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground/50 px-1 select-none py-1">
+                      <span className="flex-1 h-px bg-border/30" />
+                      {formatGap(gapMin)}
+                      <span className="flex-1 h-px bg-border/30" />
+                    </li>
+                  );
+                })()}
+              </Fragment>
               );
             })}
           </Fragment>
@@ -221,13 +247,14 @@ function encouragement(pct: number): string {
 
 function AddTaskSheet({ onClose }: { onClose: () => void }) {
   const [time, setTime] = useState("08:00");
+  const [endTime, setEndTime] = useState("");
   const [title, setTitle] = useState("");
   const [note, setNote] = useState("");
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) return;
-    addTask({ time, title, note });
+    addTask({ time, endTime: endTime || undefined, title, note });
     onClose();
   };
 
@@ -246,6 +273,14 @@ function AddTaskSheet({ onClose }: { onClose: () => void }) {
               type="time"
               value={time}
               onChange={(e) => setTime(e.target.value)}
+              className="w-full bg-secondary rounded-xl px-4 py-3.5 text-foreground outline-none focus:ring-2 focus:ring-primary/30 font-medium"
+            />
+          </Field>
+          <Field label="End time (optional)">
+            <input
+              type="time"
+              value={endTime}
+              onChange={(e) => setEndTime(e.target.value)}
               className="w-full bg-secondary rounded-xl px-4 py-3.5 text-foreground outline-none focus:ring-2 focus:ring-primary/30 font-medium"
             />
           </Field>
