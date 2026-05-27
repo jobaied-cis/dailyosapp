@@ -40,16 +40,18 @@ function EventsPage() {
   const [time, setTime] = useState("");
   const [type, setType] = useState<EventType>("Other");
   const [priority, setPriority] = useState<EventPriority>("Medium");
+  const [notes, setNotes] = useState("");
 
   const handleAdd = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !date || !time) return;
-    addEvent({ title: title.trim(), date, time, type, priority });
+    addEvent({ title: title.trim(), date, time, type, priority, notes });
     setTitle("");
     setDate("");
     setTime("");
     setType("Other");
     setPriority("Medium");
+    setNotes("");
   };
 
   const now = Date.now();
