@@ -26,26 +26,28 @@ function RoutinePage() {
   const done = tasks.filter((t) => t.completed).length;
   const pct = total ? (done / total) * 100 : 0;
 
-  // Real-time clock — re-render every 30s
-  const [now, setNow] = useState(() => new Date());
+  // Real-time clock — client-only to avoid SSR hydration mismatch
+  const [now, setNow] = useState<Date | null>(null);
   useEffect(() => {
+    setNow(new Date());
     const id = setInterval(() => setNow(new Date()), 30_000);
     return () => clearInterval(id);
   }, []);
-  const nowMin = now.getHours() * 60 + now.getMinutes();
+  const nowMin = now ? now.getHours() * 60 + now.getMinutes() : -1;
 
-  // Compute per-task time intelligence
+  // Compute per-task time intelligence (inactive until clock is set)
   const taskMeta = tasks.map((t, i) => {
     const start = toMinutes(t.time);
     const end = i < tasks.length - 1 ? toMinutes(tasks[i + 1].time) : 24 * 60;
-    const isActive = !t.completed && nowMin >= start && nowMin < end;
-    const isMissed = !t.completed && nowMin >= end;
+    const isActive = now !== null && !t.completed && nowMin >= start && nowMin < end;
+    const isMissed = now !== null && !t.completed && nowMin >= end;
     return { start, end, isActive, isMissed };
   });
 
-  // Index where "You are here" divider should appear (before first task whose start > now)
-  let hereIndex = tasks.findIndex((t) => toMinutes(t.time) > nowMin);
-  if (hereIndex === -1 && tasks.length > 0 && nowMin < toMinutes(tasks[0].time)) hereIndex = 0;
+  // Index where "You are here" divider should appear (only after clock is set)
+  let hereIndex = now === null ? -2 : tasks.findIndex((t) => toMinutes(t.time) > nowMin);
+  if (now !== null && hereIndex === -1 && tasks.length > 0 && nowMin < toMinutes(tasks[0].time)) hereIndex = 0;
+
 
   return (
     <div className="space-y-6">
