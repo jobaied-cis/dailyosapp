@@ -48,6 +48,28 @@ function RoutinePage() {
   let hereIndex = now === null ? -2 : tasks.findIndex((t) => toMinutes(t.time) > nowMin);
   if (now !== null && hereIndex === -1 && tasks.length > 0 && nowMin < toMinutes(tasks[0].time)) hereIndex = 0;
 
+  // Group sorted tasks into time sections
+  type SectionItem = { label: string; icon: string; tasks: Task[]; originalIndices: number[] };
+  const sections: SectionItem[] = [];
+  let current: SectionItem | null = null;
+
+  for (let i = 0; i < tasks.length; i++) {
+    const t = tasks[i];
+    const m = toMinutes(t.time);
+    let label: string;
+    let icon: string;
+    if (m >= 300 && m < 720) { label = "Morning"; icon = "\u{1F305}"; }
+    else if (m >= 720 && m < 1020) { label = "Afternoon"; icon = "\u2600\uFE0F"; }
+    else if (m >= 1020 && m < 1260) { label = "Evening"; icon = "\u{1F306}"; }
+    else { label = "Night"; icon = "\u{1F319}"; }
+
+    if (!current || current.label !== label) {
+      current = { label, icon, tasks: [], originalIndices: [] };
+      sections.push(current);
+    }
+    current.tasks.push(t);
+    current.originalIndices.push(i);
+  }
 
   return (
     <div className="space-y-6">
