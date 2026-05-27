@@ -290,22 +290,25 @@ function AddTaskSheet({ onClose }: { onClose: () => void }) {
           </button>
         </div>
         <form onSubmit={submit} className="space-y-4">
-          <Field label="Time">
-            <input
-              type="time"
-              value={time}
-              onChange={(e) => setTime(e.target.value)}
-              className="w-full bg-secondary rounded-xl px-4 py-3.5 text-foreground outline-none focus:ring-2 focus:ring-primary/30 font-medium"
-            />
-          </Field>
-          <Field label="End time (optional)">
-            <input
-              type="time"
-              value={endTime}
-              onChange={(e) => setEndTime(e.target.value)}
-              className="w-full bg-secondary rounded-xl px-4 py-3.5 text-foreground outline-none focus:ring-2 focus:ring-primary/30 font-medium"
-            />
-          </Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Start">
+              <input
+                type="time"
+                value={time}
+                onChange={(e) => setTime(e.target.value)}
+                className="w-full bg-secondary rounded-xl px-4 py-3.5 text-foreground outline-none focus:ring-2 focus:ring-primary/30 font-medium"
+              />
+            </Field>
+            <Field label="End">
+              <input
+                type="time"
+                value={endTime}
+                onChange={(e) => setEndTime(e.target.value)}
+                className="w-full bg-secondary rounded-xl px-4 py-3.5 text-foreground outline-none focus:ring-2 focus:ring-primary/30 font-medium"
+              />
+            </Field>
+          </div>
+
           <Field label="Title">
             <input
               autoFocus
