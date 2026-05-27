@@ -3,6 +3,7 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 export interface Task {
   id: string;
   time: string; // "HH:MM"
+  endTime?: string; // "HH:MM" optional
   title: string;
   note?: string;
   completed: boolean;
