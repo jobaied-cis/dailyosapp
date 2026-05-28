@@ -241,6 +241,30 @@ function Dashboard() {
             <p className="text-sm text-muted-foreground mt-1">
               Day {currentDay} — {formatDayDate(mission.startDate, currentDay)}
             </p>
+            {(() => {
+              const { total, done, pct } = missionProgress(mission);
+              const daysLeft = Math.max(0, mission.days - currentDay);
+              const motivation =
+                pct === 100 ? "Completed 🎉" :
+                pct >= 70 ? "Almost done 🔥" :
+                pct >= 30 ? "Keep going 💪" :
+                "Let's begin 🚀";
+              return (
+                <div className="mt-3 space-y-1.5">
+                  <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-primary rounded-full transition-all"
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-foreground">{pct}% complete</span>
+                    <span className="text-xs text-muted-foreground">{daysLeft} days left</span>
+                  </div>
+                  <p className="text-xs font-semibold text-primary">{motivation}</p>
+                </div>
+              );
+            })()}
           </Link>
         ) : (
           <p className="text-sm text-muted-foreground">No active mission</p>
