@@ -83,17 +83,6 @@ function Dashboard() {
   const eventCount = todaysEvents.length;
   const hasHighPriorityToday = todaysEvents.some((e) => e.priority === "High");
 
-  let eventMessage = "";
-  if (eventCount === 0) {
-    eventMessage = "No events today. Relax 😌";
-  } else if (eventCount <= 2) {
-    eventMessage = `You have ${eventCount} event${eventCount > 1 ? "s" : ""} today`;
-  } else {
-    eventMessage = `Busy day! You have ${eventCount} events today 🔥`;
-  }
-  const reminderText = hasHighPriorityToday && eventCount > 0
-    ? `Important event today ⚠️ • ${eventMessage}`
-    : eventMessage;
 
   const mission = pickTodaysMission(missions);
   const currentDay = mission ? currentDayFor(mission) : 0;
@@ -209,17 +198,11 @@ function Dashboard() {
         )}
       </section>
 
-      {/* Event Reminder */}
-      <p className="text-xs font-semibold text-muted-foreground text-center">
-        {reminderText}
-      </p>
-
-      {/* Today's Events */}
 
       <section className="bg-card border border-border/60 rounded-[1.5rem] p-5 shadow-[0_4px_20px_-8px_rgba(15,23,42,0.06)]">
         <div className="flex items-center justify-between mb-3">
           <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-primary flex items-center gap-1.5">
-            <CalendarDays className="size-3.5" /> Today's Events
+            <CalendarDays className="size-3.5" /> TODAY'S EVENTS ({eventCount})
           </span>
           <Link to="/events" className="text-xs font-semibold text-muted-foreground hover:text-foreground">
             All
@@ -313,6 +296,28 @@ function Dashboard() {
               <CalendarDays className="size-3.5 text-primary/70" /> Month
             </span>
             <span className="text-sm font-bold text-foreground">{monthExpense.toLocaleString()}৳</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground flex items-center gap-1.5">
+              <Target className="size-3.5 text-primary/70" /> Daily Target
+            </span>
+            <span className="text-sm font-bold text-foreground">
+              {dailyLimit > 0 ? `${dailyLimit.toLocaleString()}৳` : "Not set"}
+            </span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground flex items-center gap-1.5">
+              <TrendingDown className="size-3.5 text-primary/70" /> Spent Today
+            </span>
+            <span className="text-sm font-bold text-foreground">{todayExpense.toLocaleString()}৳</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-muted-foreground flex items-center gap-1.5">
+              <Wallet className="size-3.5 text-primary/70" /> Remaining
+            </span>
+            <span className={`text-sm font-bold ${dailyLimit > 0 && dailyLimit - todayExpense < 0 ? "text-destructive" : "text-foreground"}`}>
+              {dailyLimit > 0 ? `${(dailyLimit - todayExpense).toLocaleString()}৳` : "—"}
+            </span>
           </div>
         </div>
       </section>
