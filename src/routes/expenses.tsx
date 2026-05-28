@@ -179,7 +179,7 @@ function ExpensesPage() {
               Income
             </p>
             <p className="text-lg font-bold text-emerald-600 mt-0.5">
-              +${totalIncome.toFixed(2)}
+              +{formatTaka(totalIncome, taka)}
             </p>
           </div>
           <div className="bg-secondary/60 rounded-2xl p-3">
@@ -187,7 +187,7 @@ function ExpensesPage() {
               Expense
             </p>
             <p className="text-lg font-bold text-destructive mt-0.5">
-              -${totalExpense.toFixed(2)}
+              -{formatTaka(totalExpense, taka)}
             </p>
           </div>
         </div>
@@ -224,7 +224,7 @@ function ExpensesPage() {
             }}
             className="flex items-center gap-2"
           >
-            <span className="text-sm text-muted-foreground font-semibold">$</span>
+            <span className="text-sm text-muted-foreground font-semibold">{taka}</span>
             <input
               name="limit"
               type="number"
@@ -261,7 +261,7 @@ function ExpensesPage() {
                     Today's spend
                   </p>
                   <p className={`text-sm font-extrabold ${limitExceeded ? "text-destructive" : "text-emerald-600"}`}>
-                    ${todayExpense.toFixed(0)} / ${dailyLimit.toFixed(0)}
+                    {formatTaka(todayExpense, taka)} / {formatTaka(dailyLimit, taka)}
                   </p>
                 </div>
                 <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
@@ -375,17 +375,17 @@ function DayGroupedHistory({
               onClick={() => setCollapsed((c) => ({ ...c, [key]: !(c[key] !== undefined ? !c[key] : key === todayKey) }))}
               className="press w-full flex items-center justify-between p-4 text-left"
             >
-              <div>
-                <h3 className="font-bold text-foreground text-[0.95rem]">
-                  {formatDayLabel(key)}
-                </h3>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {items.length} {items.length === 1 ? "entry" : "entries"} · Total spent{" "}
-                  <span className="font-semibold text-destructive">
-                    ${dayExpense.toFixed(2)}
-                  </span>
-                </p>
-              </div>
+                <div>
+                  <h3 className="font-bold text-foreground text-[0.95rem]">
+                    {formatDayLabel(key)}
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {items.length} {items.length === 1 ? "entry" : "entries"} · Total spent{" "}
+                    <span className="font-semibold text-destructive">
+                      {formatTaka(dayExpense, taka)}
+                    </span>
+                  </p>
+                </div>
               <ChevronDown
                 className={`size-5 text-muted-foreground shrink-0 transition-transform duration-200 ${
                   isOpen ? "rotate-180" : ""
@@ -429,7 +429,7 @@ function DayGroupedHistory({
                               isIncome ? "text-emerald-600" : "text-destructive"
                             }`}
                           >
-                            {isIncome ? "+" : "-"}${e.amount.toFixed(2)}
+                            {isIncome ? "+" : "-"}{formatTaka(e.amount, taka)}
                           </p>
                         </div>
                       </div>
