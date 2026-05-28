@@ -31,6 +31,6 @@ export function useTakaSymbol(): string {
 }
 
 export function formatTaka(n: number, symbol: string): string {
-  const value = n.toLocaleString();
+  const value = Math.round(Math.abs(n)).toLocaleString("en-US");
   return symbol === "BDT" ? `${value} BDT` : `${value}${symbol}`;
 }
