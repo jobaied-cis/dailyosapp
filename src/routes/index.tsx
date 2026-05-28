@@ -143,37 +143,53 @@ function Dashboard() {
         )}
       </div>
 
-      <section className="bg-card border border-border/60 rounded-[1.75rem] p-6 shadow-[0_8px_32px_-12px_rgba(15,23,42,0.08)] flex flex-col items-center">
-        <h2 className="font-bold text-foreground text-lg tracking-tight mb-4">Today's Routine Progress</h2>
-        <ProgressRing value={total ? done / total : 0}>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-foreground">{Math.round(pct)}%</div>
-            <div className="text-xs font-mono text-muted-foreground mt-1">{done}/{total}</div>
+      <section className="bg-card border border-border/60 rounded-[1.75rem] p-5 shadow-[0_8px_32px_-12px_rgba(15,23,42,0.08)]">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-bold text-foreground text-base tracking-tight">Today's Routine</h2>
+          <span className="text-xs font-mono font-semibold text-muted-foreground">
+            {Math.round(pct)}% · {done}/{total} tasks
+          </span>
+        </div>
+        <div className="flex items-center gap-5">
+          <div className="shrink-0">
+            <ProgressRing value={total ? done / total : 0} size={88} stroke={8}>
+              <div className="text-center">
+                <div className="text-base font-bold text-foreground leading-none">{Math.round(pct)}%</div>
+                <div className="text-[10px] font-mono text-muted-foreground mt-0.5">{done}/{total}</div>
+              </div>
+            </ProgressRing>
           </div>
-        </ProgressRing>
+          <ul className="flex-1 min-w-0 space-y-1.5">
+            {total === 0 && (
+              <li className="text-sm text-muted-foreground">No tasks yet</li>
+            )}
+            {tasks.slice(0, 4).map((t) => {
+              const isCurrent = next && t.id === next.id;
+              return (
+                <li key={t.id} className="flex items-center gap-2 min-w-0">
+                  <span className="text-[10px] font-mono text-muted-foreground w-10 shrink-0">{t.time}</span>
+                  <span
+                    className={`text-sm truncate flex-1 ${
+                      t.completed
+                        ? "line-through text-muted-foreground/70"
+                        : isCurrent
+                        ? "font-semibold text-foreground"
+                        : "text-foreground/80"
+                    }`}
+                  >
+                    {t.title}
+                  </span>
+                  {isCurrent && (
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-primary bg-primary/10 px-1.5 py-0.5 rounded-full shrink-0">
+                      Now
+                    </span>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </div>
       </section>
-
-
-
-
-      {next && (
-        <Link
-          to="/routine"
-          className="press block bg-card border border-border/60 rounded-[1.5rem] p-5 shadow-[0_4px_20px_-8px_rgba(15,23,42,0.06)] hover:shadow-[0_8px_28px_-8px_rgba(15,23,42,0.1)]"
-        >
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-primary flex items-center gap-1.5">
-              <Flame className="size-3.5" /> Up next
-            </span>
-            <ArrowRight className="size-4 text-muted-foreground" />
-          </div>
-          <div className="flex items-baseline justify-between gap-3">
-            <h3 className="font-bold text-foreground text-[1.05rem]">{next.title}</h3>
-            <span className="text-sm font-mono font-medium text-muted-foreground">{next.time}</span>
-          </div>
-          {next.note && <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed">{next.note}</p>}
-        </Link>
-      )}
 
       {total === 0 && (
         <div className="bg-card border border-border/60 rounded-[1.5rem] p-8 shadow-[0_4px_20px_-8px_rgba(15,23,42,0.06)] text-center">
