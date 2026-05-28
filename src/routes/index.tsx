@@ -275,10 +275,15 @@ function Dashboard() {
                   const totalMin = Math.floor(diffMs / 60000);
                   const hrs = Math.floor(totalMin / 60);
                   const mins = totalMin % 60;
-                  countdown = hrs > 0 ? `⏳ ${hrs}h ${mins}m left` : `⏳ ${mins}m left`;
+                  countdown = hrs > 0 ? `Starts in ${hrs}h ${mins}m` : `Starts in ${mins}m`;
                 }
               }
               const isNext = nextUpcoming?.id === evt.id;
+              const typeIcon =
+                evt.type === "Exam" ? "🎓" :
+                evt.type === "Meeting" ? "💼" :
+                evt.type === "Class" ? "🧑‍🏫" :
+                "📌";
               return (
                 <div
                   key={evt.id}
@@ -289,15 +294,16 @@ function Dashboard() {
                   }`}
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="flex items-center gap-2.5 min-w-0">
                       <span className="text-xs font-mono font-medium text-muted-foreground shrink-0">
                         {timeStr}
                       </span>
+                      <span className="text-base shrink-0 leading-none">{typeIcon}</span>
                       <span className="text-sm font-semibold text-foreground truncate">
                         {evt.title}
                       </span>
                       {isNext && (
-                        <span className="text-[9px] font-bold uppercase tracking-wider text-primary bg-primary/15 px-1.5 py-0.5 rounded-full shrink-0">
+                        <span className="text-[10px] font-extrabold uppercase tracking-wider text-primary bg-primary/20 border border-primary/30 px-2 py-0.5 rounded-full shrink-0 shadow-sm">
                           NEXT 🔥
                         </span>
                       )}
