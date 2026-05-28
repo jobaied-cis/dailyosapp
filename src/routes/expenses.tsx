@@ -171,7 +171,7 @@ function ExpensesPage() {
             balance < 0 ? "text-destructive" : "text-foreground"
           }`}
         >
-          ${balance.toFixed(2)}
+          {formatTaka(balance, taka)}
         </p>
         <div className="grid grid-cols-2 gap-3 mt-5">
           <div className="bg-secondary/60 rounded-2xl p-3">
