@@ -144,7 +144,9 @@ function Dashboard() {
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-[1.35rem] font-bold text-foreground tracking-tight">{getGreeting()}</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">{done} tasks done · Keep going!</p>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            Today: {done} tasks · {eventCount} events · ৳{todayExpense.toLocaleString()} spent
+          </p>
           <p className="text-sm font-medium text-muted-foreground tracking-wide mt-1">{today}</p>
         </div>
         {streak > 0 && (
