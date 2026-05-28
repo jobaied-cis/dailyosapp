@@ -397,24 +397,41 @@ function Dashboard() {
             </span>
             <span className="text-sm font-bold text-foreground">{formatTaka(balance, taka)}</span>
           </div>
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground flex items-center gap-1.5">
-              <TrendingDown className="size-3.5 text-primary/70" /> Today
-            </span>
-            <span className="text-sm font-bold text-foreground flex items-center gap-1.5">
-              {dailyLimit > 0 ? (
-                <span>{todayExpense.toLocaleString()} / {formatTaka(dailyLimit, taka)}</span>
-              ) : (
-                <span>{formatTaka(todayExpense, taka)}</span>
-              )}
-              {limitExceeded && <AlertTriangle className="size-3.5 text-red-500" />}
-            </span>
-          </div>
-          {limitExceeded && (
-            <div className="flex items-center gap-1.5 text-xs font-semibold text-red-500">
-              <AlertTriangle className="size-3.5" /> Over limit
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <span className="text-sm text-muted-foreground flex items-center gap-1.5">
+                <TrendingDown className="size-3.5 text-primary/70" /> Today
+              </span>
+              <span className="text-sm font-bold text-foreground flex items-center gap-1.5">
+                {dailyLimit > 0 ? (
+                  <span>{todayExpense.toLocaleString()} / {formatTaka(dailyLimit, taka)}</span>
+                ) : (
+                  <span>{formatTaka(todayExpense, taka)}</span>
+                )}
+                {limitExceeded && <AlertTriangle className="size-3.5 text-red-500" />}
+              </span>
             </div>
-          )}
+            {dailyLimit > 0 && (
+              <div className="space-y-1">
+                <div className="h-2 bg-muted rounded-full overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all ${limitExceeded ? "bg-red-500" : "bg-primary"}`}
+                    style={{ width: `${Math.min((todayExpense / dailyLimit) * 100, 100)}%` }}
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className={`text-[10px] font-bold ${limitExceeded ? "text-red-500" : "text-muted-foreground"}`}>
+                    {Math.round((todayExpense / dailyLimit) * 100)}%
+                  </span>
+                  {limitExceeded && (
+                    <span className="text-[10px] font-bold text-red-500 flex items-center gap-1">
+                      <AlertTriangle className="size-3" /> Over limit
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground flex items-center gap-1.5">
               <CalendarDays className="size-3.5 text-primary/70" /> This Month
