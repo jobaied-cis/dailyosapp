@@ -124,9 +124,24 @@ function Dashboard() {
   const dailyLimit = getDailyLimit();
   const limitExceeded = dailyLimit > 0 && todayExpense > dailyLimit;
 
+  const allDone = total > 0 && done === total;
+  const endOfDayMissed = !allDone && new Date().getHours() >= 23;
+  const streak = useStreak(allDone, endOfDayMissed);
+
   return (
     <div className="space-y-6">
-      <p className="text-sm font-medium text-muted-foreground tracking-wide">{today}</p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-[1.35rem] font-bold text-foreground tracking-tight">{getGreeting()}</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">{done} tasks done · Keep going!</p>
+          <p className="text-sm font-medium text-muted-foreground tracking-wide mt-1">{today}</p>
+        </div>
+        {streak > 0 && (
+          <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 text-amber-600 px-2.5 py-1 text-[11px] font-bold border border-amber-500/20 shrink-0">
+            <Flame className="size-3.5" /> {streak} day streak
+          </span>
+        )}
+      </div>
 
       <section className="bg-card border border-border/60 rounded-[1.75rem] p-6 shadow-[0_8px_32px_-12px_rgba(15,23,42,0.08)] flex flex-col items-center">
         <h2 className="font-bold text-foreground text-lg tracking-tight mb-4">Today's Routine Progress</h2>
