@@ -63,6 +63,7 @@ export const Route = createFileRoute("/expenses")({
 
 function ExpensesPage() {
   const entries = useExpenses();
+  const taka = useTakaSymbol();
   const [openExpense, setOpenExpense] = useState(false);
   const [openIncome, setOpenIncome] = useState(false);
   const [editing, setEditing] = useState<Expense | null>(null);
