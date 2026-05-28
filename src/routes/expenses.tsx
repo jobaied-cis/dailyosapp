@@ -11,6 +11,7 @@ import {
   type Expense,
   type ExpenseCategory,
 } from "@/lib/expenses-store";
+import { useTakaSymbol, formatTaka } from "@/lib/currency";
 import { Plus, Trash2, Wallet, X, Pencil, ArrowDownCircle, ArrowUpCircle, ChevronDown, ChevronLeft, ChevronRight, History as HistoryIcon, ArrowLeft, AlertTriangle, Settings2 } from "lucide-react";
 
 function dayKey(ts: number) {
