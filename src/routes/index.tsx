@@ -418,9 +418,10 @@ function Dashboard() {
               <TrendingDown className="size-3.5 text-primary/70" /> Today
             </span>
             <span className="text-sm font-bold text-foreground flex items-center gap-1.5">
-              {todayExpense.toLocaleString()}৳
-              {dailyLimit > 0 && (
-                <span className="text-xs font-medium text-muted-foreground">/ {dailyLimit.toLocaleString()}৳</span>
+              {dailyLimit > 0 ? (
+                <span>{todayExpense.toLocaleString()} / {dailyLimit.toLocaleString()}৳</span>
+              ) : (
+                <span>{todayExpense.toLocaleString()}৳</span>
               )}
               {limitExceeded && <AlertTriangle className="size-3.5 text-red-500" />}
             </span>
@@ -432,27 +433,13 @@ function Dashboard() {
           )}
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground flex items-center gap-1.5">
-              <CalendarDays className="size-3.5 text-primary/70" /> Month
+              <CalendarDays className="size-3.5 text-primary/70" /> This Month
             </span>
             <span className="text-sm font-bold text-foreground">{monthExpense.toLocaleString()}৳</span>
           </div>
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground flex items-center gap-1.5">
-              <Target className="size-3.5 text-primary/70" /> Daily Target
-            </span>
-            <span className="text-sm font-bold text-foreground">
-              {dailyLimit > 0 ? `${dailyLimit.toLocaleString()}৳` : "Not set"}
-            </span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground flex items-center gap-1.5">
-              <TrendingDown className="size-3.5 text-primary/70" /> Spent Today
-            </span>
-            <span className="text-sm font-bold text-foreground">{todayExpense.toLocaleString()}৳</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground flex items-center gap-1.5">
-              <Wallet className="size-3.5 text-primary/70" /> Remaining
+              <Target className="size-3.5 text-primary/70" /> Remaining
             </span>
             <span className={`text-sm font-bold ${dailyLimit > 0 && dailyLimit - todayExpense < 0 ? "text-destructive" : "text-foreground"}`}>
               {dailyLimit > 0 ? `${(dailyLimit - todayExpense).toLocaleString()}৳` : "—"}
