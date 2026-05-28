@@ -230,21 +230,6 @@ function Dashboard() {
         Open today's routine <ArrowRight className="size-4" />
       </Link>
 
-      {/* Up next */}
-      {next && (
-        <section className="bg-card border border-border/60 rounded-[1.5rem] p-5 shadow-[0_4px_20px_-8px_rgba(15,23,42,0.06)]">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-primary flex items-center gap-1.5">
-              <Sunrise className="size-3.5" /> Up Next
-            </span>
-            <span className="text-[10px] font-mono text-muted-foreground">{next.time}</span>
-          </div>
-          <h3 className="font-bold text-foreground text-[1.05rem]">{next.title}</h3>
-          {next.note && (
-            <p className="text-sm text-muted-foreground mt-1 truncate">{next.note}</p>
-          )}
-        </section>
-      )}
 
       {/* Today's Mission (below Routine) */}
       <section className="bg-card border border-border/60 rounded-[1.5rem] p-5 shadow-[0_4px_20px_-8px_rgba(15,23,42,0.06)]">
