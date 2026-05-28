@@ -413,7 +413,7 @@ function Dashboard() {
             <span className="text-sm text-muted-foreground flex items-center gap-1.5">
               <Wallet className="size-3.5 text-primary/70" /> Balance
             </span>
-            <span className="text-sm font-bold text-foreground">{balance.toLocaleString()}৳</span>
+            <span className="text-sm font-bold text-foreground">{formatTaka(balance, taka)}</span>
           </div>
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground flex items-center gap-1.5">
@@ -421,9 +421,9 @@ function Dashboard() {
             </span>
             <span className="text-sm font-bold text-foreground flex items-center gap-1.5">
               {dailyLimit > 0 ? (
-                <span>{todayExpense.toLocaleString()} / {dailyLimit.toLocaleString()}৳</span>
+                <span>{todayExpense.toLocaleString()} / {formatTaka(dailyLimit, taka)}</span>
               ) : (
-                <span>{todayExpense.toLocaleString()}৳</span>
+                <span>{formatTaka(todayExpense, taka)}</span>
               )}
               {limitExceeded && <AlertTriangle className="size-3.5 text-red-500" />}
             </span>
@@ -437,14 +437,14 @@ function Dashboard() {
             <span className="text-sm text-muted-foreground flex items-center gap-1.5">
               <CalendarDays className="size-3.5 text-primary/70" /> This Month
             </span>
-            <span className="text-sm font-bold text-foreground">{monthExpense.toLocaleString()}৳</span>
+            <span className="text-sm font-bold text-foreground">{formatTaka(monthExpense, taka)}</span>
           </div>
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground flex items-center gap-1.5">
               <Target className="size-3.5 text-primary/70" /> Remaining
             </span>
             <span className={`text-sm font-bold ${dailyLimit > 0 && dailyLimit - todayExpense < 0 ? "text-destructive" : "text-foreground"}`}>
-              {dailyLimit > 0 ? `${(dailyLimit - todayExpense).toLocaleString()}৳` : "—"}
+              {dailyLimit > 0 ? formatTaka(dailyLimit - todayExpense, taka) : "—"}
             </span>
           </div>
         </div>
