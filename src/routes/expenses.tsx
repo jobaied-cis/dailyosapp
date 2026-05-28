@@ -11,6 +11,7 @@ import {
   type Expense,
   type ExpenseCategory,
 } from "@/lib/expenses-store";
+import { useTakaSymbol, formatTaka } from "@/lib/currency";
 import { Plus, Trash2, Wallet, X, Pencil, ArrowDownCircle, ArrowUpCircle, ChevronDown, ChevronLeft, ChevronRight, History as HistoryIcon, ArrowLeft, AlertTriangle, Settings2 } from "lucide-react";
 
 function dayKey(ts: number) {
@@ -62,6 +63,7 @@ export const Route = createFileRoute("/expenses")({
 
 function ExpensesPage() {
   const entries = useExpenses();
+  const taka = useTakaSymbol();
   const [openExpense, setOpenExpense] = useState(false);
   const [openIncome, setOpenIncome] = useState(false);
   const [editing, setEditing] = useState<Expense | null>(null);
@@ -169,7 +171,7 @@ function ExpensesPage() {
             balance < 0 ? "text-destructive" : "text-foreground"
           }`}
         >
-          ${balance.toFixed(2)}
+          {formatTaka(balance, taka)}
         </p>
         <div className="grid grid-cols-2 gap-3 mt-5">
           <div className="bg-secondary/60 rounded-2xl p-3">
@@ -177,7 +179,7 @@ function ExpensesPage() {
               Income
             </p>
             <p className="text-lg font-bold text-emerald-600 mt-0.5">
-              +${totalIncome.toFixed(2)}
+              +{formatTaka(totalIncome, taka)}
             </p>
           </div>
           <div className="bg-secondary/60 rounded-2xl p-3">
@@ -185,7 +187,7 @@ function ExpensesPage() {
               Expense
             </p>
             <p className="text-lg font-bold text-destructive mt-0.5">
-              -${totalExpense.toFixed(2)}
+              -{formatTaka(totalExpense, taka)}
             </p>
           </div>
         </div>
@@ -222,7 +224,7 @@ function ExpensesPage() {
             }}
             className="flex items-center gap-2"
           >
-            <span className="text-sm text-muted-foreground font-semibold">$</span>
+            <span className="text-sm text-muted-foreground font-semibold">{taka}</span>
             <input
               name="limit"
               type="number"
@@ -259,7 +261,7 @@ function ExpensesPage() {
                     Today's spend
                   </p>
                   <p className={`text-sm font-extrabold ${limitExceeded ? "text-destructive" : "text-emerald-600"}`}>
-                    ${todayExpense.toFixed(0)} / ${dailyLimit.toFixed(0)}
+                    {formatTaka(todayExpense, taka)} / {formatTaka(dailyLimit, taka)}
                   </p>
                 </div>
                 <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
@@ -328,6 +330,7 @@ function DayGroupedHistory({
   entries: Expense[];
   onEdit: (e: Expense) => void;
 }) {
+  const taka = useTakaSymbol();
   const todayKey = dayKey(Date.now());
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
 
@@ -373,17 +376,17 @@ function DayGroupedHistory({
               onClick={() => setCollapsed((c) => ({ ...c, [key]: !(c[key] !== undefined ? !c[key] : key === todayKey) }))}
               className="press w-full flex items-center justify-between p-4 text-left"
             >
-              <div>
-                <h3 className="font-bold text-foreground text-[0.95rem]">
-                  {formatDayLabel(key)}
-                </h3>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {items.length} {items.length === 1 ? "entry" : "entries"} · Total spent{" "}
-                  <span className="font-semibold text-destructive">
-                    ${dayExpense.toFixed(2)}
-                  </span>
-                </p>
-              </div>
+                <div>
+                  <h3 className="font-bold text-foreground text-[0.95rem]">
+                    {formatDayLabel(key)}
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {items.length} {items.length === 1 ? "entry" : "entries"} · Total spent{" "}
+                    <span className="font-semibold text-destructive">
+                      {formatTaka(dayExpense, taka)}
+                    </span>
+                  </p>
+                </div>
               <ChevronDown
                 className={`size-5 text-muted-foreground shrink-0 transition-transform duration-200 ${
                   isOpen ? "rotate-180" : ""
@@ -427,7 +430,7 @@ function DayGroupedHistory({
                               isIncome ? "text-emerald-600" : "text-destructive"
                             }`}
                           >
-                            {isIncome ? "+" : "-"}${e.amount.toFixed(2)}
+                            {isIncome ? "+" : "-"}{formatTaka(e.amount, taka)}
                           </p>
                         </div>
                       </div>
@@ -693,6 +696,7 @@ function MonthHistory({
   onBack: () => void;
   onSelect: (k: string) => void;
 }) {
+  const taka = useTakaSymbol();
   // Group entries by month
   const byMonth = new Map<string, Expense[]>();
   for (const e of entries) {
@@ -758,7 +762,7 @@ function MonthHistory({
                     balance < 0 ? "text-destructive" : "text-foreground"
                   }`}
                 >
-                  ${balance.toFixed(2)}
+                  {formatTaka(balance, taka)}
                 </p>
               </div>
               <div className="grid grid-cols-2 gap-2">
@@ -767,7 +771,7 @@ function MonthHistory({
                     Income
                   </p>
                   <p className="text-sm font-bold text-emerald-600 mt-0.5">
-                    +${income.toFixed(2)}
+                    +{formatTaka(income, taka)}
                   </p>
                 </div>
                 <div className="bg-secondary/60 rounded-xl p-2.5">
@@ -775,7 +779,7 @@ function MonthHistory({
                     Expense
                   </p>
                   <p className="text-sm font-bold text-destructive mt-0.5">
-                    -${expense.toFixed(2)}
+                    -{formatTaka(expense, taka)}
                   </p>
                 </div>
               </div>
