@@ -81,7 +81,6 @@ function Dashboard() {
   const showEvents = todaysEvents.slice(0, 3);
 
   const eventCount = todaysEvents.length;
-  const hasHighPriorityToday = todaysEvents.some((e) => e.priority === "High");
 
 
   const mission = pickTodaysMission(missions);
