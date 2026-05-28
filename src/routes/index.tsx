@@ -265,30 +265,63 @@ function Dashboard() {
               const ampm = hour >= 12 ? "PM" : "AM";
               const displayHour = hour % 12 || 12;
               const timeStr = `${displayHour}:${m} ${ampm}`;
+              const eventTs = new Date(`${evt.date}T${evt.time}`).getTime();
+              const diffMs = eventTs - nowTick;
+              let countdown = "";
+              if (!evt.completed) {
+                if (diffMs <= 0) {
+                  countdown = "Now / Past";
+                } else {
+                  const totalMin = Math.floor(diffMs / 60000);
+                  const hrs = Math.floor(totalMin / 60);
+                  const mins = totalMin % 60;
+                  countdown = hrs > 0 ? `⏳ ${hrs}h ${mins}m left` : `⏳ ${mins}m left`;
+                }
+              }
+              const isNext = nextUpcoming?.id === evt.id;
               return (
-                <div key={evt.id} className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <span className="text-xs font-mono font-medium text-muted-foreground shrink-0">
-                      {timeStr}
-                    </span>
-                    <span className="text-sm font-semibold text-foreground truncate">
-                      {evt.title}
-                    </span>
+                <div
+                  key={evt.id}
+                  className={`rounded-xl px-2.5 py-2 -mx-1 transition-colors ${
+                    isNext
+                      ? "border border-primary/40 bg-primary/5 shadow-[0_0_0_3px_rgba(37,99,235,0.08)]"
+                      : "border border-transparent"
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <span className="text-xs font-mono font-medium text-muted-foreground shrink-0">
+                        {timeStr}
+                      </span>
+                      <span className="text-sm font-semibold text-foreground truncate">
+                        {evt.title}
+                      </span>
+                      {isNext && (
+                        <span className="text-[9px] font-bold uppercase tracking-wider text-primary bg-primary/15 px-1.5 py-0.5 rounded-full shrink-0">
+                          NEXT 🔥
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <span className="inline-flex items-center rounded-md border px-1.5 py-0.5 text-[10px] font-semibold bg-secondary text-muted-foreground border-border/60">
+                        {evt.type}
+                      </span>
+                      <span className={`inline-flex items-center rounded-md border px-1.5 py-0.5 text-[10px] font-bold ${
+                        evt.priority === "High"
+                          ? "bg-red-500/15 text-red-600 border-red-500/30"
+                          : evt.priority === "Medium"
+                          ? "bg-amber-500/20 text-amber-700 border-amber-500/30"
+                          : "bg-emerald-500/15 text-emerald-600 border-emerald-500/30"
+                      }`}>
+                        {evt.priority}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-1 shrink-0">
-                    <span className="inline-flex items-center rounded-md border px-1.5 py-0.5 text-[10px] font-semibold bg-secondary text-muted-foreground border-border/60">
-                      {evt.type}
-                    </span>
-                    <span className={`inline-flex items-center rounded-md border px-1.5 py-0.5 text-[10px] font-semibold ${
-                      evt.priority === "High"
-                        ? "bg-destructive/15 text-destructive border-destructive/20"
-                        : evt.priority === "Medium"
-                        ? "bg-amber-500/15 text-amber-600 border-amber-500/20"
-                        : "bg-muted text-muted-foreground border-border"
-                    }`}>
-                      {evt.priority}
-                    </span>
-                  </div>
+                  {countdown && (
+                    <p className={`text-[11px] font-medium mt-1 ml-[3.5rem] ${isNext ? "text-primary" : "text-muted-foreground"}`}>
+                      {countdown}
+                    </p>
+                  )}
                 </div>
               );
             })}
@@ -302,7 +335,10 @@ function Dashboard() {
             )}
           </div>
         ) : (
-          <p className="text-sm text-muted-foreground">No events today</p>
+          <div className="text-center py-2">
+            <p className="text-sm font-semibold text-foreground">No events today 😌</p>
+            <p className="text-xs text-muted-foreground mt-1">Relax or plan ahead</p>
+          </div>
         )}
       </section>
 
