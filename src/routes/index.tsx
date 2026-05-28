@@ -60,6 +60,13 @@ function formatDayDate(startDate: number, day: number) {
   return d.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
 }
 
+function getGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good morning, Akash👋";
+  if (hour < 18) return "Good afternoon, Akash👋";
+  return "Good evening, Akash👋";
+}
+
 function Dashboard() {
   const tasks = useTasks();
   const missions = useMissions();
