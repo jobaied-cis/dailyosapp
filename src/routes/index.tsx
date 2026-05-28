@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { useExpenses, getDailyLimit } from "@/lib/expenses-store";
 import { useStreak } from "@/lib/streak-store";
+import { useTakaSymbol, formatTaka } from "@/lib/currency";
 
 export const Route = createFileRoute("/")({
   head: () => ({
