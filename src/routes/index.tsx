@@ -403,6 +403,9 @@ function Dashboard() {
             Details
           </Link>
         </div>
+        {expenses.length === 0 && (
+          <p className="text-sm text-muted-foreground mb-3">No expense yet 💸</p>
+        )}
         <div className="space-y-2.5">
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground flex items-center gap-1.5">
