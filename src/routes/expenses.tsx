@@ -330,6 +330,7 @@ function DayGroupedHistory({
   entries: Expense[];
   onEdit: (e: Expense) => void;
 }) {
+  const taka = useTakaSymbol();
   const todayKey = dayKey(Date.now());
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
 
@@ -695,6 +696,7 @@ function MonthHistory({
   onBack: () => void;
   onSelect: (k: string) => void;
 }) {
+  const taka = useTakaSymbol();
   // Group entries by month
   const byMonth = new Map<string, Expense[]>();
   for (const e of entries) {
