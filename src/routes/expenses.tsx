@@ -762,7 +762,7 @@ function MonthHistory({
                     balance < 0 ? "text-destructive" : "text-foreground"
                   }`}
                 >
-                  ${balance.toFixed(2)}
+                  {formatTaka(balance, taka)}
                 </p>
               </div>
               <div className="grid grid-cols-2 gap-2">
@@ -771,7 +771,7 @@ function MonthHistory({
                     Income
                   </p>
                   <p className="text-sm font-bold text-emerald-600 mt-0.5">
-                    +${income.toFixed(2)}
+                    +{formatTaka(income, taka)}
                   </p>
                 </div>
                 <div className="bg-secondary/60 rounded-xl p-2.5">
@@ -779,7 +779,7 @@ function MonthHistory({
                     Expense
                   </p>
                   <p className="text-sm font-bold text-destructive mt-0.5">
-                    -${expense.toFixed(2)}
+                    -{formatTaka(expense, taka)}
                   </p>
                 </div>
               </div>
