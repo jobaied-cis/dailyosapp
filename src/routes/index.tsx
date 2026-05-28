@@ -19,6 +19,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { useExpenses, getDailyLimit } from "@/lib/expenses-store";
+import { useStreak } from "@/lib/streak-store";
 
 export const Route = createFileRoute("/")({
   head: () => ({
