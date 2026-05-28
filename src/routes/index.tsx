@@ -204,7 +204,6 @@ function Dashboard() {
             })}
           </ul>
         </div>
-        <p className="text-[11px] text-muted-foreground/80 mt-3 text-center">Stay consistent 💪</p>
       </section>
 
       {total === 0 && (
@@ -275,7 +274,6 @@ function Dashboard() {
         ) : (
           <p className="text-sm text-muted-foreground">No active mission 🎯</p>
         )}
-        <p className="text-[11px] text-muted-foreground/80 mt-3 text-center">Build your future 🚀</p>
       </section>
 
 
@@ -377,7 +375,6 @@ function Dashboard() {
             <p className="text-xs text-muted-foreground mt-1">Relax or plan ahead</p>
           </div>
         )}
-        <p className="text-[11px] text-muted-foreground/80 mt-3 text-center">Don't miss this ⏰</p>
       </section>
 
       {/* Expense Summary */}
