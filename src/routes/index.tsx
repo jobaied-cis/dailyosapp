@@ -286,8 +286,9 @@ function Dashboard() {
             })()}
           </Link>
         ) : (
-          <p className="text-sm text-muted-foreground">No active mission</p>
+          <p className="text-sm text-muted-foreground">No active mission 🎯</p>
         )}
+        <p className="text-[11px] text-muted-foreground/80 mt-3 text-center">Build your future 🚀</p>
       </section>
 
 
