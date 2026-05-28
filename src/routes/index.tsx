@@ -390,6 +390,7 @@ function Dashboard() {
             <p className="text-xs text-muted-foreground mt-1">Relax or plan ahead</p>
           </div>
         )}
+        <p className="text-[11px] text-muted-foreground/80 mt-3 text-center">Don't miss this ⏰</p>
       </section>
 
       {/* Expense Summary */}
