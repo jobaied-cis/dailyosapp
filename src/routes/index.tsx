@@ -174,7 +174,7 @@ function Dashboard() {
           </div>
           <ul className="flex-1 min-w-0 space-y-1.5">
             {total === 0 && (
-              <li className="text-sm text-muted-foreground">No tasks yet</li>
+              <li className="text-sm text-muted-foreground">No routine today 😌</li>
             )}
             {tasks.slice(0, 4).map((t) => {
               const isCurrent = next && t.id === next.id;
