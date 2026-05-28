@@ -202,6 +202,7 @@ function Dashboard() {
             })}
           </ul>
         </div>
+        <p className="text-[11px] text-muted-foreground/80 mt-3 text-center">Stay consistent 💪</p>
       </section>
 
       {total === 0 && (
