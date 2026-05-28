@@ -82,6 +82,12 @@ function Dashboard() {
     day: "numeric",
   });
 
+  const [nowTick, setNowTick] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNowTick(Date.now()), 60_000);
+    return () => clearInterval(id);
+  }, []);
+
   const nowLocal = new Date();
   const todayStr = `${nowLocal.getFullYear()}-${String(nowLocal.getMonth() + 1).padStart(2, "0")}-${String(nowLocal.getDate()).padStart(2, "0")}`;
   const todaysEvents = events
@@ -90,6 +96,10 @@ function Dashboard() {
   const showEvents = todaysEvents.slice(0, 3);
 
   const eventCount = todaysEvents.length;
+  const nextUpcoming = todaysEvents.find((e) => {
+    if (e.completed) return false;
+    return new Date(`${e.date}T${e.time}`).getTime() > nowTick;
+  });
 
 
   const mission = pickTodaysMission(missions);
