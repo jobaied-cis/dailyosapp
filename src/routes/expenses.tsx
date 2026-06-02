@@ -43,10 +43,17 @@ function formatDayLabel(key: string) {
 }
 
 const CATEGORY_EMOJI: Record<ExpenseCategory, string> = {
-  Food: "🍔",
+  Food: "🍚",
   Transport: "🚌",
   Study: "📚",
   Others: "📦",
+};
+
+const CATEGORY_COLOR: Record<ExpenseCategory, string> = {
+  Food: "#22C55E",
+  Transport: "#3B82F6",
+  Study: "#F59E0B",
+  Others: "#6B7280",
 };
 
 const CATEGORIES: ExpenseCategory[] = ["Food", "Transport", "Study", "Others"];
@@ -400,55 +407,62 @@ function DayGroupedHistory({
                   return (
                     <li
                       key={e.id}
-                      className="group flex items-center justify-between bg-secondary/40 rounded-2xl p-3"
+                      className="group flex items-stretch bg-secondary/40 rounded-2xl overflow-hidden"
                     >
-                      <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <div
-                          className={`size-9 shrink-0 rounded-full flex items-center justify-center ${
-                            isIncome ? "bg-emerald-500/10" : "bg-destructive/10"
-                          }`}
-                        >
-                          {isIncome ? (
-                            <ArrowDownCircle className="size-5 text-emerald-600" />
-                          ) : (
-                            <ArrowUpCircle className="size-5 text-destructive" />
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <h4 className="font-semibold text-foreground text-[0.9rem] truncate">
-                              {e.title}
-                            </h4>
-                            {!isIncome && (
-                              <span className="shrink-0 inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
-                                {CATEGORY_EMOJI[e.category]} {e.category}
-                              </span>
-                            )}
-                          </div>
-                          <p
-                            className={`text-sm font-mono font-semibold mt-0.5 ${
-                              isIncome ? "text-emerald-600" : "text-destructive"
+                      <div
+                        className="w-[3px] shrink-0"
+                        style={{ backgroundColor: isIncome ? "#14B8A6" : CATEGORY_COLOR[e.category] }}
+                      />
+                      <div className="flex items-center justify-between flex-1 p-3 min-w-0">
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <div
+                            className={`size-9 shrink-0 rounded-full flex items-center justify-center ${
+                              isIncome ? "bg-emerald-500/10" : "bg-destructive/10"
                             }`}
                           >
-                            {isIncome ? "+" : "-"}{formatTaka(e.amount, taka)}
-                          </p>
+                            {isIncome ? (
+                              <ArrowDownCircle className="size-5 text-emerald-600" />
+                            ) : (
+                              <ArrowUpCircle className="size-5 text-destructive" />
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-semibold text-foreground text-[0.9rem] truncate">
+                                <span className="mr-1.5">{isIncome ? "💰" : CATEGORY_EMOJI[e.category]}</span>
+                                {e.title}
+                              </h4>
+                              {!isIncome && (
+                                <span className="shrink-0 inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+                                  {e.category}
+                                </span>
+                              )}
+                            </div>
+                            <p
+                              className={`text-sm font-mono font-semibold mt-0.5 ${
+                                isIncome ? "text-emerald-600" : "text-destructive"
+                              }`}
+                            >
+                              {isIncome ? "+" : "-"}{formatTaka(e.amount, taka)}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <button
-                          onClick={() => onEdit(e)}
-                          aria-label="Edit entry"
-                          className="press text-muted-foreground/40 hover:text-primary p-1.5 rounded-full hover:bg-primary/5"
-                        >
-                          <Pencil className="size-4" />
-                        </button>
-                        <button
-                          onClick={() => deleteExpense(e.id)}
-                          aria-label="Delete entry"
-                          className="press text-muted-foreground/40 hover:text-destructive p-1.5 rounded-full hover:bg-destructive/5"
-                        >
-                          <Trash2 className="size-4" />
-                        </button>
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => onEdit(e)}
+                            aria-label="Edit entry"
+                            className="press text-muted-foreground/40 hover:text-primary p-1.5 rounded-full hover:bg-primary/5"
+                          >
+                            <Pencil className="size-4" />
+                          </button>
+                          <button
+                            onClick={() => deleteExpense(e.id)}
+                            aria-label="Delete entry"
+                            className="press text-muted-foreground/40 hover:text-destructive p-1.5 rounded-full hover:bg-destructive/5"
+                          >
+                            <Trash2 className="size-4" />
+                          </button>
+                        </div>
                       </div>
                     </li>
                   );
