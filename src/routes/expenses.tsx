@@ -298,6 +298,9 @@ function ExpensesPage() {
         )}
       </section>
 
+      {/* Category Breakdown */}
+      <CategoryBreakdown entries={monthEntries} />
+
       {/* Action buttons */}
       <div className="grid grid-cols-2 gap-3">
         <button
