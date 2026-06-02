@@ -322,6 +322,13 @@ function ExpensesPage() {
       {/* Day-grouped history (filtered to selected month) */}
       <DayGroupedHistory entries={monthEntries} onEdit={setEditing} />
 
+      {/* Smart Insights */}
+      <SmartInsights
+        todayExpense={todayExpense}
+        dailyLimit={dailyLimit}
+        monthEntries={monthEntries}
+      />
+
       {openExpense && <AddExpenseSheet onClose={() => setOpenExpense(false)} />}
       {openIncome && <AddIncomeSheet onClose={() => setOpenIncome(false)} />}
       {editing && (
