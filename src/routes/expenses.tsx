@@ -43,10 +43,17 @@ function formatDayLabel(key: string) {
 }
 
 const CATEGORY_EMOJI: Record<ExpenseCategory, string> = {
-  Food: "🍔",
+  Food: "🍚",
   Transport: "🚌",
   Study: "📚",
   Others: "📦",
+};
+
+const CATEGORY_COLOR: Record<ExpenseCategory, string> = {
+  Food: "#22C55E",
+  Transport: "#3B82F6",
+  Study: "#F59E0B",
+  Others: "#6B7280",
 };
 
 const CATEGORIES: ExpenseCategory[] = ["Food", "Transport", "Study", "Others"];
