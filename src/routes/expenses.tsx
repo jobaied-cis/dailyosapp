@@ -12,7 +12,7 @@ import {
   type ExpenseCategory,
 } from "@/lib/expenses-store";
 import { useTakaSymbol, formatTaka } from "@/lib/currency";
-import { Plus, Trash2, Wallet, X, Pencil, ArrowDownCircle, ArrowUpCircle, ChevronDown, ChevronLeft, ChevronRight, History as HistoryIcon, ArrowLeft, AlertTriangle, Settings2 } from "lucide-react";
+import { Plus, Trash2, Wallet, X, Pencil, ArrowDownCircle, ArrowUpCircle, ChevronDown, ChevronLeft, ChevronRight, History as HistoryIcon, ArrowLeft, AlertTriangle, Settings2, Lightbulb } from "lucide-react";
 
 function dayKey(ts: number) {
   const d = new Date(ts);
@@ -322,6 +322,13 @@ function ExpensesPage() {
       {/* Day-grouped history (filtered to selected month) */}
       <DayGroupedHistory entries={monthEntries} onEdit={setEditing} />
 
+      {/* Smart Insights */}
+      <SmartInsights
+        todayExpense={todayExpense}
+        dailyLimit={dailyLimit}
+        monthEntries={monthEntries}
+      />
+
       {openExpense && <AddExpenseSheet onClose={() => setOpenExpense(false)} />}
       {openIncome && <AddIncomeSheet onClose={() => setOpenIncome(false)} />}
       {editing && (
@@ -527,6 +534,65 @@ function CategoryBreakdown({ entries }: { entries: Expense[] }) {
             </div>
           );
         })}
+      </div>
+    </section>
+  );
+}
+
+function SmartInsights({
+  todayExpense,
+  dailyLimit,
+  monthEntries,
+}: {
+  todayExpense: number;
+  dailyLimit: number;
+  monthEntries: Expense[];
+}) {
+  const insights: { icon: React.ReactNode; text: string; tone: "amber" | "neutral" }[] = [];
+
+  if (dailyLimit > 0 && todayExpense > dailyLimit) {
+    insights.push({
+      icon: <AlertTriangle className="size-4 text-amber-500" />,
+      text: "You exceeded today's limit",
+      tone: "amber",
+    });
+  }
+
+  const expenseEntries = monthEntries.filter((e) => e.type === "expense");
+  if (expenseEntries.length > 0) {
+    const totals: Record<string, number> = {};
+    for (const e of expenseEntries) {
+      totals[e.category] = (totals[e.category] || 0) + e.amount;
+    }
+    const topCat = Object.entries(totals).sort((a, b) => b[1] - a[1])[0];
+    if (topCat) {
+      insights.push({
+        icon: <Lightbulb className="size-4 text-amber-500" />,
+        text: `Top spending: ${topCat[0]}`,
+        tone: "amber",
+      });
+    }
+  }
+
+  if (insights.length === 0) return null;
+
+  return (
+    <section className="bg-card border border-border/60 rounded-[1.25rem] p-4 shadow-[0_2px_12px_-4px_rgba(15,23,42,0.06)]">
+      <h3 className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground mb-2.5">
+        Insights
+      </h3>
+      <div className="space-y-2">
+        {insights.map((insight, i) => (
+          <div
+            key={i}
+            className={`flex items-center gap-2.5 rounded-xl px-3 py-2.5 ${
+              insight.tone === "amber" ? "bg-amber-500/10" : "bg-secondary/60"
+            }`}
+          >
+            {insight.icon}
+            <span className="text-sm font-semibold text-foreground">{insight.text}</span>
+          </div>
+        ))}
       </div>
     </section>
   );
