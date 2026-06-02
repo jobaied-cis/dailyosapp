@@ -479,6 +479,59 @@ function DayGroupedHistory({
   );
 }
 
+function CategoryBreakdown({ entries }: { entries: Expense[] }) {
+  const taka = useTakaSymbol();
+  const expenseEntries = entries.filter((e) => e.type === "expense");
+  const totalExpense = expenseEntries.reduce((s, e) => s + e.amount, 0);
+
+  const categoryTotals: Record<ExpenseCategory, number> = {
+    Food: 0,
+    Transport: 0,
+    Study: 0,
+    Others: 0,
+  };
+  for (const e of expenseEntries) {
+    categoryTotals[e.category] += e.amount;
+  }
+
+  if (totalExpense === 0) return null;
+
+  return (
+    <section className="bg-card border border-border/60 rounded-[1.25rem] p-4 shadow-[0_2px_12px_-4px_rgba(15,23,42,0.06)]">
+      <h3 className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground mb-3">
+        Category Breakdown
+      </h3>
+      <div className="space-y-3">
+        {CATEGORIES.map((cat) => {
+          const amount = categoryTotals[cat];
+          if (amount <= 0) return null;
+          const percent = totalExpense > 0 ? (amount / totalExpense) * 100 : 0;
+          return (
+            <div key={cat}>
+              <div className="flex items-center justify-between mb-1.5">
+                <div className="flex items-center gap-2">
+                  <span className="text-base">{CATEGORY_EMOJI[cat]}</span>
+                  <span className="text-sm font-semibold text-foreground">{cat}</span>
+                </div>
+                <span className="text-sm font-bold text-foreground">{formatTaka(amount, taka)}</span>
+              </div>
+              <div className="h-[3px] w-full bg-secondary rounded-full overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all"
+                  style={{
+                    width: `${Math.min(percent, 100)}%`,
+                    backgroundColor: CATEGORY_COLOR[cat],
+                  }}
+                />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
 function CategorySelect({
   value,
   onChange,
