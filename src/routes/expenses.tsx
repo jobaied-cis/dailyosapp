@@ -329,7 +329,7 @@ function ExpensesPage() {
       <SmartInsights
         todayExpense={todayExpense}
         dailyLimit={dailyLimit}
-        monthEntries={monthEntries}
+        entries={entries}
       />
 
       {openExpense && <AddExpenseSheet onClose={() => setOpenExpense(false)} />}
