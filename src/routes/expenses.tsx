@@ -200,6 +200,24 @@ function ExpensesPage() {
         </div>
       </section>
 
+      {/* Action buttons */}
+      <div className="grid grid-cols-2 gap-3">
+        <button
+          onClick={() => setOpenIncome(true)}
+          className="press flex items-center justify-center gap-2 bg-emerald-600 text-white rounded-2xl py-3.5 font-semibold shadow-[0_4px_16px_-4px_rgba(5,150,105,0.35)]"
+        >
+          <ArrowDownCircle className="size-5" />
+          Add Money
+        </button>
+        <button
+          onClick={() => setOpenExpense(true)}
+          className="press flex items-center justify-center gap-2 bg-primary text-primary-foreground rounded-2xl py-3.5 font-semibold shadow-[0_4px_16px_-4px_rgba(37,99,235,0.35)]"
+        >
+          <ArrowUpCircle className="size-5" />
+          Add Expense
+        </button>
+      </div>
+
       {/* Daily spending limit */}
       <section className="bg-card border border-border/60 rounded-[1.25rem] p-4 shadow-[0_2px_12px_-4px_rgba(15,23,42,0.06)]">
         <div className="flex items-center justify-between mb-3">
@@ -303,25 +321,6 @@ function ExpensesPage() {
 
       {/* Weekly spending chart */}
       <WeeklyChart entries={entries} dailyLimit={dailyLimit} />
-
-
-      {/* Action buttons */}
-      <div className="grid grid-cols-2 gap-3">
-        <button
-          onClick={() => setOpenIncome(true)}
-          className="press flex items-center justify-center gap-2 bg-emerald-600 text-white rounded-2xl py-3.5 font-semibold shadow-[0_4px_16px_-4px_rgba(5,150,105,0.35)]"
-        >
-          <ArrowDownCircle className="size-5" />
-          Add Money
-        </button>
-        <button
-          onClick={() => setOpenExpense(true)}
-          className="press flex items-center justify-center gap-2 bg-primary text-primary-foreground rounded-2xl py-3.5 font-semibold shadow-[0_4px_16px_-4px_rgba(37,99,235,0.35)]"
-        >
-          <ArrowUpCircle className="size-5" />
-          Add Expense
-        </button>
-      </div>
 
       {/* Day-grouped history (filtered to selected month) */}
       <DayGroupedHistory entries={monthEntries} onEdit={setEditing} />
