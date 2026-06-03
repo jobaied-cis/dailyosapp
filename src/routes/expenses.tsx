@@ -301,6 +301,10 @@ function ExpensesPage() {
       {/* Category Breakdown */}
       <CategoryBreakdown entries={monthEntries} />
 
+      {/* Weekly spending chart */}
+      <WeeklyChart entries={entries} dailyLimit={dailyLimit} />
+
+
       {/* Action buttons */}
       <div className="grid grid-cols-2 gap-3">
         <button
@@ -486,7 +490,84 @@ function DayGroupedHistory({
   );
 }
 
+function WeeklyChart({ entries, dailyLimit }: { entries: Expense[]; dailyLimit: number }) {
+  const taka = useTakaSymbol();
+  const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+  const now = new Date();
+  // Monday as start of week
+  const dayIdx = (now.getDay() + 6) % 7; // 0 = Mon
+  const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - dayIdx);
+
+  const days = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i);
+    return { date: d, key: dayKey(d.getTime()) };
+  });
+
+  const totals = days.map(({ key }) =>
+    entries
+      .filter((e) => e.type === "expense" && dayKey(e.createdAt) === key)
+      .reduce((s, e) => s + e.amount, 0)
+  );
+
+  const maxSpend = Math.max(...totals, dailyLimit || 0, 1);
+  const todayStr = dayKey(now.getTime());
+
+  return (
+    <section className="bg-card border border-border/60 rounded-[1.25rem] p-4 shadow-[0_2px_12px_-4px_rgba(15,23,42,0.06)]">
+      <h3 className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground mb-3">
+        This Week
+      </h3>
+      <div className="space-y-2">
+        {days.map(({ key, date }, i) => {
+          const amount = totals[i];
+          const isFuture = date.getTime() > now.getTime() && key !== todayStr;
+          const isToday = key === todayStr;
+          const percent = isFuture ? 0 : (amount / maxSpend) * 100;
+          const exceeded = dailyLimit > 0 && amount > dailyLimit;
+          const barColor = isFuture
+            ? "transparent"
+            : isToday
+              ? exceeded
+                ? "#EF4444"
+                : "#22C55E"
+              : "#6B7280";
+          return (
+            <div key={key} className="flex items-center gap-3">
+              <span
+                className={`w-9 text-[11px] font-semibold ${
+                  isToday ? "text-foreground" : "text-muted-foreground"
+                }`}
+              >
+                {DAY_LABELS[i]}
+              </span>
+              <div className="flex-1 h-2 rounded-full bg-secondary/60 overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all"
+                  style={{
+                    width: `${Math.min(Math.max(percent, amount > 0 ? 4 : 0), 100)}%`,
+                    backgroundColor: barColor,
+                    opacity: isToday ? 1 : 0.75,
+                  }}
+                />
+              </div>
+              <span
+                className={`w-16 text-right text-[11px] tabular-nums ${
+                  isFuture ? "text-muted-foreground/40" : "text-muted-foreground"
+                }`}
+              >
+                {isFuture ? "—" : amount > 0 ? formatTaka(amount, taka) : "0"}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
 function CategoryBreakdown({ entries }: { entries: Expense[] }) {
+
   const taka = useTakaSymbol();
   const expenseEntries = entries.filter((e) => e.type === "expense");
   const totalExpense = expenseEntries.reduce((s, e) => s + e.amount, 0);
