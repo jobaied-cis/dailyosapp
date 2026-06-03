@@ -301,6 +301,10 @@ function ExpensesPage() {
       {/* Category Breakdown */}
       <CategoryBreakdown entries={monthEntries} />
 
+      {/* Weekly spending chart */}
+      <WeeklyChart entries={entries} dailyLimit={dailyLimit} />
+
+
       {/* Action buttons */}
       <div className="grid grid-cols-2 gap-3">
         <button
