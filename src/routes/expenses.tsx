@@ -12,6 +12,7 @@ import {
   type ExpenseCategory,
 } from "@/lib/expenses-store";
 import { useTakaSymbol, formatTaka } from "@/lib/currency";
+import { CurrencyTrigger } from "@/components/CurrencySheet";
 import { Plus, Trash2, Wallet, X, Pencil, ArrowDownCircle, ArrowUpCircle, ChevronDown, ChevronLeft, ChevronRight, History as HistoryIcon, ArrowLeft, AlertTriangle, Settings2, Lightbulb, TrendingUp, TrendingDown, Sparkles } from "lucide-react";
 
 function dayKey(ts: number) {
