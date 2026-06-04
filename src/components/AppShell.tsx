@@ -1,6 +1,7 @@
 import { Link, Outlet, useLocation } from "@tanstack/react-router";
 import { CalendarDays, Home, ListChecks, Moon, Sun, Target, Wallet } from "lucide-react";
 import { useTheme } from "@/lib/theme-store";
+import { useCurrency, setCurrency, TAKA } from "@/lib/currency";
 
 export function AppShell() {
   const { pathname } = useLocation();
