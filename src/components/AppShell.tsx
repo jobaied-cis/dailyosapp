@@ -72,6 +72,22 @@ function ThemeToggle() {
   );
 }
 
+function CurrencyToggle() {
+  const currency = useCurrency();
+  const next = currency === "BDT" ? "USD" : "BDT";
+  const label = currency === "BDT" ? TAKA : "$";
+  return (
+    <button
+      onClick={() => setCurrency(next)}
+      aria-label={`Switch currency to ${next}`}
+      title={`Currency: ${currency} — tap to switch`}
+      className="press inline-flex items-center justify-center size-10 rounded-full bg-secondary text-foreground hover:bg-secondary/80 font-bold text-base leading-none"
+    >
+      {label}
+    </button>
+  );
+}
+
 function NavItem({
   to,
   icon,
