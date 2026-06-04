@@ -30,7 +30,10 @@ export function AppShell() {
                 Your Life Operating System
               </span>
             </div>
-            <ThemeToggle />
+            <div className="flex items-center gap-2">
+              <CurrencyToggle />
+              <ThemeToggle />
+            </div>
           </div>
         </header>
 
