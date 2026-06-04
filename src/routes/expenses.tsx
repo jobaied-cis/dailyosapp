@@ -628,7 +628,7 @@ function SmartInsights({
   dailyLimit: number;
   entries: Expense[];
 }) {
-  const insights: { icon: React.ReactNode; text: string; accent: string }[] = [];
+  const insights: { icon: string; text: string; accent: string }[] = [];
 
   // A. Top category insight
   const expenseEntries = entries.filter((e) => e.type === "expense");
@@ -642,12 +642,7 @@ function SmartInsights({
     if (topCat) {
       const percent = Math.round((topCat[1] / totalExpense) * 100);
       insights.push({
-        icon: (
-          <Lightbulb
-            className="size-4"
-            style={{ color: CATEGORY_COLOR[topCat[0] as ExpenseCategory] }}
-          />
-        ),
+        icon: "💡",
         text: `Top spending: ${topCat[0]} (${percent}%)`,
         accent: "text-foreground",
       });
@@ -678,14 +673,14 @@ function SmartInsights({
     }
     if (exceededDays > 0) {
       insights.push({
-        icon: <AlertTriangle className="size-4 text-red-400" />,
-        text: `You exceeded limit ${exceededDays} day${exceededDays > 1 ? "s" : ""} this week`,
+        icon: "⚠️",
+        text: `Exceeded limit on ${exceededDays} day${exceededDays > 1 ? "s" : ""} this week`,
         accent: "text-red-400",
       });
     } else {
       insights.push({
-        icon: <ArrowDownCircle className="size-4 text-emerald-400" />,
-        text: "You're within limit this week",
+        icon: "⚠️",
+        text: "Within limit this week",
         accent: "text-emerald-400",
       });
     }
@@ -703,20 +698,18 @@ function SmartInsights({
   if (todayExpense > 0 || yesterdayExpense > 0) {
     if (todayExpense > yesterdayExpense) {
       insights.push({
-        icon: <TrendingUp className="size-4 text-red-400" />,
+        icon: "📉",
         text: "Spending increased compared to yesterday",
         accent: "text-red-400",
       });
     } else if (todayExpense < yesterdayExpense) {
       insights.push({
-        icon: <TrendingDown className="size-4 text-emerald-400" />,
-        text: "Good! Spending reduced from yesterday",
+        icon: "📉",
+        text: "Spending reduced from yesterday",
         accent: "text-emerald-400",
       });
     }
   }
-
-  if (insights.length === 0) return null;
 
   return (
     <section className="bg-gradient-to-br from-amber-500/15 to-amber-700/10 border border-amber-500/20 rounded-[1.25rem] p-4 shadow-[0_4px_24px_-8px_rgba(245,158,11,0.25)]">
@@ -724,19 +717,28 @@ function SmartInsights({
         <Sparkles className="size-3.5" />
         Insights
       </h3>
-      <div className="space-y-2">
-        {insights.map((insight, i) => (
-          <div
-            key={i}
-            className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 bg-black/20 backdrop-blur-sm"
-          >
-            {insight.icon}
-            <span className={`text-sm font-semibold ${insight.accent}`}>
-              {insight.text}
-            </span>
-          </div>
-        ))}
-      </div>
+      {insights.length === 0 ? (
+        <div className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 bg-black/20 backdrop-blur-sm">
+          <span className="text-sm">📊</span>
+          <span className="text-sm font-semibold text-amber-100/80">
+            No spending data yet — start tracking
+          </span>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {insights.map((insight, i) => (
+            <div
+              key={i}
+              className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 bg-black/20 backdrop-blur-sm"
+            >
+              <span className="text-sm">{insight.icon}</span>
+              <span className={`text-sm font-semibold ${insight.accent}`}>
+                {insight.text}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
     </section>
   );
 }
