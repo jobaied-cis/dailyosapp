@@ -1,6 +1,7 @@
 import { Link, Outlet, useLocation } from "@tanstack/react-router";
 import { CalendarDays, Home, ListChecks, Moon, Sun, Target, Wallet } from "lucide-react";
 import { useTheme } from "@/lib/theme-store";
+import { useCurrency, setCurrency, TAKA } from "@/lib/currency";
 
 export function AppShell() {
   const { pathname } = useLocation();
@@ -29,7 +30,10 @@ export function AppShell() {
                 Your Life Operating System
               </span>
             </div>
-            <ThemeToggle />
+            <div className="flex items-center gap-2">
+              <CurrencyToggle />
+              <ThemeToggle />
+            </div>
           </div>
         </header>
 
@@ -64,6 +68,22 @@ function ThemeToggle() {
       ) : (
         <span className="size-5" />
       )}
+    </button>
+  );
+}
+
+function CurrencyToggle() {
+  const currency = useCurrency();
+  const next = currency === "BDT" ? "USD" : "BDT";
+  const label = currency === "BDT" ? TAKA : "$";
+  return (
+    <button
+      onClick={() => setCurrency(next)}
+      aria-label={`Switch currency to ${next}`}
+      title={`Currency: ${currency} — tap to switch`}
+      className="press inline-flex items-center justify-center size-10 rounded-full bg-secondary text-foreground hover:bg-secondary/80 font-bold text-base leading-none"
+    >
+      {label}
     </button>
   );
 }
