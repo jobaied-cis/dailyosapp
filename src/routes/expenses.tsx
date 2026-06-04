@@ -174,13 +174,18 @@ function ExpensesPage() {
         <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
           {formatMonthLabel(selectedMonth)} · Balance
         </p>
-        <p
-          className={`text-4xl font-extrabold mt-1 tracking-tight ${
-            balance < 0 ? "text-destructive" : "text-foreground"
-          }`}
+        <CurrencyTrigger
+          ariaLabel="Change currency"
+          className="press inline-block mt-1 rounded-2xl px-3 py-1 -mx-3 hover:bg-secondary/50 transition-colors"
         >
-          {formatTaka(balance, taka)}
-        </p>
+          <span
+            className={`text-4xl font-extrabold tracking-tight ${
+              balance < 0 ? "text-destructive" : "text-foreground"
+            }`}
+          >
+            {formatTaka(balance, taka)}
+          </span>
+        </CurrencyTrigger>
         <div className="grid grid-cols-2 gap-3 mt-5">
           <div className="bg-secondary/60 rounded-2xl p-3">
             <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
