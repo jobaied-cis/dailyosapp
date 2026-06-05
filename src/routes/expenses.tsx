@@ -82,6 +82,9 @@ function ExpensesPage() {
 
   // Today's expense calculation (all entries, not just selected month)
   const todayKeyStr = dayKey(Date.now());
+  const yesterdayDate = new Date();
+  yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+  const yesterdayKeyStr = dayKey(yesterdayDate.getTime());
   const todayExpense = entries
     .filter((e) => e.type === "expense" && dayKey(e.createdAt) === todayKeyStr)
     .reduce((s, e) => s + e.amount, 0);
