@@ -322,20 +322,39 @@ function ExpensesPage() {
         )}
       </section>
 
+      {/* Today */}
+      <DayCard
+        dayKey={todayKeyStr}
+        items={monthEntries.filter((e) => dayKey(e.createdAt) === todayKeyStr)}
+        onEdit={setEditing}
+        defaultOpen
+      />
+
+      {/* Yesterday */}
+      <DayCard
+        dayKey={yesterdayKeyStr}
+        items={monthEntries.filter((e) => dayKey(e.createdAt) === yesterdayKeyStr)}
+        onEdit={setEditing}
+      />
+
       {/* Category Breakdown */}
       <CategoryBreakdown entries={monthEntries} />
 
       {/* Weekly spending chart */}
       <WeeklyChart entries={entries} dailyLimit={dailyLimit} />
 
-      {/* Day-grouped history (filtered to selected month) */}
-      <DayGroupedHistory entries={monthEntries} onEdit={setEditing} />
-
       {/* Smart Insights */}
       <SmartInsights
         todayExpense={todayExpense}
         dailyLimit={dailyLimit}
         entries={entries}
+      />
+
+      {/* Remaining day history */}
+      <DayGroupedHistory
+        entries={monthEntries}
+        onEdit={setEditing}
+        excludeKeys={[todayKeyStr, yesterdayKeyStr]}
       />
 
       {openExpense && <AddExpenseSheet onClose={() => setOpenExpense(false)} />}
