@@ -82,6 +82,9 @@ function ExpensesPage() {
 
   // Today's expense calculation (all entries, not just selected month)
   const todayKeyStr = dayKey(Date.now());
+  const yesterdayDate = new Date();
+  yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+  const yesterdayKeyStr = dayKey(yesterdayDate.getTime());
   const todayExpense = entries
     .filter((e) => e.type === "expense" && dayKey(e.createdAt) === todayKeyStr)
     .reduce((s, e) => s + e.amount, 0);
@@ -322,20 +325,39 @@ function ExpensesPage() {
         )}
       </section>
 
+      {/* Today */}
+      <DayCard
+        dayKey={todayKeyStr}
+        items={monthEntries.filter((e) => dayKey(e.createdAt) === todayKeyStr)}
+        onEdit={setEditing}
+        defaultOpen
+      />
+
+      {/* Yesterday */}
+      <DayCard
+        dayKey={yesterdayKeyStr}
+        items={monthEntries.filter((e) => dayKey(e.createdAt) === yesterdayKeyStr)}
+        onEdit={setEditing}
+      />
+
       {/* Category Breakdown */}
       <CategoryBreakdown entries={monthEntries} />
 
       {/* Weekly spending chart */}
       <WeeklyChart entries={entries} dailyLimit={dailyLimit} />
 
-      {/* Day-grouped history (filtered to selected month) */}
-      <DayGroupedHistory entries={monthEntries} onEdit={setEditing} />
-
       {/* Smart Insights */}
       <SmartInsights
         todayExpense={todayExpense}
         dailyLimit={dailyLimit}
         entries={entries}
+      />
+
+      {/* Remaining day history */}
+      <DayGroupedHistory
+        entries={monthEntries}
+        onEdit={setEditing}
+        excludeKeys={[todayKeyStr, yesterdayKeyStr]}
       />
 
       {openExpense && <AddExpenseSheet onClose={() => setOpenExpense(false)} />}
@@ -349,17 +371,131 @@ function ExpensesPage() {
   );
 }
 
+function DayCard({
+  dayKey: key,
+  items,
+  onEdit,
+  defaultOpen = false,
+}: {
+  dayKey: string;
+  items: Expense[];
+  onEdit: (e: Expense) => void;
+  defaultOpen?: boolean;
+}) {
+  const taka = useTakaSymbol();
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+
+  if (items.length === 0) return null;
+
+  const dayExpense = items
+    .filter((e) => e.type === "expense")
+    .reduce((s, e) => s + e.amount, 0);
+
+  return (
+    <section className="bg-card border border-border/60 rounded-[1.25rem] shadow-[0_2px_12px_-4px_rgba(15,23,42,0.06)] overflow-hidden">
+      <button
+        onClick={() => setIsOpen((o) => !o)}
+        className="press w-full flex items-center justify-between p-4 text-left"
+      >
+        <div>
+          <h3 className="font-bold text-foreground text-[0.95rem]">
+            {formatDayLabel(key)}
+          </h3>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {items.length} {items.length === 1 ? "entry" : "entries"} · Total spent{" "}
+            <span className="font-semibold text-destructive">
+              {formatTaka(dayExpense, taka)}
+            </span>
+          </p>
+        </div>
+        <ChevronDown
+          className={`size-5 text-muted-foreground shrink-0 transition-transform duration-200 ${
+            isOpen ? "rotate-180" : ""
+          }`}
+        />
+      </button>
+      {isOpen && (
+        <ul className="px-3 pb-3 space-y-2">
+          {items.map((e) => {
+            const isIncome = e.type === "income";
+            return (
+              <li
+                key={e.id}
+                className="group flex items-stretch bg-secondary/40 rounded-2xl overflow-hidden"
+              >
+                <div
+                  className="w-[3px] shrink-0"
+                  style={{ backgroundColor: isIncome ? "#14B8A6" : CATEGORY_COLOR[e.category] }}
+                />
+                <div className="flex items-center justify-between flex-1 p-3 min-w-0">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div
+                      className={`size-9 shrink-0 rounded-full flex items-center justify-center ${
+                        isIncome ? "bg-emerald-500/10" : "bg-destructive/10"
+                      }`}
+                    >
+                      {isIncome ? (
+                        <ArrowDownCircle className="size-5 text-emerald-600" />
+                      ) : (
+                        <ArrowUpCircle className="size-5 text-destructive" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-semibold text-foreground text-[0.9rem] truncate">
+                          <span className="mr-1.5">{isIncome ? "💰" : CATEGORY_EMOJI[e.category]}</span>
+                          {e.title}
+                        </h4>
+                        {!isIncome && (
+                          <span className="shrink-0 inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+                            {e.category}
+                          </span>
+                        )}
+                      </div>
+                      <p
+                        className={`text-sm font-mono font-semibold mt-0.5 ${
+                          isIncome ? "text-emerald-600" : "text-destructive"
+                        }`}
+                      >
+                        {isIncome ? "+" : "-"}{formatTaka(e.amount, taka)}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => onEdit(e)}
+                      aria-label="Edit entry"
+                      className="press text-muted-foreground/40 hover:text-primary p-1.5 rounded-full hover:bg-primary/5"
+                    >
+                      <Pencil className="size-4" />
+                    </button>
+                    <button
+                      onClick={() => deleteExpense(e.id)}
+                      aria-label="Delete entry"
+                      className="press text-muted-foreground/40 hover:text-destructive p-1.5 rounded-full hover:bg-destructive/5"
+                    >
+                      <Trash2 className="size-4" />
+                    </button>
+                  </div>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </section>
+  );
+}
+
 function DayGroupedHistory({
   entries,
   onEdit,
+  excludeKeys = [],
 }: {
   entries: Expense[];
   onEdit: (e: Expense) => void;
+  excludeKeys?: string[];
 }) {
-  const taka = useTakaSymbol();
-  const todayKey = dayKey(Date.now());
-  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
-
   if (entries.length === 0) {
     return (
       <div className="text-center text-muted-foreground py-16">
@@ -385,112 +521,27 @@ function DayGroupedHistory({
     a[0] < b[0] ? 1 : -1,
   );
 
+  const filtered = groups.filter(([key]) => !excludeKeys.includes(key));
+  if (filtered.length === 0) return null;
+
+  const todayKey = dayKey(Date.now());
+
   return (
     <div className="space-y-3">
-      {groups.map(([key, items], gi) => {
-        const dayExpense = items
-          .filter((e) => e.type === "expense")
-          .reduce((s, e) => s + e.amount, 0);
-        const isOpen = collapsed[key] !== undefined ? !collapsed[key] : key === todayKey;
-        return (
-          <section
-            key={key}
-            style={{ animationDelay: `${Math.min(gi * 50, 240)}ms` }}
-            className="bg-card border border-border/60 rounded-[1.25rem] shadow-[0_2px_12px_-4px_rgba(15,23,42,0.06)] overflow-hidden animate-list-item-in"
-          >
-            <button
-              onClick={() => setCollapsed((c) => ({ ...c, [key]: !(c[key] !== undefined ? !c[key] : key === todayKey) }))}
-              className="press w-full flex items-center justify-between p-4 text-left"
-            >
-                <div>
-                  <h3 className="font-bold text-foreground text-[0.95rem]">
-                    {formatDayLabel(key)}
-                  </h3>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {items.length} {items.length === 1 ? "entry" : "entries"} · Total spent{" "}
-                    <span className="font-semibold text-destructive">
-                      {formatTaka(dayExpense, taka)}
-                    </span>
-                  </p>
-                </div>
-              <ChevronDown
-                className={`size-5 text-muted-foreground shrink-0 transition-transform duration-200 ${
-                  isOpen ? "rotate-180" : ""
-                }`}
-              />
-            </button>
-            {isOpen && (
-              <ul className="px-3 pb-3 space-y-2">
-                {items.map((e) => {
-                  const isIncome = e.type === "income";
-                  return (
-                    <li
-                      key={e.id}
-                      className="group flex items-stretch bg-secondary/40 rounded-2xl overflow-hidden"
-                    >
-                      <div
-                        className="w-[3px] shrink-0"
-                        style={{ backgroundColor: isIncome ? "#14B8A6" : CATEGORY_COLOR[e.category] }}
-                      />
-                      <div className="flex items-center justify-between flex-1 p-3 min-w-0">
-                        <div className="flex items-center gap-3 flex-1 min-w-0">
-                          <div
-                            className={`size-9 shrink-0 rounded-full flex items-center justify-center ${
-                              isIncome ? "bg-emerald-500/10" : "bg-destructive/10"
-                            }`}
-                          >
-                            {isIncome ? (
-                              <ArrowDownCircle className="size-5 text-emerald-600" />
-                            ) : (
-                              <ArrowUpCircle className="size-5 text-destructive" />
-                            )}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <h4 className="font-semibold text-foreground text-[0.9rem] truncate">
-                                <span className="mr-1.5">{isIncome ? "💰" : CATEGORY_EMOJI[e.category]}</span>
-                                {e.title}
-                              </h4>
-                              {!isIncome && (
-                                <span className="shrink-0 inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
-                                  {e.category}
-                                </span>
-                              )}
-                            </div>
-                            <p
-                              className={`text-sm font-mono font-semibold mt-0.5 ${
-                                isIncome ? "text-emerald-600" : "text-destructive"
-                              }`}
-                            >
-                              {isIncome ? "+" : "-"}{formatTaka(e.amount, taka)}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <button
-                            onClick={() => onEdit(e)}
-                            aria-label="Edit entry"
-                            className="press text-muted-foreground/40 hover:text-primary p-1.5 rounded-full hover:bg-primary/5"
-                          >
-                            <Pencil className="size-4" />
-                          </button>
-                          <button
-                            onClick={() => deleteExpense(e.id)}
-                            aria-label="Delete entry"
-                            className="press text-muted-foreground/40 hover:text-destructive p-1.5 rounded-full hover:bg-destructive/5"
-                          >
-                            <Trash2 className="size-4" />
-                          </button>
-                        </div>
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </section>
-        );
-      })}
+      {filtered.map(([key, items], gi) => (
+        <div
+          key={key}
+          style={{ animationDelay: `${Math.min(gi * 50, 240)}ms` }}
+          className="animate-list-item-in"
+        >
+          <DayCard
+            dayKey={key}
+            items={items}
+            onEdit={onEdit}
+            defaultOpen={key === todayKey}
+          />
+        </div>
+      ))}
     </div>
   );
 }
