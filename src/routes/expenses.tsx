@@ -331,6 +331,7 @@ function ExpensesPage() {
         items={monthEntries.filter((e) => dayKey(e.createdAt) === todayKeyStr)}
         onEdit={setEditing}
         defaultOpen
+        isToday
       />
 
       {/* Yesterday */}
