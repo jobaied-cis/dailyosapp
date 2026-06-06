@@ -331,6 +331,7 @@ function ExpensesPage() {
         items={monthEntries.filter((e) => dayKey(e.createdAt) === todayKeyStr)}
         onEdit={setEditing}
         defaultOpen
+        isToday
       />
 
       {/* Yesterday */}
@@ -376,20 +377,45 @@ function DayCard({
   items,
   onEdit,
   defaultOpen = false,
+  isToday = false,
 }: {
   dayKey: string;
   items: Expense[];
   onEdit: (e: Expense) => void;
   defaultOpen?: boolean;
+  isToday?: boolean;
 }) {
   const taka = useTakaSymbol();
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
-  if (items.length === 0) return null;
+  // Empty state — only render for Today, hide entirely for other days
+  if (items.length === 0) {
+    if (!isToday) return null;
+    return (
+      <section className="bg-card border border-border/60 rounded-[1.25rem] shadow-[0_2px_12px_-4px_rgba(15,23,42,0.06)] overflow-hidden">
+        <div className="p-5 text-center">
+          <h3 className="font-bold text-foreground text-[0.95rem]">
+            Today · 0 transactions
+          </h3>
+          <p className="mt-3 text-sm font-medium text-foreground">
+            No spending yet today 💸
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Start tracking your expenses
+          </p>
+        </div>
+      </section>
+    );
+  }
 
   const dayExpense = items
     .filter((e) => e.type === "expense")
     .reduce((s, e) => s + e.amount, 0);
+
+  const txCount = items.length;
+  const headerLabel = isToday
+    ? `Today • ${txCount} ${txCount === 1 ? "transaction" : "transactions"}`
+    : formatDayLabel(key);
 
   return (
     <section className="bg-card border border-border/60 rounded-[1.25rem] shadow-[0_2px_12px_-4px_rgba(15,23,42,0.06)] overflow-hidden">
@@ -399,10 +425,15 @@ function DayCard({
       >
         <div>
           <h3 className="font-bold text-foreground text-[0.95rem]">
-            {formatDayLabel(key)}
+            {headerLabel}
           </h3>
           <p className="text-xs text-muted-foreground mt-0.5">
-            {items.length} {items.length === 1 ? "entry" : "entries"} · Total spent{" "}
+            {!isToday && (
+              <>
+                {items.length} {items.length === 1 ? "entry" : "entries"} ·{" "}
+              </>
+            )}
+            Total spent{" "}
             <span className="font-semibold text-destructive">
               {formatTaka(dayExpense, taka)}
             </span>
@@ -415,13 +446,18 @@ function DayCard({
         />
       </button>
       {isOpen && (
-        <ul className="px-3 pb-3 space-y-2">
-          {items.map((e) => {
+        <ul className="px-3 pb-3 space-y-2.5">
+          {items.map((e, idx) => {
             const isIncome = e.type === "income";
+            const isMostRecent = isToday && idx === 0;
             return (
               <li
                 key={e.id}
-                className="group flex items-stretch bg-secondary/40 rounded-2xl overflow-hidden"
+                className={`group flex items-stretch bg-secondary/40 rounded-2xl overflow-hidden transition-all duration-150 active:scale-[0.97] ${
+                  isMostRecent
+                    ? "ring-1 ring-primary/40 shadow-[0_4px_18px_-6px_rgba(59,130,246,0.35)] bg-secondary/60"
+                    : "shadow-sm"
+                }`}
               >
                 <div
                   className="w-[3px] shrink-0"
@@ -447,7 +483,12 @@ function DayCard({
                           {e.title}
                         </h4>
                         {!isIncome && (
-                          <span className="shrink-0 inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-muted text-muted-foreground">
+                          <span
+                            className="shrink-0 inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full text-foreground/90"
+                            style={{
+                              backgroundColor: `${CATEGORY_COLOR[e.category]}22`,
+                            }}
+                          >
                             {e.category}
                           </span>
                         )}
@@ -486,6 +527,7 @@ function DayCard({
     </section>
   );
 }
+
 
 function DayGroupedHistory({
   entries,
