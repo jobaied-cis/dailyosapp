@@ -682,31 +682,67 @@ function CategoryBreakdown({ entries }: { entries: Expense[] }) {
 
   if (totalExpense === 0) return null;
 
+  // Determine top category
+  let topCategory: ExpenseCategory | null = null;
+  let maxAmount = 0;
+  for (const cat of CATEGORIES) {
+    if (categoryTotals[cat] > maxAmount) {
+      maxAmount = categoryTotals[cat];
+      topCategory = cat;
+    }
+  }
+
   return (
     <section className="bg-card border border-border/60 rounded-[1.25rem] p-4 shadow-[0_2px_12px_-4px_rgba(15,23,42,0.06)]">
-      <h3 className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground mb-3">
+      <h3 className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
         Category Breakdown
       </h3>
-      <div className="space-y-3">
+      <p className="text-xs text-muted-foreground mt-0.5 mb-3">
+        Where your money goes
+      </p>
+      <div className="space-y-4">
         {CATEGORIES.map((cat) => {
           const amount = categoryTotals[cat];
           if (amount <= 0) return null;
           const percent = totalExpense > 0 ? (amount / totalExpense) * 100 : 0;
+          const isTop = topCategory === cat;
           return (
-            <div key={cat}>
-              <div className="flex items-center justify-between mb-1.5">
+            <div
+              key={cat}
+              className="group transition-all duration-150 active:scale-[0.98]"
+            >
+              <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <span className="text-base">{CATEGORY_EMOJI[cat]}</span>
-                  <span className="text-sm font-semibold text-foreground">{cat}</span>
+                  <span
+                    className={`text-sm font-semibold ${
+                      isTop ? "text-foreground" : "text-foreground/80"
+                    }`}
+                  >
+                    {cat}
+                  </span>
+                  {isTop && (
+                    <span className="inline-flex items-center text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+                      Top
+                    </span>
+                  )}
                 </div>
-                <span className="text-sm font-bold text-foreground">{formatTaka(amount, taka)}</span>
+                <span className="text-sm font-bold tabular-nums">
+                  <span className={isTop ? "text-foreground" : "text-muted-foreground"}>
+                    {formatTaka(amount, taka)}
+                  </span>
+                  <span className="text-xs font-semibold text-muted-foreground ml-1.5">
+                    ({Math.round(percent)}%)
+                  </span>
+                </span>
               </div>
-              <div className="h-[3px] w-full bg-secondary rounded-full overflow-hidden">
+              <div className="h-2 w-full bg-secondary/60 rounded-full overflow-hidden">
                 <div
-                  className="h-full rounded-full transition-all"
+                  className="h-full rounded-full transition-all duration-500"
                   style={{
                     width: `${Math.min(percent, 100)}%`,
                     backgroundColor: CATEGORY_COLOR[cat],
+                    opacity: isTop ? 1 : 0.7,
                   }}
                 />
               </div>
