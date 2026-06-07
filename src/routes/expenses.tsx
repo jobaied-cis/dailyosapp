@@ -128,7 +128,7 @@ function ExpensesPage() {
         }}
       />
     ) : (
-    <div className="space-y-6 pb-8">
+    <div className="space-y-6 pb-8 stagger-sections">
       {/* Month selector */}
       <div className="flex items-center justify-between bg-card border border-border/60 rounded-2xl px-2 py-2 shadow-[0_2px_12px_-4px_rgba(15,23,42,0.06)]">
         <button
@@ -453,7 +453,7 @@ function DayCard({
             return (
               <li
                 key={e.id}
-                className={`group flex items-stretch bg-secondary/40 rounded-2xl overflow-hidden transition-all duration-150 active:scale-[0.97] ${
+                className={`group card-pop flex items-stretch bg-secondary/40 rounded-2xl overflow-hidden ${
                   isMostRecent
                     ? "ring-1 ring-primary/40 shadow-[0_4px_18px_-6px_rgba(59,130,246,0.35)] bg-secondary/60"
                     : "shadow-sm"
@@ -709,7 +709,7 @@ function CategoryBreakdown({ entries }: { entries: Expense[] }) {
           return (
             <div
               key={cat}
-              className="group transition-all duration-150 active:scale-[0.98]"
+              className="group card-pop rounded-xl -mx-1 px-1 py-1"
             >
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
@@ -847,7 +847,7 @@ function SmartInsights({
   }
 
   return (
-    <section className="bg-gradient-to-br from-amber-500/15 to-amber-700/10 border border-amber-500/20 rounded-[1.25rem] p-4 shadow-[0_4px_24px_-8px_rgba(245,158,11,0.25)]">
+    <section className="card-pop bg-gradient-to-br from-amber-500/15 to-amber-700/10 border border-amber-500/20 rounded-[1.25rem] p-4 shadow-[0_4px_24px_-8px_rgba(245,158,11,0.25)]">
       <h3 className="text-[11px] font-bold uppercase tracking-[0.12em] text-amber-400 mb-2.5 flex items-center gap-1.5">
         <Sparkles className="size-3.5" />
         Insights
