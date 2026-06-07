@@ -308,6 +308,18 @@ function ExpensesPage() {
                     style={{ width: `${limitPercent}%` }}
                   />
                 </div>
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-muted-foreground">
+                    {remaining >= 0
+                      ? `${formatTaka(remaining, taka)} left today`
+                      : `${formatTaka(Math.abs(remaining), taka)} over limit`}
+                  </p>
+                  <p className={`text-xs font-semibold ${limitExceeded ? "text-destructive" : "text-emerald-600"}`}>
+                    {limitExceeded
+                      ? `Exceeded ❌`
+                      : `On track ${displayPercent > 0 ? `• ${displayPercent}%` : "✅"}`}
+                  </p>
+                </div>
               </div>
             ) : (
               <p className="text-sm text-muted-foreground">
