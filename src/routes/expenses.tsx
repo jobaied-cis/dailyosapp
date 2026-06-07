@@ -777,8 +777,8 @@ function SmartInsights({
     if (topCat) {
       const percent = Math.round((topCat[1] / totalExpense) * 100);
       insights.push({
-        icon: "💡",
-        text: `Top spending: ${topCat[0]} (${percent}%)`,
+        icon: "📊",
+        text: `${topCat[0]} is your top spending category (${percent}%)`,
         accent: "text-foreground",
       });
     }
@@ -809,13 +809,13 @@ function SmartInsights({
     if (exceededDays > 0) {
       insights.push({
         icon: "⚠️",
-        text: `Exceeded limit on ${exceededDays} day${exceededDays > 1 ? "s" : ""} this week`,
+        text: `You exceeded your daily limit on ${exceededDays} day${exceededDays > 1 ? "s" : ""} this week`,
         accent: "text-red-400",
       });
     } else {
       insights.push({
-        icon: "⚠️",
-        text: "Within limit this week",
+        icon: "👏",
+        text: "Great control! You stayed within your limit this week",
         accent: "text-emerald-400",
       });
     }
@@ -833,14 +833,14 @@ function SmartInsights({
   if (todayExpense > 0 || yesterdayExpense > 0) {
     if (todayExpense > yesterdayExpense) {
       insights.push({
-        icon: "📉",
+        icon: "📈",
         text: "Spending increased compared to yesterday",
         accent: "text-red-400",
       });
     } else if (todayExpense < yesterdayExpense) {
       insights.push({
         icon: "📉",
-        text: "Spending reduced from yesterday",
+        text: "Spending reduced from yesterday — great control!",
         accent: "text-emerald-400",
       });
     }
@@ -856,7 +856,7 @@ function SmartInsights({
         <div className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 bg-black/20 backdrop-blur-sm">
           <span className="text-sm">📊</span>
           <span className="text-sm font-semibold text-amber-100/80">
-            No spending data yet — start tracking
+            No data yet — start tracking to see insights
           </span>
         </div>
       ) : (
