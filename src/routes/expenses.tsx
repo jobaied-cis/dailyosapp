@@ -90,6 +90,8 @@ function ExpensesPage() {
     .reduce((s, e) => s + e.amount, 0);
   const limitExceeded = dailyLimit > 0 && todayExpense > dailyLimit;
   const limitPercent = dailyLimit > 0 ? Math.min((todayExpense / dailyLimit) * 100, 100) : 0;
+  const remaining = dailyLimit > 0 ? dailyLimit - todayExpense : 0;
+  const displayPercent = dailyLimit > 0 ? Math.round((todayExpense / dailyLimit) * 100) : 0;
 
   // Available months (always include current month even if empty)
   const availableMonths = (() => {
@@ -305,6 +307,18 @@ function ExpensesPage() {
                     }`}
                     style={{ width: `${limitPercent}%` }}
                   />
+                </div>
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-muted-foreground">
+                    {remaining >= 0
+                      ? `${formatTaka(remaining, taka)} left today`
+                      : `${formatTaka(Math.abs(remaining), taka)} over limit`}
+                  </p>
+                  <p className={`text-xs font-semibold ${limitExceeded ? "text-destructive" : "text-emerald-600"}`}>
+                    {limitExceeded
+                      ? `Exceeded ❌`
+                      : `On track ${displayPercent > 0 ? `• ${displayPercent}%` : "✅"}`}
+                  </p>
                 </div>
               </div>
             ) : (
