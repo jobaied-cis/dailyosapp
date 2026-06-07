@@ -453,7 +453,7 @@ function DayCard({
             return (
               <li
                 key={e.id}
-                className={`group flex items-stretch bg-secondary/40 rounded-2xl overflow-hidden transition-all duration-150 active:scale-[0.97] ${
+                className={`group card-pop flex items-stretch bg-secondary/40 rounded-2xl overflow-hidden ${
                   isMostRecent
                     ? "ring-1 ring-primary/40 shadow-[0_4px_18px_-6px_rgba(59,130,246,0.35)] bg-secondary/60"
                     : "shadow-sm"
