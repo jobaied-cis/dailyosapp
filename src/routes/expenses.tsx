@@ -809,13 +809,13 @@ function SmartInsights({
     if (exceededDays > 0) {
       insights.push({
         icon: "⚠️",
-        text: `Exceeded limit on ${exceededDays} day${exceededDays > 1 ? "s" : ""} this week`,
+        text: `You exceeded your daily limit on ${exceededDays} day${exceededDays > 1 ? "s" : ""} this week`,
         accent: "text-red-400",
       });
     } else {
       insights.push({
-        icon: "⚠️",
-        text: "Within limit this week",
+        icon: "👏",
+        text: "Great control! You stayed within your limit this week",
         accent: "text-emerald-400",
       });
     }
