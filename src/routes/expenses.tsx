@@ -90,6 +90,8 @@ function ExpensesPage() {
     .reduce((s, e) => s + e.amount, 0);
   const limitExceeded = dailyLimit > 0 && todayExpense > dailyLimit;
   const limitPercent = dailyLimit > 0 ? Math.min((todayExpense / dailyLimit) * 100, 100) : 0;
+  const remaining = dailyLimit > 0 ? dailyLimit - todayExpense : 0;
+  const displayPercent = dailyLimit > 0 ? Math.round((todayExpense / dailyLimit) * 100) : 0;
 
   // Available months (always include current month even if empty)
   const availableMonths = (() => {
