@@ -709,7 +709,7 @@ function CategoryBreakdown({ entries }: { entries: Expense[] }) {
           return (
             <div
               key={cat}
-              className="group transition-all duration-150 active:scale-[0.98]"
+              className="group card-pop rounded-xl -mx-1 px-1 py-1"
             >
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
