@@ -777,8 +777,8 @@ function SmartInsights({
     if (topCat) {
       const percent = Math.round((topCat[1] / totalExpense) * 100);
       insights.push({
-        icon: "💡",
-        text: `Top spending: ${topCat[0]} (${percent}%)`,
+        icon: "📊",
+        text: `${topCat[0]} is your top spending category (${percent}%)`,
         accent: "text-foreground",
       });
     }
