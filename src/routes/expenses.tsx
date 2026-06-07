@@ -847,7 +847,7 @@ function SmartInsights({
   }
 
   return (
-    <section className="bg-gradient-to-br from-amber-500/15 to-amber-700/10 border border-amber-500/20 rounded-[1.25rem] p-4 shadow-[0_4px_24px_-8px_rgba(245,158,11,0.25)]">
+    <section className="card-pop bg-gradient-to-br from-amber-500/15 to-amber-700/10 border border-amber-500/20 rounded-[1.25rem] p-4 shadow-[0_4px_24px_-8px_rgba(245,158,11,0.25)]">
       <h3 className="text-[11px] font-bold uppercase tracking-[0.12em] text-amber-400 mb-2.5 flex items-center gap-1.5">
         <Sparkles className="size-3.5" />
         Insights
