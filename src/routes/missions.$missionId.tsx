@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, useRef, useEffect, type FormEvent } from "react";
-import { ArrowLeft, Check, Pencil, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Check, ChevronDown, Lock, Pencil, Plus, Trash2 } from "lucide-react";
 import {
   addDay,
   addTask,
@@ -38,6 +38,24 @@ function MissionDetailPage() {
   const { total, done, pct } = missionProgress(mission);
   const dayCount = Math.max(mission.days || 1, 1);
   const days = Array.from({ length: dayCount }, (_, i) => i + 1);
+
+  const DAY_MS = 24 * 60 * 60 * 1000;
+  const startMidnight = new Date(mission.startDate);
+  startMidnight.setHours(0, 0, 0, 0);
+  const todayMidnight = new Date();
+  todayMidnight.setHours(0, 0, 0, 0);
+  const rawDay = Math.floor((todayMidnight.getTime() - startMidnight.getTime()) / DAY_MS) + 1;
+  const todayDay = rawDay >= 1 && rawDay <= dayCount ? rawDay : null;
+
+  useEffect(() => {
+    if (todayDay == null) return;
+    const el = document.getElementById(`mission-day-${todayDay}`);
+    if (el) {
+      requestAnimationFrame(() =>
+        el.scrollIntoView({ behavior: "smooth", block: "start" }),
+      );
+    }
+  }, [mission.id, todayDay]);
 
   return (
     <div className="space-y-6 pb-12">
@@ -77,9 +95,21 @@ function MissionDetailPage() {
       </section>
 
       <div className="space-y-5">
-        {days.map((day) => (
-          <DaySection key={day} mission={mission} day={day} />
-        ))}
+        {days.map((day) => {
+          const status: DayStatus =
+            todayDay == null
+              ? day === 1
+                ? "today"
+                : "future"
+              : day < todayDay
+                ? "past"
+                : day === todayDay
+                  ? "today"
+                  : "future";
+          return (
+            <DaySection key={day} mission={mission} day={day} status={status} />
+          );
+        })}
       </div>
 
       <button
@@ -93,8 +123,25 @@ function MissionDetailPage() {
   );
 }
 
-function DaySection({ mission, day }: { mission: Mission; day: number }) {
+type DayStatus = "past" | "today" | "future";
+
+function DaySection({
+  mission,
+  day,
+  status,
+}: {
+  mission: Mission;
+  day: number;
+  status: DayStatus;
+}) {
   const [value, setValue] = useState("");
+  const [expanded, setExpanded] = useState(status !== "past");
+
+  useEffect(() => {
+    setExpanded(status !== "past");
+  }, [status]);
+
+
   const tasks = mission.tasks
     .filter((t) => t.day === day)
     .sort((a, b) => a.createdAt - b.createdAt);
@@ -119,16 +166,54 @@ function DaySection({ mission, day }: { mission: Mission; day: number }) {
     day: "numeric",
   });
 
+  const isToday = status === "today";
+  const isFuture = status === "future";
+  const isPast = status === "past";
+
   return (
-    <section className="space-y-3">
-      <div>
+    <section
+      id={`mission-day-${day}`}
+      className={
+        "space-y-3 rounded-xl transition-all scroll-mt-4 " +
+        (isToday
+          ? "border border-primary/40 bg-primary/5 p-3 shadow-sm"
+          : isFuture
+            ? "opacity-60"
+            : "")
+      }
+    >
+      <div
+        className={isPast ? "cursor-pointer select-none" : ""}
+        onClick={isPast ? () => setExpanded((v) => !v) : undefined}
+      >
         <div className="flex items-center gap-2 flex-wrap">
-          <h2 className="font-bold text-foreground text-base">Day {day}</h2>
+          <h2 className="font-bold text-foreground text-base">
+            Day {day}
+            {isToday && <span className="text-primary"> (Today 🔥)</span>}
+          </h2>
           <span className="text-xs text-muted-foreground">({dateLabel})</span>
-          {allDone && (
+          {isToday && (
+            <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider bg-primary text-primary-foreground px-2 py-0.5 rounded-full">
+              Today 🔥
+            </span>
+          )}
+          {isFuture && (
+            <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider bg-secondary text-muted-foreground px-2 py-0.5 rounded-full">
+              <Lock className="size-3" /> Locked
+            </span>
+          )}
+          {allDone && !isToday && (
             <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider bg-primary/15 text-primary px-2 py-0.5 rounded-full">
               <Check className="size-3" /> Done
             </span>
+          )}
+          {isPast && (
+            <ChevronDown
+              className={
+                "size-4 text-muted-foreground ml-auto transition-transform " +
+                (expanded ? "rotate-180" : "")
+              }
+            />
           )}
         </div>
         <p className="text-xs text-muted-foreground mt-0.5">
@@ -136,33 +221,37 @@ function DaySection({ mission, day }: { mission: Mission; day: number }) {
         </p>
       </div>
 
-      <form onSubmit={handleAdd} className="flex gap-2">
-        <input
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          placeholder={`Add a task to Day ${day}…`}
-          maxLength={200}
-          className="flex-1 bg-secondary rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-primary/30 text-sm"
-        />
-        <button
-          type="submit"
-          disabled={!value.trim()}
-          className="bg-primary text-primary-foreground font-semibold text-sm px-4 rounded-lg disabled:opacity-50"
-        >
-          Add
-        </button>
-      </form>
+      {expanded && (
+        <>
+          <form onSubmit={handleAdd} className="flex gap-2">
+            <input
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
+              placeholder={`Add a task to Day ${day}…`}
+              maxLength={200}
+              className="flex-1 bg-secondary rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-primary/30 text-sm"
+            />
+            <button
+              type="submit"
+              disabled={!value.trim()}
+              className="bg-primary text-primary-foreground font-semibold text-sm px-4 rounded-lg disabled:opacity-50"
+            >
+              Add
+            </button>
+          </form>
 
-      {tasks.length === 0 ? (
-        <p className="text-sm text-muted-foreground text-center py-6 border border-dashed border-border/60 rounded-xl">
-          No tasks yet.
-        </p>
-      ) : (
-        <ul className="space-y-2">
-          {tasks.map((t) => (
-            <TaskRow key={t.id} missionId={mission.id} task={t} />
-          ))}
-        </ul>
+          {tasks.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-6 border border-dashed border-border/60 rounded-xl">
+              No tasks yet.
+            </p>
+          ) : (
+            <ul className="space-y-2">
+              {tasks.map((t) => (
+                <TaskRow key={t.id} missionId={mission.id} task={t} />
+              ))}
+            </ul>
+          )}
+        </>
       )}
     </section>
   );
