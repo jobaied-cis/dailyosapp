@@ -166,16 +166,54 @@ function DaySection({
     day: "numeric",
   });
 
+  const isToday = status === "today";
+  const isFuture = status === "future";
+  const isPast = status === "past";
+
   return (
-    <section className="space-y-3">
-      <div>
+    <section
+      id={`mission-day-${day}`}
+      className={
+        "space-y-3 rounded-xl transition-all scroll-mt-4 " +
+        (isToday
+          ? "border border-primary/40 bg-primary/5 p-3 shadow-sm"
+          : isFuture
+            ? "opacity-60"
+            : "")
+      }
+    >
+      <div
+        className={isPast ? "cursor-pointer select-none" : ""}
+        onClick={isPast ? () => setExpanded((v) => !v) : undefined}
+      >
         <div className="flex items-center gap-2 flex-wrap">
-          <h2 className="font-bold text-foreground text-base">Day {day}</h2>
+          <h2 className="font-bold text-foreground text-base">
+            Day {day}
+            {isToday && <span className="text-primary"> (Today 🔥)</span>}
+          </h2>
           <span className="text-xs text-muted-foreground">({dateLabel})</span>
-          {allDone && (
+          {isToday && (
+            <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider bg-primary text-primary-foreground px-2 py-0.5 rounded-full">
+              Today 🔥
+            </span>
+          )}
+          {isFuture && (
+            <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider bg-secondary text-muted-foreground px-2 py-0.5 rounded-full">
+              <Lock className="size-3" /> Locked
+            </span>
+          )}
+          {allDone && !isToday && (
             <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider bg-primary/15 text-primary px-2 py-0.5 rounded-full">
               <Check className="size-3" /> Done
             </span>
+          )}
+          {isPast && (
+            <ChevronDown
+              className={
+                "size-4 text-muted-foreground ml-auto transition-transform " +
+                (expanded ? "rotate-180" : "")
+              }
+            />
           )}
         </div>
         <p className="text-xs text-muted-foreground mt-0.5">
@@ -183,33 +221,37 @@ function DaySection({
         </p>
       </div>
 
-      <form onSubmit={handleAdd} className="flex gap-2">
-        <input
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          placeholder={`Add a task to Day ${day}…`}
-          maxLength={200}
-          className="flex-1 bg-secondary rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-primary/30 text-sm"
-        />
-        <button
-          type="submit"
-          disabled={!value.trim()}
-          className="bg-primary text-primary-foreground font-semibold text-sm px-4 rounded-lg disabled:opacity-50"
-        >
-          Add
-        </button>
-      </form>
+      {expanded && (
+        <>
+          <form onSubmit={handleAdd} className="flex gap-2">
+            <input
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
+              placeholder={`Add a task to Day ${day}…`}
+              maxLength={200}
+              className="flex-1 bg-secondary rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-primary/30 text-sm"
+            />
+            <button
+              type="submit"
+              disabled={!value.trim()}
+              className="bg-primary text-primary-foreground font-semibold text-sm px-4 rounded-lg disabled:opacity-50"
+            >
+              Add
+            </button>
+          </form>
 
-      {tasks.length === 0 ? (
-        <p className="text-sm text-muted-foreground text-center py-6 border border-dashed border-border/60 rounded-xl">
-          No tasks yet.
-        </p>
-      ) : (
-        <ul className="space-y-2">
-          {tasks.map((t) => (
-            <TaskRow key={t.id} missionId={mission.id} task={t} />
-          ))}
-        </ul>
+          {tasks.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-6 border border-dashed border-border/60 rounded-xl">
+              No tasks yet.
+            </p>
+          ) : (
+            <ul className="space-y-2">
+              {tasks.map((t) => (
+                <TaskRow key={t.id} missionId={mission.id} task={t} />
+              ))}
+            </ul>
+          )}
+        </>
       )}
     </section>
   );
