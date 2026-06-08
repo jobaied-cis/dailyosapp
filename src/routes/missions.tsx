@@ -20,11 +20,50 @@ function MissionsLayout() {
   return <MissionsListPage />;
 }
 
-const PRIORITY_LABELS: Record<number, { label: string; dot: string }> = {
-  1: { label: "High", dot: "bg-red-500" },
-  2: { label: "Medium", dot: "bg-yellow-500" },
-  3: { label: "Low", dot: "bg-green-500" },
+const PRIORITY_LABELS: Record<number, { label: string; dot: string; bar: string }> = {
+  1: { label: "High", dot: "bg-red-500", bar: "bg-red-500" },
+  2: { label: "Medium", dot: "bg-yellow-500", bar: "bg-yellow-500" },
+  3: { label: "Low", dot: "bg-blue-500", bar: "bg-blue-500" },
 };
+
+const DAY_MS = 86_400_000;
+
+function dayKey(ts: number): string {
+  const d = new Date(ts);
+  return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+}
+
+function computeStreak(tasks: { completed: boolean; createdAt: number }[]): number {
+  const days = new Set(tasks.filter((t) => t.completed).map((t) => dayKey(t.createdAt)));
+  if (days.size === 0) return 0;
+  let streak = 0;
+  const cursor = new Date();
+  while (days.has(dayKey(cursor.getTime()))) {
+    streak += 1;
+    cursor.setDate(cursor.getDate() - 1);
+  }
+  return streak;
+}
+
+function deadlineLabel(startDate: number, days: number): { text: string; overdue: boolean } {
+  const end = startDate + days * DAY_MS;
+  const diff = Math.ceil((end - Date.now()) / DAY_MS);
+  if (diff < 0) return { text: `Overdue ${Math.abs(diff)}d`, overdue: true };
+  if (diff === 0) return { text: "Due today", overdue: false };
+  if (diff === 1) return { text: "1 day left", overdue: false };
+  return { text: `${diff} days left`, overdue: false };
+}
+
+function lastActivityLabel(tasks: { createdAt: number }[]): string | null {
+  if (tasks.length === 0) return null;
+  const latest = tasks.reduce((a, t) => Math.max(a, t.createdAt), 0);
+  const diff = Math.floor((Date.now() - latest) / DAY_MS);
+  if (diff <= 0) return "Last activity: today";
+  if (diff === 1) return "Last activity: yesterday";
+  if (diff < 7) return `Last activity: ${diff}d ago`;
+  if (diff < 30) return `Last activity: ${Math.floor(diff / 7)}w ago`;
+  return `Last activity: ${Math.floor(diff / 30)}mo ago`;
+}
 
 function MissionsListPage() {
   const missions = useMissions();
