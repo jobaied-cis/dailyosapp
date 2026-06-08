@@ -39,6 +39,24 @@ function MissionDetailPage() {
   const dayCount = Math.max(mission.days || 1, 1);
   const days = Array.from({ length: dayCount }, (_, i) => i + 1);
 
+  const DAY_MS = 24 * 60 * 60 * 1000;
+  const startMidnight = new Date(mission.startDate);
+  startMidnight.setHours(0, 0, 0, 0);
+  const todayMidnight = new Date();
+  todayMidnight.setHours(0, 0, 0, 0);
+  const rawDay = Math.floor((todayMidnight.getTime() - startMidnight.getTime()) / DAY_MS) + 1;
+  const todayDay = rawDay >= 1 && rawDay <= dayCount ? rawDay : null;
+
+  useEffect(() => {
+    if (todayDay == null) return;
+    const el = document.getElementById(`mission-day-${todayDay}`);
+    if (el) {
+      requestAnimationFrame(() =>
+        el.scrollIntoView({ behavior: "smooth", block: "start" }),
+      );
+    }
+  }, [mission.id, todayDay]);
+
   return (
     <div className="space-y-6 pb-12">
       <div className="flex items-center justify-between">
@@ -77,9 +95,21 @@ function MissionDetailPage() {
       </section>
 
       <div className="space-y-5">
-        {days.map((day) => (
-          <DaySection key={day} mission={mission} day={day} />
-        ))}
+        {days.map((day) => {
+          const status: DayStatus =
+            todayDay == null
+              ? day === 1
+                ? "today"
+                : "future"
+              : day < todayDay
+                ? "past"
+                : day === todayDay
+                  ? "today"
+                  : "future";
+          return (
+            <DaySection key={day} mission={mission} day={day} status={status} />
+          );
+        })}
       </div>
 
       <button
@@ -93,8 +123,25 @@ function MissionDetailPage() {
   );
 }
 
-function DaySection({ mission, day }: { mission: Mission; day: number }) {
+type DayStatus = "past" | "today" | "future";
+
+function DaySection({
+  mission,
+  day,
+  status,
+}: {
+  mission: Mission;
+  day: number;
+  status: DayStatus;
+}) {
   const [value, setValue] = useState("");
+  const [expanded, setExpanded] = useState(status !== "past");
+
+  useEffect(() => {
+    setExpanded(status !== "past");
+  }, [status]);
+
+
   const tasks = mission.tasks
     .filter((t) => t.day === day)
     .sort((a, b) => a.createdAt - b.createdAt);
