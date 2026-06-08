@@ -20,11 +20,50 @@ function MissionsLayout() {
   return <MissionsListPage />;
 }
 
-const PRIORITY_LABELS: Record<number, { label: string; dot: string }> = {
-  1: { label: "High", dot: "bg-red-500" },
-  2: { label: "Medium", dot: "bg-yellow-500" },
-  3: { label: "Low", dot: "bg-green-500" },
+const PRIORITY_LABELS: Record<number, { label: string; dot: string; bar: string }> = {
+  1: { label: "High", dot: "bg-red-500", bar: "bg-red-500" },
+  2: { label: "Medium", dot: "bg-yellow-500", bar: "bg-yellow-500" },
+  3: { label: "Low", dot: "bg-blue-500", bar: "bg-blue-500" },
 };
+
+const DAY_MS = 86_400_000;
+
+function dayKey(ts: number): string {
+  const d = new Date(ts);
+  return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+}
+
+function computeStreak(tasks: { completed: boolean; createdAt: number }[]): number {
+  const days = new Set(tasks.filter((t) => t.completed).map((t) => dayKey(t.createdAt)));
+  if (days.size === 0) return 0;
+  let streak = 0;
+  const cursor = new Date();
+  while (days.has(dayKey(cursor.getTime()))) {
+    streak += 1;
+    cursor.setDate(cursor.getDate() - 1);
+  }
+  return streak;
+}
+
+function deadlineLabel(startDate: number, days: number): { text: string; overdue: boolean } {
+  const end = startDate + days * DAY_MS;
+  const diff = Math.ceil((end - Date.now()) / DAY_MS);
+  if (diff < 0) return { text: `Overdue ${Math.abs(diff)}d`, overdue: true };
+  if (diff === 0) return { text: "Due today", overdue: false };
+  if (diff === 1) return { text: "1 day left", overdue: false };
+  return { text: `${diff} days left`, overdue: false };
+}
+
+function lastActivityLabel(tasks: { createdAt: number }[]): string | null {
+  if (tasks.length === 0) return null;
+  const latest = tasks.reduce((a, t) => Math.max(a, t.createdAt), 0);
+  const diff = Math.floor((Date.now() - latest) / DAY_MS);
+  if (diff <= 0) return "Last activity: today";
+  if (diff === 1) return "Last activity: yesterday";
+  if (diff < 7) return `Last activity: ${diff}d ago`;
+  if (diff < 30) return `Last activity: ${Math.floor(diff / 7)}w ago`;
+  return `Last activity: ${Math.floor(diff / 30)}mo ago`;
+}
 
 function MissionsListPage() {
   const missions = useMissions();
@@ -64,12 +103,20 @@ function MissionsListPage() {
   };
 
   const sortedMissions = [...missions].sort((a, b) => a.priority - b.priority);
+  const activeCount = sortedMissions.filter((m) => {
+    const { total, done } = missionProgress(m);
+    return total === 0 || done < total;
+  }).length;
 
   return (
     <div className="space-y-6 pb-12">
       <section>
         <h2 className="font-bold text-foreground text-2xl tracking-tight">Missions</h2>
-        <p className="text-sm text-muted-foreground mt-1">Tap a mission to open it.</p>
+        <p className="text-sm text-muted-foreground mt-1">
+          {sortedMissions.length === 0
+            ? "No missions yet"
+            : `${activeCount} active mission${activeCount === 1 ? "" : "s"}`}
+        </p>
       </section>
 
       <form onSubmit={handleAdd} className="flex gap-2">
@@ -107,13 +154,17 @@ function MissionsListPage() {
             const { total, done, pct } = missionProgress(m);
             const isEditing = editingId === m.id;
             const pri = PRIORITY_LABELS[m.priority] || PRIORITY_LABELS[2];
+            const streak = computeStreak(m.tasks);
+            const deadline = deadlineLabel(m.startDate, m.days);
+            const activity = lastActivityLabel(m.tasks);
             return (
               <li key={m.id} className="relative group">
                 <Link
                   to="/missions/$missionId"
                   params={{ missionId: m.id }}
-                  className="block bg-card border border-border/60 rounded-xl p-4 hover:border-primary/40 transition"
+                  className="block relative overflow-hidden bg-card border border-border/60 rounded-xl p-4 pl-5 hover:border-primary/40 hover:shadow-md transition-all"
                 >
+                  <span className={`absolute left-0 top-0 bottom-0 w-1 ${pri.bar}`} />
                   <div className="flex items-center justify-between gap-3">
                     {isEditing ? (
                       <input
@@ -128,16 +179,38 @@ function MissionsListPage() {
                     ) : (
                       <h3 className="font-semibold text-foreground truncate">{m.title}</h3>
                     )}
-                    <span className="text-sm font-bold text-primary tabular-nums">{pct}%</span>
+                    <span className="text-sm font-bold text-primary tabular-nums shrink-0">{pct}%</span>
                   </div>
-                  <div className="flex items-center justify-between mt-1">
-                    <p className="text-xs text-muted-foreground">
-                      {done}/{total} tasks
-                    </p>
+
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {done}/{total} tasks · {pct}%
+                  </p>
+
+                  <div className="mt-2 h-1.5 w-full rounded-full bg-secondary overflow-hidden">
+                    <div
+                      className="h-full bg-primary rounded-full transition-all duration-500"
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+
+                  <div className="flex items-center flex-wrap gap-x-3 gap-y-1 mt-3">
                     <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
                       <span className={`w-2 h-2 rounded-full ${pri.dot}`} />
                       {pri.label}
                     </span>
+                    {streak > 0 && (
+                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-orange-500">
+                        🔥 {streak} day{streak === 1 ? "" : "s"}
+                      </span>
+                    )}
+                    <span
+                      className={`text-xs font-medium ${deadline.overdue ? "text-destructive" : "text-muted-foreground"}`}
+                    >
+                      {deadline.text}
+                    </span>
+                    {activity && (
+                      <span className="text-xs text-muted-foreground ml-auto">{activity}</span>
+                    )}
                   </div>
                 </Link>
                 <div className="absolute top-3 right-14 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
