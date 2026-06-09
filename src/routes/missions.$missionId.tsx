@@ -159,10 +159,12 @@ function DaySection({
   mission,
   day,
   status,
+  onStreakIncrease,
 }: {
   mission: Mission;
   day: number;
   status: DayStatus;
+  onStreakIncrease?: () => void;
 }) {
   const [value, setValue] = useState("");
   const [expanded, setExpanded] = useState(status !== "past");
