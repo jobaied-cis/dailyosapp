@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, useRef, useEffect, type FormEvent } from "react";
-import { ArrowLeft, Check, ChevronDown, Lock, Pencil, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Check, ChevronDown, Flame, Lock, Pencil, Plus, Trash2 } from "lucide-react";
 import {
   addDay,
   addTask,
@@ -13,6 +13,7 @@ import {
   type Mission,
   type MissionTask,
 } from "@/lib/missions-store";
+import { getMissionStreak } from "@/lib/mission-streak-store";
 
 export const Route = createFileRoute("/missions/$missionId")({
   head: () => ({ meta: [{ title: "Mission — DailyOS" }] }),
@@ -38,6 +39,9 @@ function MissionDetailPage() {
   const { total, done, pct } = missionProgress(mission);
   const dayCount = Math.max(mission.days || 1, 1);
   const days = Array.from({ length: dayCount }, (_, i) => i + 1);
+
+  const streakInfo = getMissionStreak(missionId);
+  const [streakFlash, setStreakFlash] = useState(false);
 
   const DAY_MS = 24 * 60 * 60 * 1000;
   const startMidnight = new Date(mission.startDate);
@@ -83,9 +87,26 @@ function MissionDetailPage() {
 
       <section className="bg-card border border-border/60 rounded-xl p-4">
         <h1 className="font-bold text-foreground text-xl">{mission.title}</h1>
-        <p className="text-xs text-muted-foreground mt-2 font-semibold uppercase tracking-wider">
-          {done}/{total} tasks · {pct}%
-        </p>
+        <div className="flex items-center flex-wrap gap-x-3 gap-y-1 mt-2">
+          <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">
+            {done}/{total} tasks · {pct}%
+          </p>
+          {streakInfo.streak > 0 && (
+            <span className="inline-flex items-center gap-1 text-xs font-semibold text-orange-500">
+              <Flame className="size-3" /> {streakInfo.streak} day{streakInfo.streak === 1 ? "" : "s"}
+            </span>
+          )}
+          {streakInfo.atRisk && (
+            <span className="inline-flex items-center gap-1 text-xs font-semibold text-destructive">
+              ⚠️ Streak at risk
+            </span>
+          )}
+          {streakFlash && (
+            <span className="inline-flex items-center gap-1 text-xs font-bold text-primary animate-pulse">
+              +1 streak 🔥
+            </span>
+          )}
+        </div>
         <div className="mt-3 h-2 bg-secondary rounded-full overflow-hidden">
           <div
             className="h-full bg-primary transition-all"
@@ -107,7 +128,16 @@ function MissionDetailPage() {
                   ? "today"
                   : "future";
           return (
-            <DaySection key={day} mission={mission} day={day} status={status} />
+            <DaySection
+              key={day}
+              mission={mission}
+              day={day}
+              status={status}
+              onStreakIncrease={() => {
+                setStreakFlash(true);
+                setTimeout(() => setStreakFlash(false), 2000);
+              }}
+            />
           );
         })}
       </div>
@@ -129,10 +159,12 @@ function DaySection({
   mission,
   day,
   status,
+  onStreakIncrease,
 }: {
   mission: Mission;
   day: number;
   status: DayStatus;
+  onStreakIncrease?: () => void;
 }) {
   const [value, setValue] = useState("");
   const [expanded, setExpanded] = useState(status !== "past");
@@ -140,7 +172,6 @@ function DaySection({
   useEffect(() => {
     setExpanded(status !== "past");
   }, [status]);
-
 
   const tasks = mission.tasks
     .filter((t) => t.day === day)
@@ -247,7 +278,12 @@ function DaySection({
           ) : (
             <ul className="space-y-2">
               {tasks.map((t) => (
-                <TaskRow key={t.id} missionId={mission.id} task={t} />
+                <TaskRow
+                  key={t.id}
+                  missionId={mission.id}
+                  task={t}
+                  onStreakIncrease={onStreakIncrease}
+                />
               ))}
             </ul>
           )}
@@ -257,7 +293,15 @@ function DaySection({
   );
 }
 
-function TaskRow({ missionId, task }: { missionId: string; task: MissionTask }) {
+function TaskRow({
+  missionId,
+  task,
+  onStreakIncrease,
+}: {
+  missionId: string;
+  task: MissionTask;
+  onStreakIncrease?: () => void;
+}) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(task.title);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -288,7 +332,10 @@ function TaskRow({ missionId, task }: { missionId: string; task: MissionTask }) 
       <input
         type="checkbox"
         checked={task.completed}
-        onChange={() => toggleTask(missionId, task.id)}
+        onChange={() => {
+          const increased = toggleTask(missionId, task.id);
+          if (increased) onStreakIncrease?.();
+        }}
         className="size-4 accent-primary cursor-pointer"
       />
       {editing ? (

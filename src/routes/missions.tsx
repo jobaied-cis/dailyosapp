@@ -1,6 +1,7 @@
 import { createFileRoute, Link, Outlet, useMatchRoute } from "@tanstack/react-router";
 import { useState, type FormEvent, type KeyboardEvent } from "react";
 import { addMission, deleteMission, missionProgress, updateMission, useMissions } from "@/lib/missions-store";
+import { getMissionStreak } from "@/lib/mission-streak-store";
 import { Pencil, Trash2 } from "lucide-react";
 
 export const Route = createFileRoute("/missions")({
@@ -28,22 +29,6 @@ const PRIORITY_LABELS: Record<number, { label: string; dot: string; bar: string 
 
 const DAY_MS = 86_400_000;
 
-function dayKey(ts: number): string {
-  const d = new Date(ts);
-  return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
-}
-
-function computeStreak(tasks: { completed: boolean; createdAt: number }[]): number {
-  const days = new Set(tasks.filter((t) => t.completed).map((t) => dayKey(t.createdAt)));
-  if (days.size === 0) return 0;
-  let streak = 0;
-  const cursor = new Date();
-  while (days.has(dayKey(cursor.getTime()))) {
-    streak += 1;
-    cursor.setDate(cursor.getDate() - 1);
-  }
-  return streak;
-}
 
 function deadlineLabel(startDate: number, days: number): { text: string; overdue: boolean } {
   const end = startDate + days * DAY_MS;
@@ -154,7 +139,9 @@ function MissionsListPage() {
             const { total, done, pct } = missionProgress(m);
             const isEditing = editingId === m.id;
             const pri = PRIORITY_LABELS[m.priority] || PRIORITY_LABELS[2];
-            const streak = computeStreak(m.tasks);
+            const streakInfo = getMissionStreak(m.id);
+            const streak = streakInfo.streak;
+            const atRisk = streakInfo.atRisk;
             const deadline = deadlineLabel(m.startDate, m.days);
             const activity = lastActivityLabel(m.tasks);
             return (
@@ -201,6 +188,11 @@ function MissionsListPage() {
                     {streak > 0 && (
                       <span className="inline-flex items-center gap-1 text-xs font-semibold text-orange-500">
                         🔥 {streak} day{streak === 1 ? "" : "s"}
+                      </span>
+                    )}
+                    {atRisk && (
+                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-destructive">
+                        ⚠️ Streak at risk
                       </span>
                     )}
                     <span
