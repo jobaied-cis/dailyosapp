@@ -139,7 +139,9 @@ function MissionsListPage() {
             const { total, done, pct } = missionProgress(m);
             const isEditing = editingId === m.id;
             const pri = PRIORITY_LABELS[m.priority] || PRIORITY_LABELS[2];
-            const streak = computeStreak(m.tasks);
+            const streakInfo = getMissionStreak(m.id);
+            const streak = streakInfo.streak;
+            const atRisk = streakInfo.atRisk;
             const deadline = deadlineLabel(m.startDate, m.days);
             const activity = lastActivityLabel(m.tasks);
             return (
