@@ -279,7 +279,12 @@ function DaySection({
           ) : (
             <ul className="space-y-2">
               {tasks.map((t) => (
-                <TaskRow key={t.id} missionId={mission.id} task={t} />
+                <TaskRow
+                  key={t.id}
+                  missionId={mission.id}
+                  task={t}
+                  onStreakIncrease={onStreakIncrease}
+                />
               ))}
             </ul>
           )}
