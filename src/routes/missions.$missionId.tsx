@@ -333,7 +333,10 @@ function TaskRow({
       <input
         type="checkbox"
         checked={task.completed}
-        onChange={() => toggleTask(missionId, task.id)}
+        onChange={() => {
+          const increased = toggleTask(missionId, task.id);
+          if (increased) onStreakIncrease?.();
+        }}
         className="size-4 accent-primary cursor-pointer"
       />
       {editing ? (
