@@ -40,6 +40,9 @@ function MissionDetailPage() {
   const dayCount = Math.max(mission.days || 1, 1);
   const days = Array.from({ length: dayCount }, (_, i) => i + 1);
 
+  const streakInfo = getMissionStreak(missionId);
+  const [streakFlash, setStreakFlash] = useState(false);
+
   const DAY_MS = 24 * 60 * 60 * 1000;
   const startMidnight = new Date(mission.startDate);
   startMidnight.setHours(0, 0, 0, 0);
