@@ -29,22 +29,6 @@ const PRIORITY_LABELS: Record<number, { label: string; dot: string; bar: string 
 
 const DAY_MS = 86_400_000;
 
-function dayKey(ts: number): string {
-  const d = new Date(ts);
-  return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
-}
-
-function computeStreak(tasks: { completed: boolean; createdAt: number }[]): number {
-  const days = new Set(tasks.filter((t) => t.completed).map((t) => dayKey(t.createdAt)));
-  if (days.size === 0) return 0;
-  let streak = 0;
-  const cursor = new Date();
-  while (days.has(dayKey(cursor.getTime()))) {
-    streak += 1;
-    cursor.setDate(cursor.getDate() - 1);
-  }
-  return streak;
-}
 
 function deadlineLabel(startDate: number, days: number): { text: string; overdue: boolean } {
   const end = startDate + days * DAY_MS;
