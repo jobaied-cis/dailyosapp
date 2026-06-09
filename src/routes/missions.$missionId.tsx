@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, useRef, useEffect, type FormEvent } from "react";
-import { ArrowLeft, Check, ChevronDown, Lock, Pencil, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Check, ChevronDown, Flame, Lock, Pencil, Plus, Trash2 } from "lucide-react";
 import {
   addDay,
   addTask,
@@ -13,6 +13,7 @@ import {
   type Mission,
   type MissionTask,
 } from "@/lib/missions-store";
+import { getMissionStreak } from "@/lib/mission-streak-store";
 
 export const Route = createFileRoute("/missions/$missionId")({
   head: () => ({ meta: [{ title: "Mission — DailyOS" }] }),
