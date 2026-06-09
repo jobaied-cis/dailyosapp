@@ -1,4 +1,5 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
+import { recordMissionCompletion } from "./mission-streak-store";
 
 export interface MissionTask {
   id: string;
