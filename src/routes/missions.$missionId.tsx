@@ -87,9 +87,26 @@ function MissionDetailPage() {
 
       <section className="bg-card border border-border/60 rounded-xl p-4">
         <h1 className="font-bold text-foreground text-xl">{mission.title}</h1>
-        <p className="text-xs text-muted-foreground mt-2 font-semibold uppercase tracking-wider">
-          {done}/{total} tasks · {pct}%
-        </p>
+        <div className="flex items-center flex-wrap gap-x-3 gap-y-1 mt-2">
+          <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">
+            {done}/{total} tasks · {pct}%
+          </p>
+          {streakInfo.streak > 0 && (
+            <span className="inline-flex items-center gap-1 text-xs font-semibold text-orange-500">
+              <Flame className="size-3" /> {streakInfo.streak} day{streakInfo.streak === 1 ? "" : "s"}
+            </span>
+          )}
+          {streakInfo.atRisk && (
+            <span className="inline-flex items-center gap-1 text-xs font-semibold text-destructive">
+              ⚠️ Streak at risk
+            </span>
+          )}
+          {streakFlash && (
+            <span className="inline-flex items-center gap-1 text-xs font-bold text-primary animate-pulse">
+              +1 streak 🔥
+            </span>
+          )}
+        </div>
         <div className="mt-3 h-2 bg-secondary rounded-full overflow-hidden">
           <div
             className="h-full bg-primary transition-all"
