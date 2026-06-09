@@ -294,7 +294,15 @@ function DaySection({
   );
 }
 
-function TaskRow({ missionId, task }: { missionId: string; task: MissionTask }) {
+function TaskRow({
+  missionId,
+  task,
+  onStreakIncrease,
+}: {
+  missionId: string;
+  task: MissionTask;
+  onStreakIncrease?: () => void;
+}) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(task.title);
   const inputRef = useRef<HTMLInputElement>(null);
