@@ -190,6 +190,11 @@ function MissionsListPage() {
                         🔥 {streak} day{streak === 1 ? "" : "s"}
                       </span>
                     )}
+                    {atRisk && (
+                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-destructive">
+                        ⚠️ Streak at risk
+                      </span>
+                    )}
                     <span
                       className={`text-xs font-medium ${deadline.overdue ? "text-destructive" : "text-muted-foreground"}`}
                     >
