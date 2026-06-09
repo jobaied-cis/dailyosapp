@@ -173,7 +173,6 @@ function DaySection({
     setExpanded(status !== "past");
   }, [status]);
 
-
   const tasks = mission.tasks
     .filter((t) => t.day === day)
     .sort((a, b) => a.createdAt - b.createdAt);
