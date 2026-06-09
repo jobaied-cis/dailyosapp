@@ -128,7 +128,16 @@ function MissionDetailPage() {
                   ? "today"
                   : "future";
           return (
-            <DaySection key={day} mission={mission} day={day} status={status} />
+            <DaySection
+              key={day}
+              mission={mission}
+              day={day}
+              status={status}
+              onStreakIncrease={() => {
+                setStreakFlash(true);
+                setTimeout(() => setStreakFlash(false), 2000);
+              }}
+            />
           );
         })}
       </div>
