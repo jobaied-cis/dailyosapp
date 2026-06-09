@@ -173,20 +173,27 @@ export function updateTask(missionId: string, taskId: string, title: string) {
   );
 }
 
-export function toggleTask(missionId: string, taskId: string) {
+export function toggleTask(missionId: string, taskId: string): boolean {
   ensureInit();
-  persist(
-    cache.map((m) =>
-      m.id === missionId
-        ? {
-            ...m,
-            tasks: m.tasks.map((t) =>
-              t.id === taskId ? { ...t, completed: !t.completed } : t,
-            ),
-          }
-        : m,
-    ),
-  );
+  let toggledToCompleted = false;
+  const next = cache.map((m) => {
+    if (m.id !== missionId) return m;
+    const nextTasks = m.tasks.map((t) => {
+      if (t.id === taskId) {
+        toggledToCompleted = !t.completed;
+        return { ...t, completed: !t.completed };
+      }
+      return t;
+    });
+    return { ...m, tasks: nextTasks };
+  });
+  persist(next);
+
+  if (toggledToCompleted) {
+    const result = recordMissionCompletion(missionId);
+    return result.increased;
+  }
+  return false;
 }
 
 export function deleteTask(missionId: string, taskId: string) {
