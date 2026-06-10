@@ -59,6 +59,7 @@ function MissionsListPage() {
   const missions = useMissions();
   const [title, setTitle] = useState("");
   const [priority, setPriority] = useState(2);
+  const [duration, setDuration] = useState(7);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draftTitle, setDraftTitle] = useState("");
   const [confirmId, setConfirmId] = useState<string | null>(null);
@@ -67,9 +68,10 @@ function MissionsListPage() {
     e.preventDefault();
     const t = title.trim();
     if (!t) return;
-    addMission(t, priority);
+    addMission(t, priority, Math.max(1, Number(duration) || 1));
     setTitle("");
     setPriority(2);
+    setDuration(7);
   };
 
   const startEdit = (m: { id: string; title: string }) => {
