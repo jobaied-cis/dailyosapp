@@ -63,6 +63,8 @@ function MissionDetailPage() {
 
   const streakInfo = getMissionStreak(missionId);
   const [streakFlash, setStreakFlash] = useState(false);
+  const [celebrationDay, setCelebrationDay] = useState<number | null>(null);
+  const pendingStreakRef = useRef<number | null>(null);
 
   const DAY_MS = 24 * 60 * 60 * 1000;
   const startMidnight = new Date(mission.startDate);
@@ -158,6 +160,10 @@ function MissionDetailPage() {
                 setStreakFlash(true);
                 setTimeout(() => setStreakFlash(false), 2000);
               }}
+              onDayComplete={(d, streakAfter) => {
+                pendingStreakRef.current = streakAfter;
+                setCelebrationDay(d);
+              }}
             />
           );
         })}
@@ -170,6 +176,20 @@ function MissionDetailPage() {
         <Plus className="size-4" />
         Add Day
       </button>
+
+      {celebrationDay != null && (
+        <DayCompleteCelebration
+          day={celebrationDay}
+          onClose={() => {
+            const s = pendingStreakRef.current;
+            setCelebrationDay(null);
+            pendingStreakRef.current = null;
+            if (s && s > 0) {
+              toast(`🔥 Streak increased to ${s} day${s === 1 ? "" : "s"}!`);
+            }
+          }}
+        />
+      )}
     </div>
   );
 }
