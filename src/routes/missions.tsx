@@ -30,13 +30,18 @@ const PRIORITY_LABELS: Record<number, { label: string; dot: string; bar: string 
 const DAY_MS = 86_400_000;
 
 
-function deadlineLabel(startDate: number, days: number): { text: string; overdue: boolean } {
+function deadlineLabel(
+  startDate: number,
+  days: number,
+): { text: string; status: "normal" | "near" | "overdue"; lastDay: boolean } {
   const end = startDate + days * DAY_MS;
   const diff = Math.ceil((end - Date.now()) / DAY_MS);
-  if (diff < 0) return { text: `Overdue ${Math.abs(diff)}d`, overdue: true };
-  if (diff === 0) return { text: "Due today", overdue: false };
-  if (diff === 1) return { text: "1 day left", overdue: false };
-  return { text: `${diff} days left`, overdue: false };
+  if (diff < 0)
+    return { text: `Overdue ${Math.abs(diff)}d`, status: "overdue", lastDay: false };
+  if (diff === 0) return { text: "Due today", status: "near", lastDay: true };
+  if (diff === 1) return { text: "1 day left", status: "near", lastDay: true };
+  if (diff <= 3) return { text: `${diff} days left`, status: "near", lastDay: false };
+  return { text: `${diff} days left`, status: "normal", lastDay: false };
 }
 
 function lastActivityLabel(tasks: { createdAt: number }[]): string | null {
