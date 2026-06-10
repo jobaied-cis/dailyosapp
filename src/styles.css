@@ -251,3 +251,9 @@ html { scroll-behavior: smooth; }
   background-size: 100% 2px;
   animation: strike 280ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
+
+/* Confetti for day completion */
+@keyframes confetti-fall {
+  0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(110vh) rotate(720deg); opacity: 0.8; }
+}
