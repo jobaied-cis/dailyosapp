@@ -1,5 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, useRef, useEffect, type FormEvent } from "react";
+import { toast } from "sonner";
 import { ArrowLeft, Check, ChevronDown, Flame, Lock, Pencil, Plus, Trash2 } from "lucide-react";
 import {
   addDay,
@@ -14,6 +15,26 @@ import {
   type MissionTask,
 } from "@/lib/missions-store";
 import { getMissionStreak } from "@/lib/mission-streak-store";
+import { DayCompleteCelebration } from "@/components/DayCompleteCelebration";
+
+const CELEBRATED_KEY = "dailyos.dayCelebrated";
+function getCelebrated(): Record<string, true> {
+  try {
+    return JSON.parse(localStorage.getItem(CELEBRATED_KEY) || "{}");
+  } catch {
+    return {};
+  }
+}
+function markCelebrated(key: string) {
+  const c = getCelebrated();
+  c[key] = true;
+  try {
+    localStorage.setItem(CELEBRATED_KEY, JSON.stringify(c));
+  } catch {}
+}
+function isCelebrated(key: string): boolean {
+  return !!getCelebrated()[key];
+}
 
 export const Route = createFileRoute("/missions/$missionId")({
   head: () => ({ meta: [{ title: "Mission — DailyOS" }] }),
