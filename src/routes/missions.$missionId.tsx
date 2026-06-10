@@ -201,11 +201,13 @@ function DaySection({
   day,
   status,
   onStreakIncrease,
+  onDayComplete,
 }: {
   mission: Mission;
   day: number;
   status: DayStatus;
   onStreakIncrease?: () => void;
+  onDayComplete?: (day: number, streakAfter: number) => void;
 }) {
   const [value, setValue] = useState("");
   const [expanded, setExpanded] = useState(status !== "past");
@@ -222,6 +224,19 @@ function DaySection({
   const dayDone = tasks.filter((t) => t.completed).length;
   const dayPct = dayTotal ? Math.round((dayDone / dayTotal) * 100) : 0;
   const allDone = dayTotal > 0 && dayDone === dayTotal;
+
+  const prevAllDoneRef = useRef(allDone);
+  useEffect(() => {
+    if (allDone && !prevAllDoneRef.current) {
+      const key = `${mission.id}:${day}`;
+      if (!isCelebrated(key)) {
+        markCelebrated(key);
+        const streak = getMissionStreak(mission.id).streak;
+        onDayComplete?.(day, streak);
+      }
+    }
+    prevAllDoneRef.current = allDone;
+  }, [allDone, mission.id, day, onDayComplete]);
 
   const handleAdd = (e: FormEvent) => {
     e.preventDefault();
