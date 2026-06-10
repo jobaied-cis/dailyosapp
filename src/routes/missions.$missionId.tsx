@@ -110,6 +110,33 @@ function MissionDetailPage() {
 
       <section className="bg-card border border-border/60 rounded-xl p-4">
         <h1 className="font-bold text-foreground text-xl">{mission.title}</h1>
+        {(() => {
+          const endDate = new Date(mission.startDate + mission.days * DAY_MS);
+          const endLabel = endDate.toLocaleDateString(undefined, {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+          });
+          const diff = Math.ceil((endDate.getTime() - Date.now()) / DAY_MS);
+          const overdue = diff < 0;
+          const near = !overdue && diff <= 3;
+          const colorClass = overdue
+            ? "text-destructive"
+            : near
+              ? "text-orange-500"
+              : "text-blue-500";
+          const countdown = overdue
+            ? `Overdue ${Math.abs(diff)}d`
+            : diff === 0
+              ? "Due today"
+              : `${diff} day${diff === 1 ? "" : "s"} left`;
+          return (
+            <p className={`text-xs font-semibold mt-1 ${colorClass}`}>
+              Ends {endLabel} · {countdown}
+              {(diff === 1 || diff === 0) && !overdue && " · ⚠️ Last day"}
+            </p>
+          );
+        })()}
         <div className="flex items-center flex-wrap gap-x-3 gap-y-1 mt-2">
           <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">
             {done}/{total} tasks · {pct}%
@@ -137,6 +164,7 @@ function MissionDetailPage() {
           />
         </div>
       </section>
+
 
       <div className="space-y-5">
         {days.map((day) => {
