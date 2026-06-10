@@ -216,10 +216,15 @@ function MissionsListPage() {
                       </span>
                     )}
                     <span
-                      className={`text-xs font-medium ${deadline.overdue ? "text-destructive" : "text-muted-foreground"}`}
+                      className={`text-xs font-medium ${deadline.status === "overdue" ? "text-destructive" : deadline.status === "near" ? "text-orange-500" : "text-blue-500"}`}
                     >
                       {deadline.text}
                     </span>
+                    {deadline.lastDay && deadline.status !== "overdue" && (
+                      <span className="text-xs font-semibold text-orange-500">
+                        ⚠️ Last day — don't miss
+                      </span>
+                    )}
                     {activity && (
                       <span className="text-xs text-muted-foreground ml-auto">{activity}</span>
                     )}
