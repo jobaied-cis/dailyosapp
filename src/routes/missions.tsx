@@ -111,29 +111,42 @@ function MissionsListPage() {
         </p>
       </section>
 
-      <form onSubmit={handleAdd} className="flex gap-2">
+      <form onSubmit={handleAdd} className="space-y-2">
         <input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="New mission title…"
-          className="flex-1 bg-secondary rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-primary/30 text-sm"
+          className="w-full bg-secondary rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-primary/30 text-sm"
         />
-        <select
-          value={priority}
-          onChange={(e) => setPriority(Number(e.target.value))}
-          className="bg-secondary rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30"
-        >
-          <option value={1}>High</option>
-          <option value={2}>Medium</option>
-          <option value={3}>Low</option>
-        </select>
-        <button
-          type="submit"
-          disabled={!title.trim()}
-          className="bg-primary text-primary-foreground font-semibold text-sm px-4 rounded-lg disabled:opacity-50"
-        >
-          Add
-        </button>
+        <div className="flex gap-2">
+          <select
+            value={priority}
+            onChange={(e) => setPriority(Number(e.target.value))}
+            className="bg-secondary rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30"
+          >
+            <option value={1}>High</option>
+            <option value={2}>Medium</option>
+            <option value={3}>Low</option>
+          </select>
+          <div className="flex items-center gap-2 flex-1 bg-secondary rounded-lg px-3">
+            <input
+              type="number"
+              min={1}
+              max={365}
+              value={duration}
+              onChange={(e) => setDuration(Number(e.target.value))}
+              className="w-16 bg-transparent py-2 outline-none text-sm tabular-nums"
+            />
+            <span className="text-xs text-muted-foreground">days</span>
+          </div>
+          <button
+            type="submit"
+            disabled={!title.trim()}
+            className="bg-primary text-primary-foreground font-semibold text-sm px-4 rounded-lg disabled:opacity-50"
+          >
+            Add
+          </button>
+        </div>
       </form>
 
       {sortedMissions.length === 0 ? (
