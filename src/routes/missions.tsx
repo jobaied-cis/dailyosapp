@@ -30,13 +30,18 @@ const PRIORITY_LABELS: Record<number, { label: string; dot: string; bar: string 
 const DAY_MS = 86_400_000;
 
 
-function deadlineLabel(startDate: number, days: number): { text: string; overdue: boolean } {
+function deadlineLabel(
+  startDate: number,
+  days: number,
+): { text: string; status: "normal" | "near" | "overdue"; lastDay: boolean } {
   const end = startDate + days * DAY_MS;
   const diff = Math.ceil((end - Date.now()) / DAY_MS);
-  if (diff < 0) return { text: `Overdue ${Math.abs(diff)}d`, overdue: true };
-  if (diff === 0) return { text: "Due today", overdue: false };
-  if (diff === 1) return { text: "1 day left", overdue: false };
-  return { text: `${diff} days left`, overdue: false };
+  if (diff < 0)
+    return { text: `Overdue ${Math.abs(diff)}d`, status: "overdue", lastDay: false };
+  if (diff === 0) return { text: "Due today", status: "near", lastDay: true };
+  if (diff === 1) return { text: "1 day left", status: "near", lastDay: true };
+  if (diff <= 3) return { text: `${diff} days left`, status: "near", lastDay: false };
+  return { text: `${diff} days left`, status: "normal", lastDay: false };
 }
 
 function lastActivityLabel(tasks: { createdAt: number }[]): string | null {
@@ -54,6 +59,7 @@ function MissionsListPage() {
   const missions = useMissions();
   const [title, setTitle] = useState("");
   const [priority, setPriority] = useState(2);
+  const [duration, setDuration] = useState(7);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draftTitle, setDraftTitle] = useState("");
   const [confirmId, setConfirmId] = useState<string | null>(null);
@@ -62,9 +68,10 @@ function MissionsListPage() {
     e.preventDefault();
     const t = title.trim();
     if (!t) return;
-    addMission(t, priority);
+    addMission(t, priority, Math.max(1, Number(duration) || 1));
     setTitle("");
     setPriority(2);
+    setDuration(7);
   };
 
   const startEdit = (m: { id: string; title: string }) => {
@@ -104,29 +111,42 @@ function MissionsListPage() {
         </p>
       </section>
 
-      <form onSubmit={handleAdd} className="flex gap-2">
+      <form onSubmit={handleAdd} className="space-y-2">
         <input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="New mission title…"
-          className="flex-1 bg-secondary rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-primary/30 text-sm"
+          className="w-full bg-secondary rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-primary/30 text-sm"
         />
-        <select
-          value={priority}
-          onChange={(e) => setPriority(Number(e.target.value))}
-          className="bg-secondary rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30"
-        >
-          <option value={1}>High</option>
-          <option value={2}>Medium</option>
-          <option value={3}>Low</option>
-        </select>
-        <button
-          type="submit"
-          disabled={!title.trim()}
-          className="bg-primary text-primary-foreground font-semibold text-sm px-4 rounded-lg disabled:opacity-50"
-        >
-          Add
-        </button>
+        <div className="flex gap-2">
+          <select
+            value={priority}
+            onChange={(e) => setPriority(Number(e.target.value))}
+            className="bg-secondary rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/30"
+          >
+            <option value={1}>High</option>
+            <option value={2}>Medium</option>
+            <option value={3}>Low</option>
+          </select>
+          <div className="flex items-center gap-2 flex-1 bg-secondary rounded-lg px-3">
+            <input
+              type="number"
+              min={1}
+              max={365}
+              value={duration}
+              onChange={(e) => setDuration(Number(e.target.value))}
+              className="w-16 bg-transparent py-2 outline-none text-sm tabular-nums"
+            />
+            <span className="text-xs text-muted-foreground">days</span>
+          </div>
+          <button
+            type="submit"
+            disabled={!title.trim()}
+            className="bg-primary text-primary-foreground font-semibold text-sm px-4 rounded-lg disabled:opacity-50"
+          >
+            Add
+          </button>
+        </div>
       </form>
 
       {sortedMissions.length === 0 ? (
@@ -196,10 +216,15 @@ function MissionsListPage() {
                       </span>
                     )}
                     <span
-                      className={`text-xs font-medium ${deadline.overdue ? "text-destructive" : "text-muted-foreground"}`}
+                      className={`text-xs font-medium ${deadline.status === "overdue" ? "text-destructive" : deadline.status === "near" ? "text-orange-500" : "text-blue-500"}`}
                     >
                       {deadline.text}
                     </span>
+                    {deadline.lastDay && deadline.status !== "overdue" && (
+                      <span className="text-xs font-semibold text-orange-500">
+                        ⚠️ Last day — don't miss
+                      </span>
+                    )}
                     {activity && (
                       <span className="text-xs text-muted-foreground ml-auto">{activity}</span>
                     )}

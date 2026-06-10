@@ -101,7 +101,7 @@ export function useMission(id: string): Mission | undefined {
   return useMissions().find((m) => m.id === id);
 }
 
-export function addMission(title: string, priority: number = 2): string {
+export function addMission(title: string, priority: number = 2, days: number = 1): string {
   ensureInit();
   const now = Date.now();
   const mission: Mission = {
@@ -110,7 +110,7 @@ export function addMission(title: string, priority: number = 2): string {
     priority,
     createdAt: now,
     startDate: now,
-    days: 1,
+    days: Math.max(1, Math.floor(days)),
     tasks: [],
   };
   persist([...cache, mission]);
