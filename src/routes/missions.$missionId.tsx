@@ -250,6 +250,20 @@ function MissionDetailPage() {
           }}
         />
       )}
+
+      {missionComplete && (
+        <MissionCompleteCelebration
+          title={mission.title}
+          totalDays={dayCount}
+          totalTasks={total}
+          finalStreak={streakInfo.streak}
+          onClose={() => setMissionComplete(false)}
+          onStartNew={() => {
+            setMissionComplete(false);
+            navigate({ to: "/missions" });
+          }}
+        />
+      )}
     </div>
   );
 }
