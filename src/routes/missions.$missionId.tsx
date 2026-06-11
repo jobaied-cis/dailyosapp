@@ -16,6 +16,24 @@ import {
 } from "@/lib/missions-store";
 import { getMissionStreak } from "@/lib/mission-streak-store";
 import { DayCompleteCelebration } from "@/components/DayCompleteCelebration";
+import { MissionCompleteCelebration } from "@/components/MissionCompleteCelebration";
+
+const MISSION_CELEBRATED_KEY = "dailyos.missionCelebrated";
+function isMissionCelebrated(id: string): boolean {
+  try {
+    const c = JSON.parse(localStorage.getItem(MISSION_CELEBRATED_KEY) || "{}");
+    return !!c[id];
+  } catch {
+    return false;
+  }
+}
+function markMissionCelebrated(id: string) {
+  try {
+    const c = JSON.parse(localStorage.getItem(MISSION_CELEBRATED_KEY) || "{}");
+    c[id] = true;
+    localStorage.setItem(MISSION_CELEBRATED_KEY, JSON.stringify(c));
+  } catch {}
+}
 
 const CELEBRATED_KEY = "dailyos.dayCelebrated";
 function getCelebrated(): Record<string, true> {
@@ -64,7 +82,21 @@ function MissionDetailPage() {
   const streakInfo = getMissionStreak(missionId);
   const [streakFlash, setStreakFlash] = useState(false);
   const [celebrationDay, setCelebrationDay] = useState<number | null>(null);
+  const [missionComplete, setMissionComplete] = useState(false);
   const pendingStreakRef = useRef<number | null>(null);
+
+  // Mission completion: every day (1..dayCount) has at least one task, and all tasks are done.
+  const everyDayHasTasks = days.every((d) => mission.tasks.some((t) => t.day === d));
+  const isFullyComplete = total > 0 && done === total && everyDayHasTasks;
+
+  useEffect(() => {
+    if (isFullyComplete && !isMissionCelebrated(mission.id) && celebrationDay == null) {
+      markMissionCelebrated(mission.id);
+      // small delay so day-complete celebration (if any) shows first
+      const t = setTimeout(() => setMissionComplete(true), 400);
+      return () => clearTimeout(t);
+    }
+  }, [isFullyComplete, mission.id, celebrationDay]);
 
   const DAY_MS = 24 * 60 * 60 * 1000;
   const startMidnight = new Date(mission.startDate);
@@ -215,6 +247,20 @@ function MissionDetailPage() {
             if (s && s > 0) {
               toast(`🔥 Streak increased to ${s} day${s === 1 ? "" : "s"}!`);
             }
+          }}
+        />
+      )}
+
+      {missionComplete && (
+        <MissionCompleteCelebration
+          title={mission.title}
+          totalDays={dayCount}
+          totalTasks={total}
+          finalStreak={streakInfo.streak}
+          onClose={() => setMissionComplete(false)}
+          onStartNew={() => {
+            setMissionComplete(false);
+            navigate({ to: "/missions" });
           }}
         />
       )}
