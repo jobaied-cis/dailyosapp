@@ -16,6 +16,24 @@ import {
 } from "@/lib/missions-store";
 import { getMissionStreak } from "@/lib/mission-streak-store";
 import { DayCompleteCelebration } from "@/components/DayCompleteCelebration";
+import { MissionCompleteCelebration } from "@/components/MissionCompleteCelebration";
+
+const MISSION_CELEBRATED_KEY = "dailyos.missionCelebrated";
+function isMissionCelebrated(id: string): boolean {
+  try {
+    const c = JSON.parse(localStorage.getItem(MISSION_CELEBRATED_KEY) || "{}");
+    return !!c[id];
+  } catch {
+    return false;
+  }
+}
+function markMissionCelebrated(id: string) {
+  try {
+    const c = JSON.parse(localStorage.getItem(MISSION_CELEBRATED_KEY) || "{}");
+    c[id] = true;
+    localStorage.setItem(MISSION_CELEBRATED_KEY, JSON.stringify(c));
+  } catch {}
+}
 
 const CELEBRATED_KEY = "dailyos.dayCelebrated";
 function getCelebrated(): Record<string, true> {
