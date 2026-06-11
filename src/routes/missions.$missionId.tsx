@@ -82,7 +82,21 @@ function MissionDetailPage() {
   const streakInfo = getMissionStreak(missionId);
   const [streakFlash, setStreakFlash] = useState(false);
   const [celebrationDay, setCelebrationDay] = useState<number | null>(null);
+  const [missionComplete, setMissionComplete] = useState(false);
   const pendingStreakRef = useRef<number | null>(null);
+
+  // Mission completion: every day (1..dayCount) has at least one task, and all tasks are done.
+  const everyDayHasTasks = days.every((d) => mission.tasks.some((t) => t.day === d));
+  const isFullyComplete = total > 0 && done === total && everyDayHasTasks;
+
+  useEffect(() => {
+    if (isFullyComplete && !isMissionCelebrated(mission.id) && celebrationDay == null) {
+      markMissionCelebrated(mission.id);
+      // small delay so day-complete celebration (if any) shows first
+      const t = setTimeout(() => setMissionComplete(true), 400);
+      return () => clearTimeout(t);
+    }
+  }, [isFullyComplete, mission.id, celebrationDay]);
 
   const DAY_MS = 24 * 60 * 60 * 1000;
   const startMidnight = new Date(mission.startDate);
