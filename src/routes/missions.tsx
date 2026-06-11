@@ -100,6 +100,18 @@ function MissionsListPage() {
     return total === 0 || done < total;
   }).length;
 
+  const bestStreak = sortedMissions.reduce((max, m) => {
+    const s = getMissionStreak(m.id).streak;
+    return s > max ? s : max;
+  }, 0);
+
+  const avgProgress = sortedMissions.length
+    ? Math.round(
+        sortedMissions.reduce((sum, m) => sum + missionProgress(m).pct, 0) /
+          sortedMissions.length
+      )
+    : 0;
+
   return (
     <div className="space-y-6 pb-12">
       <section>
@@ -110,6 +122,25 @@ function MissionsListPage() {
             : `${activeCount} active mission${activeCount === 1 ? "" : "s"}`}
         </p>
       </section>
+
+      {sortedMissions.length > 0 && (
+        <div className="grid grid-cols-3 gap-3">
+          <div className="bg-card border border-border/60 rounded-xl p-3 text-center">
+            <p className="text-lg font-bold text-foreground tabular-nums">{activeCount}</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Active</p>
+          </div>
+          <div className="bg-card border border-border/60 rounded-xl p-3 text-center">
+            <p className="text-lg font-bold text-foreground tabular-nums">
+              {bestStreak > 0 ? `🔥 ${bestStreak}` : "—"}
+            </p>
+            <p className="text-xs text-muted-foreground mt-0.5">Best streak</p>
+          </div>
+          <div className="bg-card border border-border/60 rounded-xl p-3 text-center">
+            <p className="text-lg font-bold text-foreground tabular-nums">{avgProgress}%</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Avg progress</p>
+          </div>
+        </div>
+      )}
 
       <form onSubmit={handleAdd} className="space-y-2">
         <input
