@@ -187,7 +187,21 @@ function MissionDetailPage() {
             <span className="inline-flex items-center gap-1 text-xs font-bold text-primary animate-pulse">
               +1 streak 🔥
             </span>
-          )}
+      )}
+
+      {missionComplete && (
+        <MissionCompleteCelebration
+          title={mission.title}
+          totalDays={dayCount}
+          totalTasks={total}
+          finalStreak={streakInfo.streak}
+          onClose={() => setMissionComplete(false)}
+          onStartNew={() => {
+            setMissionComplete(false);
+            navigate({ to: "/missions" });
+          }}
+        />
+      )}
         </div>
         <div className="mt-3 h-2 bg-secondary rounded-full overflow-hidden">
           <div
