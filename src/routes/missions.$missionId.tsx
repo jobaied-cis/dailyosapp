@@ -64,6 +64,50 @@ function MissionDetailPage() {
   const navigate = useNavigate();
   const mission = useMission(missionId);
 
+  const dayCount = Math.max(mission?.days || 1, 1);
+  const days = Array.from({ length: dayCount }, (_, i) => i + 1);
+  const tasksAll = mission?.tasks ?? [];
+  const total = tasksAll.length;
+  const done = tasksAll.filter((t) => t.completed).length;
+  const pct = total ? Math.round((done / total) * 100) : 0;
+
+  const streakInfo = getMissionStreak(missionId);
+  const [streakFlash, setStreakFlash] = useState(false);
+  const [celebrationDay, setCelebrationDay] = useState<number | null>(null);
+  const [missionComplete, setMissionComplete] = useState(false);
+  const pendingStreakRef = useRef<number | null>(null);
+
+  const everyDayHasTasks = days.every((d) => tasksAll.some((t) => t.day === d));
+  const isFullyComplete = !!mission && total > 0 && done === total && everyDayHasTasks;
+
+  useEffect(() => {
+    if (!mission) return;
+    if (isFullyComplete && !isMissionCelebrated(mission.id) && celebrationDay == null) {
+      markMissionCelebrated(mission.id);
+      const t = setTimeout(() => setMissionComplete(true), 400);
+      return () => clearTimeout(t);
+    }
+  }, [isFullyComplete, mission, celebrationDay]);
+
+  const DAY_MS = 24 * 60 * 60 * 1000;
+  const startDate = mission?.startDate ?? Date.now();
+  const startMidnight = new Date(startDate);
+  startMidnight.setHours(0, 0, 0, 0);
+  const todayMidnight = new Date();
+  todayMidnight.setHours(0, 0, 0, 0);
+  const rawDay = Math.floor((todayMidnight.getTime() - startMidnight.getTime()) / DAY_MS) + 1;
+  const todayDay = rawDay >= 1 && rawDay <= dayCount ? rawDay : null;
+
+  useEffect(() => {
+    if (!mission || todayDay == null) return;
+    const el = document.getElementById(`mission-day-${todayDay}`);
+    if (el) {
+      requestAnimationFrame(() =>
+        el.scrollIntoView({ behavior: "smooth", block: "start" }),
+      );
+    }
+  }, [mission, todayDay]);
+
   if (!mission) {
     return (
       <div className="text-center py-16">
@@ -74,47 +118,6 @@ function MissionDetailPage() {
       </div>
     );
   }
-
-  const { total, done, pct } = missionProgress(mission);
-  const dayCount = Math.max(mission.days || 1, 1);
-  const days = Array.from({ length: dayCount }, (_, i) => i + 1);
-
-  const streakInfo = getMissionStreak(missionId);
-  const [streakFlash, setStreakFlash] = useState(false);
-  const [celebrationDay, setCelebrationDay] = useState<number | null>(null);
-  const [missionComplete, setMissionComplete] = useState(false);
-  const pendingStreakRef = useRef<number | null>(null);
-
-  // Mission completion: every day (1..dayCount) has at least one task, and all tasks are done.
-  const everyDayHasTasks = days.every((d) => mission.tasks.some((t) => t.day === d));
-  const isFullyComplete = total > 0 && done === total && everyDayHasTasks;
-
-  useEffect(() => {
-    if (isFullyComplete && !isMissionCelebrated(mission.id) && celebrationDay == null) {
-      markMissionCelebrated(mission.id);
-      // small delay so day-complete celebration (if any) shows first
-      const t = setTimeout(() => setMissionComplete(true), 400);
-      return () => clearTimeout(t);
-    }
-  }, [isFullyComplete, mission.id, celebrationDay]);
-
-  const DAY_MS = 24 * 60 * 60 * 1000;
-  const startMidnight = new Date(mission.startDate);
-  startMidnight.setHours(0, 0, 0, 0);
-  const todayMidnight = new Date();
-  todayMidnight.setHours(0, 0, 0, 0);
-  const rawDay = Math.floor((todayMidnight.getTime() - startMidnight.getTime()) / DAY_MS) + 1;
-  const todayDay = rawDay >= 1 && rawDay <= dayCount ? rawDay : null;
-
-  useEffect(() => {
-    if (todayDay == null) return;
-    const el = document.getElementById(`mission-day-${todayDay}`);
-    if (el) {
-      requestAnimationFrame(() =>
-        el.scrollIntoView({ behavior: "smooth", block: "start" }),
-      );
-    }
-  }, [mission.id, todayDay]);
 
   return (
     <div className="space-y-6 pb-12">
