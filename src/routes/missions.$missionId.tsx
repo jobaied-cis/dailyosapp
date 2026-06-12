@@ -409,8 +409,9 @@ function DaySection({
 
           {tasks.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-6 border border-dashed border-border/60 rounded-xl">
-              No tasks yet.
+              Add your first task 🚀
             </p>
+
           ) : (
             <ul className="space-y-2">
               {tasks.map((t) => (
