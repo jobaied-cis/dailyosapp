@@ -3,7 +3,111 @@ import { useState, useEffect } from "react";
 import { useEvents, addEvent, deleteEvent, toggleEventCompletion, updateEvent, getEventStatus } from "@/lib/events-store";
 import type { EventType, EventPriority } from "@/lib/events-store";
 import { Checkbox } from "@/components/ui/checkbox";
-import { CalendarDays, Clock, Plus, Trash2, Calendar, Pencil } from "lucide-react";
+import { CalendarDays, Clock, Plus, Trash2, Calendar, Pencil, Flame } from "lucide-react";
+
+function getTodayStr(): string {
+  const d = new Date();
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+function typeEmoji(type: EventType): string {
+  switch (type) {
+    case "Exam":
+      return "📝";
+    case "Meeting":
+      return "🤝";
+    case "Class":
+      return "📚";
+    case "Personal":
+      return "🎯";
+    case "Other":
+    default:
+      return "📌";
+  }
+}
+
+function formatTimeUntil(diffMs: number): string {
+  if (diffMs <= 0) return "⏳ Starts now";
+  const minutes = Math.floor(diffMs / 60000);
+  const hours = Math.floor(diffMs / 3600000);
+  if (hours >= 1) {
+    const remMin = Math.floor((diffMs % 3600000) / 60000);
+    if (remMin > 0) return `⏳ in ${hours}h ${remMin}m`;
+    return `⏳ in ${hours}h`;
+  }
+  return `⏳ in ${minutes}m`;
+}
+
+function TodayFocusCard({ events, now }: { events: import("@/lib/events-store").EventItem[]; now: number }) {
+  const today = getTodayStr();
+  const todaysEvents = events.filter((e) => e.date === today);
+  const upcoming = todaysEvents
+    .filter((e) => !e.completed)
+    .map((e) => {
+      const t = new Date(`${e.date}T${e.time}`).getTime();
+      return { ...e, timeMs: t };
+    })
+    .sort((a, b) => a.timeMs - b.timeMs);
+
+  const nextEvent = upcoming.find((e) => e.timeMs > now);
+  const remainingCount = upcoming.filter((e) => e.timeMs > now).length;
+  const hasEventsToday = todaysEvents.length > 0;
+  const allDone = hasEventsToday && todaysEvents.every((e) => e.completed);
+  const allPassed = !allDone && !nextEvent && hasEventsToday;
+
+  if (!hasEventsToday) return null;
+
+  return (
+    <div className="bg-card border border-primary/30 rounded-[1.25rem] p-4 shadow-[0_2px_16px_-4px_rgba(37,99,235,0.15)] space-y-2">
+      <div className="flex items-center gap-2">
+        <Flame className="size-4 text-primary" />
+        <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-primary">Today Focus</p>
+      </div>
+
+      {allDone ? (
+        <div className="flex items-center gap-3">
+          <span className="text-2xl">🎉</span>
+          <div>
+            <p className="font-semibold text-foreground text-sm">All events done today</p>
+            <p className="text-xs text-muted-foreground">Great job!</p>
+          </div>
+        </div>
+      ) : allPassed ? (
+        <div className="flex items-center gap-3">
+          <span className="text-2xl">✅</span>
+          <div>
+            <p className="font-semibold text-foreground text-sm">No more events today</p>
+            <p className="text-xs text-muted-foreground">You're all caught up.</p>
+          </div>
+        </div>
+      ) : nextEvent ? (
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <span className="text-lg">{typeEmoji(nextEvent.type)}</span>
+            <p className="font-semibold text-foreground text-sm truncate">{nextEvent.title}</p>
+          </div>
+          <p className="text-xs text-primary font-medium">{formatTimeUntil(nextEvent.timeMs - now)}</p>
+          {remainingCount > 1 ? (
+            <p className="text-[11px] text-muted-foreground">{remainingCount} events remaining today</p>
+          ) : remainingCount === 1 ? (
+            <p className="text-[11px] text-muted-foreground">1 event remaining today</p>
+          ) : null}
+        </div>
+      ) : (
+        <div className="flex items-center gap-3">
+          <span className="text-2xl">✅</span>
+          <div>
+            <p className="font-semibold text-foreground text-sm">No more events today</p>
+            <p className="text-xs text-muted-foreground">You're all caught up.</p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export const Route = createFileRoute("/events")({
   head: () => ({
@@ -119,6 +223,9 @@ function EventsPage() {
           <p className="text-xs text-muted-foreground">Upcoming schedule</p>
         </div>
       </div>
+
+      {/* Today Focus */}
+      <TodayFocusCard events={events} now={now} />
 
       {/* Add/Edit Event Form */}
       <form
