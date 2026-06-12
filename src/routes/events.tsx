@@ -3,7 +3,43 @@ import { useState, useEffect } from "react";
 import { useEvents, addEvent, deleteEvent, toggleEventCompletion, updateEvent, getEventStatus } from "@/lib/events-store";
 import type { EventType, EventPriority } from "@/lib/events-store";
 import { Checkbox } from "@/components/ui/checkbox";
-import { CalendarDays, Clock, Plus, Trash2, Calendar, Pencil } from "lucide-react";
+import { CalendarDays, Clock, Plus, Trash2, Calendar, Pencil, Flame } from "lucide-react";
+
+function getTodayStr(): string {
+  const d = new Date();
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+function typeEmoji(type: EventType): string {
+  switch (type) {
+    case "Exam":
+      return "📝";
+    case "Meeting":
+      return "🤝";
+    case "Class":
+      return "📚";
+    case "Personal":
+      return "🎯";
+    case "Other":
+    default:
+      return "📌";
+  }
+}
+
+function formatTimeUntil(diffMs: number): string {
+  if (diffMs <= 0) return "⏳ Starts now";
+  const minutes = Math.floor(diffMs / 60000);
+  const hours = Math.floor(diffMs / 3600000);
+  if (hours >= 1) {
+    const remMin = Math.floor((diffMs % 3600000) / 60000);
+    if (remMin > 0) return `⏳ in ${hours}h ${remMin}m`;
+    return `⏳ in ${hours}h`;
+  }
+  return `⏳ in ${minutes}m`;
+}
 
 export const Route = createFileRoute("/events")({
   head: () => ({
