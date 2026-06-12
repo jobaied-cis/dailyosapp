@@ -465,7 +465,7 @@ function TaskRow({
   };
 
   return (
-    <li className="flex items-center gap-3 bg-card border border-border/40 rounded-lg px-3 py-2.5">
+    <li className="flex items-center gap-3 bg-card border border-border/40 rounded-lg px-3 py-2.5 transition-all duration-200 hover:border-border active:scale-[0.99]">
       <input
         type="checkbox"
         checked={task.completed}
@@ -473,8 +473,12 @@ function TaskRow({
           const increased = toggleTask(missionId, task.id);
           if (increased) onStreakIncrease?.();
         }}
-        className="size-4 accent-primary cursor-pointer"
+        className={
+          "size-4 accent-primary cursor-pointer transition-transform duration-150 ease-out hover:scale-110 active:scale-125 " +
+          (task.completed ? "scale-110" : "")
+        }
       />
+
       {editing ? (
         <input
           ref={inputRef}
