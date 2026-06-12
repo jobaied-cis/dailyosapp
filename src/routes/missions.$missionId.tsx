@@ -110,14 +110,17 @@ function MissionDetailPage() {
 
   if (!mission) {
     return (
-      <div className="text-center py-16">
-        <p className="text-muted-foreground">Mission not found.</p>
-        <Link to="/missions" className="inline-block mt-4 text-primary font-semibold">
+      <div className="space-y-4 pb-12 animate-pulse">
+        <div className="h-5 w-24 bg-secondary rounded" />
+        <div className="h-24 w-full bg-card border border-border/60 rounded-xl" />
+        <div className="h-32 w-full bg-card border border-border/60 rounded-xl" />
+        <Link to="/missions" className="inline-block mt-4 text-primary font-semibold text-sm">
           Back to missions
         </Link>
       </div>
     );
   }
+
 
   return (
     <div className="space-y-6 pb-12">
@@ -406,8 +409,9 @@ function DaySection({
 
           {tasks.length === 0 ? (
             <p className="text-sm text-muted-foreground text-center py-6 border border-dashed border-border/60 rounded-xl">
-              No tasks yet.
+              Add your first task 🚀
             </p>
+
           ) : (
             <ul className="space-y-2">
               {tasks.map((t) => (
@@ -461,7 +465,7 @@ function TaskRow({
   };
 
   return (
-    <li className="flex items-center gap-3 bg-card border border-border/40 rounded-lg px-3 py-2.5">
+    <li className="flex items-center gap-3 bg-card border border-border/40 rounded-lg px-3 py-2.5 transition-all duration-200 hover:border-border active:scale-[0.99]">
       <input
         type="checkbox"
         checked={task.completed}
@@ -469,8 +473,12 @@ function TaskRow({
           const increased = toggleTask(missionId, task.id);
           if (increased) onStreakIncrease?.();
         }}
-        className="size-4 accent-primary cursor-pointer"
+        className={
+          "size-4 accent-primary cursor-pointer transition-transform duration-150 ease-out hover:scale-110 active:scale-125 " +
+          (task.completed ? "scale-110" : "")
+        }
       />
+
       {editing ? (
         <input
           ref={inputRef}

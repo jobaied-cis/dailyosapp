@@ -173,10 +173,11 @@ function MissionsListPage() {
           <button
             type="submit"
             disabled={!title.trim()}
-            className="bg-primary text-primary-foreground font-semibold text-sm px-4 rounded-lg disabled:opacity-50"
+            className="bg-primary text-primary-foreground font-semibold text-sm px-4 rounded-lg disabled:opacity-50 transition-all duration-150 hover:opacity-90 active:scale-95"
           >
             Add
           </button>
+
         </div>
       </form>
 
@@ -200,8 +201,9 @@ function MissionsListPage() {
                 <Link
                   to="/missions/$missionId"
                   params={{ missionId: m.id }}
-                  className="block relative overflow-hidden bg-card border border-border/60 rounded-xl p-4 pl-5 hover:border-primary/40 hover:shadow-md transition-all"
+                  className="card-pop block relative overflow-hidden bg-card border border-border/60 rounded-xl p-4 pl-5 hover:border-primary/40 hover:shadow-md transition-all"
                 >
+
                   <span className={`absolute left-0 top-0 bottom-0 w-1 ${pri.bar}`} />
                   <div className="flex items-center justify-between gap-3">
                     {isEditing ? (
