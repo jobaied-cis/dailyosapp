@@ -110,14 +110,17 @@ function MissionDetailPage() {
 
   if (!mission) {
     return (
-      <div className="text-center py-16">
-        <p className="text-muted-foreground">Mission not found.</p>
-        <Link to="/missions" className="inline-block mt-4 text-primary font-semibold">
+      <div className="space-y-4 pb-12 animate-pulse">
+        <div className="h-5 w-24 bg-secondary rounded" />
+        <div className="h-24 w-full bg-card border border-border/60 rounded-xl" />
+        <div className="h-32 w-full bg-card border border-border/60 rounded-xl" />
+        <Link to="/missions" className="inline-block mt-4 text-primary font-semibold text-sm">
           Back to missions
         </Link>
       </div>
     );
   }
+
 
   return (
     <div className="space-y-6 pb-12">
