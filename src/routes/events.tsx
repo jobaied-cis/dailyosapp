@@ -156,6 +156,9 @@ function EventsPage() {
         </div>
       </div>
 
+      {/* Today Focus */}
+      <TodayFocusCard events={events} now={now} />
+
       {/* Add/Edit Event Form */}
       <form
         onSubmit={editingId ? handleUpdate : handleAdd}
