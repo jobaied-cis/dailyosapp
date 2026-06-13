@@ -1,10 +1,71 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
+import { toast } from "sonner";
 import { useEvents, addEvent, deleteEvent, toggleEventCompletion, updateEvent, getEventStatus } from "@/lib/events-store";
 import type { EventType, EventPriority, EventItem } from "@/lib/events-store";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
-import { CalendarDays, Clock, Plus, Trash2, Calendar, Pencil, Flame } from "lucide-react";
+import { CalendarDays, Clock, Plus, Trash2, Calendar, Pencil, Flame, Zap } from "lucide-react";
+
+function pad(n: number) { return String(n).padStart(2, "0"); }
+function toDateStr(d: Date) { return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; }
+
+const WEEKDAYS = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+
+function parseQuickAdd(input: string): { title: string; date: string; time: string } {
+  let text = " " + input.trim() + " ";
+  const today = new Date();
+  let date = toDateStr(today);
+  let time = "09:00";
+  let dateFound = false;
+  let timeFound = false;
+
+  // time: 2pm, 10am, 5:30pm, 14:30
+  const timeRe = /\b(\d{1,2})(?::(\d{2}))?\s*(am|pm)\b|\b(\d{1,2}):(\d{2})\b/i;
+  const tm = text.match(timeRe);
+  if (tm) {
+    let h: number, m: number;
+    if (tm[3]) {
+      h = parseInt(tm[1], 10) % 12;
+      if (tm[3].toLowerCase() === "pm") h += 12;
+      m = tm[2] ? parseInt(tm[2], 10) : 0;
+    } else {
+      h = parseInt(tm[4], 10);
+      m = parseInt(tm[5], 10);
+    }
+    if (h >= 0 && h < 24 && m >= 0 && m < 60) {
+      time = `${pad(h)}:${pad(m)}`;
+      timeFound = true;
+      text = text.replace(tm[0], " ");
+    }
+  }
+
+  // today / tomorrow
+  if (/\btoday\b/i.test(text)) {
+    date = toDateStr(today); dateFound = true;
+    text = text.replace(/\btoday\b/i, " ");
+  } else if (/\btomorrow\b/i.test(text)) {
+    const d = new Date(today); d.setDate(d.getDate() + 1);
+    date = toDateStr(d); dateFound = true;
+    text = text.replace(/\btomorrow\b/i, " ");
+  } else {
+    for (let i = 0; i < WEEKDAYS.length; i++) {
+      const re = new RegExp(`\\b${WEEKDAYS[i]}\\b`, "i");
+      if (re.test(text)) {
+        const cur = today.getDay();
+        let diff = (i - cur + 7) % 7;
+        if (diff === 0) diff = 7;
+        const d = new Date(today); d.setDate(d.getDate() + diff);
+        date = toDateStr(d); dateFound = true;
+        text = text.replace(re, " ");
+        break;
+      }
+    }
+  }
+
+  const title = text.replace(/\s+/g, " ").trim();
+  return { title: title || input.trim(), date: dateFound ? date : toDateStr(today), time: timeFound ? time : "09:00" };
+}
 
 function getTodayStr(): string {
   const d = new Date();
@@ -125,7 +186,20 @@ function EventsPage() {
   const [notes, setNotes] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [quick, setQuick] = useState("");
   const [, setTick] = useState(0);
+
+  const handleQuickAdd = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    const raw = quick.trim();
+    if (!raw) return;
+    const { title: t, date: d, time: tm } = parseQuickAdd(raw);
+    addEvent({ title: t, date: d, time: tm, type: "Other", priority: "Medium", notes: "" });
+    setQuick("");
+    toast.success("Event added ⚡");
+  };
+
 
   useEffect(() => {
     const id = setInterval(() => setTick((t) => t + 1), 60000);
@@ -181,7 +255,21 @@ function EventsPage() {
       {/* Today Focus */}
       <TodayFocusCard events={events} now={now} />
 
+      {/* Quick Add */}
+      <div className="relative">
+        <Zap className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-primary pointer-events-none" />
+        <input
+          type="text"
+          value={quick}
+          onChange={(e) => setQuick(e.target.value)}
+          onKeyDown={handleQuickAdd}
+          placeholder="⚡ Quick add: exam tomorrow 2pm"
+          className="w-full bg-card border border-border/60 rounded-2xl pl-9 pr-3 py-3 text-sm font-medium text-foreground outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40 placeholder:text-muted-foreground/70 shadow-[0_2px_12px_-4px_rgba(15,23,42,0.06)]"
+        />
+      </div>
+
       {/* Event List */}
+
       <div className="space-y-3">
         {events.length === 0 ? (
           <div className="text-center text-muted-foreground py-16">
