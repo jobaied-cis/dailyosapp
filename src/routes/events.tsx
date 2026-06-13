@@ -186,7 +186,20 @@ function EventsPage() {
   const [notes, setNotes] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [quick, setQuick] = useState("");
   const [, setTick] = useState(0);
+
+  const handleQuickAdd = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    const raw = quick.trim();
+    if (!raw) return;
+    const { title: t, date: d, time: tm } = parseQuickAdd(raw);
+    addEvent({ title: t, date: d, time: tm, type: "Other", priority: "Medium", notes: "" });
+    setQuick("");
+    toast.success("Event added ⚡");
+  };
+
 
   useEffect(() => {
     const id = setInterval(() => setTick((t) => t + 1), 60000);
