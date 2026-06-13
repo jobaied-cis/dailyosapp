@@ -5,7 +5,7 @@ import { useEvents, addEvent, deleteEvent, toggleEventCompletion, updateEvent, g
 import type { EventType, EventPriority, EventItem } from "@/lib/events-store";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
-import { CalendarDays, Clock, Plus, Trash2, Calendar, Pencil, Flame, Zap } from "lucide-react";
+import { CalendarDays, Clock, Plus, Trash2, Calendar, Pencil, Flame, Zap, AlertTriangle } from "lucide-react";
 
 function pad(n: number) { return String(n).padStart(2, "0"); }
 function toDateStr(d: Date) { return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; }
@@ -161,6 +161,10 @@ function priorityColor(priority: EventPriority) {
     case "Medium": return "bg-amber-500/15 text-amber-600 border-amber-500/20";
     case "Low": return "bg-muted text-muted-foreground border-border";
   }
+}
+
+function findConflict(events: EventItem[], date: string, time: string, excludeId?: string): EventItem | null {
+  return events.find((e) => e.date === date && e.time === time && e.id !== excludeId) || null;
 }
 
 function formatCountdown(diffMs: number): string {
