@@ -255,7 +255,21 @@ function EventsPage() {
       {/* Today Focus */}
       <TodayFocusCard events={events} now={now} />
 
+      {/* Quick Add */}
+      <div className="relative">
+        <Zap className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-primary pointer-events-none" />
+        <input
+          type="text"
+          value={quick}
+          onChange={(e) => setQuick(e.target.value)}
+          onKeyDown={handleQuickAdd}
+          placeholder="⚡ Quick add: exam tomorrow 2pm"
+          className="w-full bg-card border border-border/60 rounded-2xl pl-9 pr-3 py-3 text-sm font-medium text-foreground outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40 placeholder:text-muted-foreground/70 shadow-[0_2px_12px_-4px_rgba(15,23,42,0.06)]"
+        />
+      </div>
+
       {/* Event List */}
+
       <div className="space-y-3">
         {events.length === 0 ? (
           <div className="text-center text-muted-foreground py-16">
