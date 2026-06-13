@@ -5,7 +5,7 @@ import { useEvents, addEvent, deleteEvent, toggleEventCompletion, updateEvent, g
 import type { EventType, EventPriority, EventItem } from "@/lib/events-store";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
-import { CalendarDays, Clock, Plus, Trash2, Calendar, Pencil, Flame, Zap } from "lucide-react";
+import { CalendarDays, Clock, Plus, Trash2, Calendar, Pencil, Flame, Zap, AlertTriangle } from "lucide-react";
 
 function pad(n: number) { return String(n).padStart(2, "0"); }
 function toDateStr(d: Date) { return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; }
@@ -163,6 +163,10 @@ function priorityColor(priority: EventPriority) {
   }
 }
 
+function findConflict(events: EventItem[], date: string, time: string, excludeId?: string): EventItem | null {
+  return events.find((e) => e.date === date && e.time === time && e.id !== excludeId) || null;
+}
+
 function formatCountdown(diffMs: number): string {
   if (diffMs <= 0) return "Starts now";
   const minutes = Math.floor(diffMs / 60000);
@@ -188,6 +192,7 @@ function EventsPage() {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [quick, setQuick] = useState("");
   const [, setTick] = useState(0);
+  const [conflict, setConflict] = useState<EventItem | null>(null);
 
   const handleQuickAdd = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key !== "Enter") return;
@@ -195,6 +200,10 @@ function EventsPage() {
     const raw = quick.trim();
     if (!raw) return;
     const { title: t, date: d, time: tm } = parseQuickAdd(raw);
+    const c = findConflict(events, d, tm);
+    if (c) {
+      toast.warning(`⚠️ Conflict with: ${c.title} (${c.time})`);
+    }
     addEvent({ title: t, date: d, time: tm, type: "Other", priority: "Medium", notes: "" });
     setQuick("");
     toast.success("Event added ⚡");
@@ -210,6 +219,7 @@ function EventsPage() {
     setTitle(""); setDate(""); setTime("");
     setType("Other"); setPriority("Medium");
     setNotes(""); setEditingId(null);
+    setConflict(null);
   };
 
   const openAdd = () => { resetForm(); setSheetOpen(true); };
@@ -217,7 +227,12 @@ function EventsPage() {
   const handleAdd = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !date || !time) return;
+    if (!conflict) {
+      const c = findConflict(events, date, time);
+      if (c) { setConflict(c); return; }
+    }
     addEvent({ title: title.trim(), date, time, type, priority, notes });
+    setConflict(null);
     resetForm();
     setSheetOpen(false);
   };
@@ -232,7 +247,12 @@ function EventsPage() {
   const handleUpdate = (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingId || !title.trim() || !date || !time) return;
+    if (!conflict) {
+      const c = findConflict(events, date, time, editingId);
+      if (c) { setConflict(c); return; }
+    }
     updateEvent(editingId, { title: title.trim(), date, time, type, priority, notes });
+    setConflict(null);
     resetForm();
     setSheetOpen(false);
   };
@@ -373,11 +393,11 @@ function EventsPage() {
             <div className="grid grid-cols-2 gap-3">
               <div className="relative">
                 <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
-                <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="w-full bg-secondary rounded-xl pl-9 pr-3 py-2.5 text-foreground outline-none focus:ring-2 focus:ring-primary/30 font-semibold text-sm appearance-none" />
+                <input type="date" value={date} onChange={(e) => { setDate(e.target.value); setConflict(null); }} className="w-full bg-secondary rounded-xl pl-9 pr-3 py-2.5 text-foreground outline-none focus:ring-2 focus:ring-primary/30 font-semibold text-sm appearance-none" />
               </div>
               <div className="relative">
                 <Clock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
-                <input type="time" value={time} onChange={(e) => setTime(e.target.value)} className="w-full bg-secondary rounded-xl pl-9 pr-3 py-2.5 text-foreground outline-none focus:ring-2 focus:ring-primary/30 font-semibold text-sm appearance-none" />
+                <input type="time" value={time} onChange={(e) => { setTime(e.target.value); setConflict(null); }} className="w-full bg-secondary rounded-xl pl-9 pr-3 py-2.5 text-foreground outline-none focus:ring-2 focus:ring-primary/30 font-semibold text-sm appearance-none" />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
@@ -395,13 +415,22 @@ function EventsPage() {
               rows={2}
               className="w-full bg-secondary rounded-xl px-3 py-2.5 text-foreground outline-none focus:ring-2 focus:ring-primary/30 placeholder:text-muted-foreground/60 font-medium text-sm resize-none"
             />
+            {conflict && (
+              <div className="bg-destructive/10 border border-destructive/20 rounded-xl p-3 space-y-1.5 animate-list-item-in">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="size-4 text-destructive shrink-0" />
+                  <p className="text-sm font-semibold text-destructive">⚠️ Conflict with: {conflict.title}</p>
+                </div>
+                <p className="text-xs text-muted-foreground pl-6">You already have an event at this time ({conflict.time}).</p>
+              </div>
+            )}
             <div className="flex items-center gap-3 pt-1">
               <button
                 type="submit"
                 disabled={!title.trim() || !date || !time}
-                className="press flex-1 bg-primary text-primary-foreground rounded-2xl py-3 font-semibold shadow-[0_4px_16px_-4px_rgba(37,99,235,0.35)] disabled:opacity-40 disabled:shadow-none"
+                className={`press flex-1 rounded-2xl py-3 font-semibold shadow-[0_4px_16px_-4px_rgba(37,99,235,0.35)] disabled:opacity-40 disabled:shadow-none ${conflict ? "bg-destructive text-destructive-foreground shadow-[0_4px_16px_-4px_rgba(220,38,38,0.35)]" : "bg-primary text-primary-foreground"}`}
               >
-                {editingId ? "Update Event" : "Add Event"}
+                {conflict ? "Add anyway" : (editingId ? "Update Event" : "Add Event")}
               </button>
               <button
                 type="button"
