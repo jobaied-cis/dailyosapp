@@ -219,6 +219,7 @@ function EventsPage() {
     setTitle(""); setDate(""); setTime("");
     setType("Other"); setPriority("Medium");
     setNotes(""); setEditingId(null);
+    setConflict(null);
   };
 
   const openAdd = () => { resetForm(); setSheetOpen(true); };
@@ -226,7 +227,12 @@ function EventsPage() {
   const handleAdd = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !date || !time) return;
+    if (!conflict) {
+      const c = findConflict(events, date, time);
+      if (c) { setConflict(c); return; }
+    }
     addEvent({ title: title.trim(), date, time, type, priority, notes });
+    setConflict(null);
     resetForm();
     setSheetOpen(false);
   };
@@ -241,7 +247,12 @@ function EventsPage() {
   const handleUpdate = (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingId || !title.trim() || !date || !time) return;
+    if (!conflict) {
+      const c = findConflict(events, date, time, editingId);
+      if (c) { setConflict(c); return; }
+    }
     updateEvent(editingId, { title: title.trim(), date, time, type, priority, notes });
+    setConflict(null);
     resetForm();
     setSheetOpen(false);
   };
