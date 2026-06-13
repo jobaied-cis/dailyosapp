@@ -200,6 +200,10 @@ function EventsPage() {
     const raw = quick.trim();
     if (!raw) return;
     const { title: t, date: d, time: tm } = parseQuickAdd(raw);
+    const c = findConflict(events, d, tm);
+    if (c) {
+      toast.warning(`⚠️ Conflict with: ${c.title} (${c.time})`);
+    }
     addEvent({ title: t, date: d, time: tm, type: "Other", priority: "Medium", notes: "" });
     setQuick("");
     toast.success("Event added ⚡");
