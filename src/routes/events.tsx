@@ -192,6 +192,7 @@ function EventsPage() {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [quick, setQuick] = useState("");
   const [, setTick] = useState(0);
+  const [conflict, setConflict] = useState<EventItem | null>(null);
 
   const handleQuickAdd = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key !== "Enter") return;
