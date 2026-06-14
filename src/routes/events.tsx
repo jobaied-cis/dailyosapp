@@ -6,6 +6,7 @@ import type { EventType, EventPriority, EventItem } from "@/lib/events-store";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { CalendarDays, Clock, Plus, Trash2, Calendar, Pencil, Flame, Zap, AlertTriangle } from "lucide-react";
+import { SwipeableRow } from "@/components/SwipeableRow";
 
 function pad(n: number) { return String(n).padStart(2, "0"); }
 function toDateStr(d: Date) { return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; }
@@ -382,58 +383,84 @@ function EventsPage() {
             const isMissed = status === "missed";
 
             return (
-              <div
+              <SwipeableRow
                 key={evt.id}
-                style={{ animationDelay: `${Math.min(i * 50, 240)}ms` }}
-                className={`bg-card border border-border/60 rounded-[1.25rem] shadow-[0_2px_12px_-4px_rgba(15,23,42,0.06)] p-4 flex items-center justify-between animate-list-item-in ${isCompleted || isMissed ? "opacity-60" : ""}`}
+                onSwipeRight={() => {
+                  if (!evt.completed) {
+                    toggleEventCompletion(evt.id);
+                    toast.success("✅ Event completed");
+                  }
+                }}
+                onSwipeLeft={() => {
+                  const snapshot = evt;
+                  deleteEvent(evt.id);
+                  toast("Event deleted", {
+                    action: {
+                      label: "Undo",
+                      onClick: () => addEvent({
+                        title: snapshot.title,
+                        date: snapshot.date,
+                        time: snapshot.time,
+                        type: snapshot.type,
+                        priority: snapshot.priority,
+                        notes: snapshot.notes,
+                      }),
+                    },
+                  });
+                }}
               >
-                <div className="flex items-center gap-3 min-w-0">
-                  <Checkbox
-                    checked={evt.completed}
-                    onCheckedChange={() => toggleEventCompletion(evt.id)}
-                    aria-label={isCompleted ? "Mark as incomplete" : "Mark as completed"}
-                    className="shrink-0"
-                  />
-                  <div className={`size-10 rounded-2xl flex items-center justify-center shrink-0 ${isPast ? "bg-muted" : "bg-primary/10"}`}>
-                    <CalendarDays className={`size-5 ${isPast ? "text-muted-foreground" : "text-primary"}`} />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-1.5 flex-wrap">
-                      <h4 className={`font-semibold text-foreground text-[0.95rem] truncate ${isCompleted ? "line-through" : ""}`}>
-                        {evt.title}
-                      </h4>
-                      <span className="inline-flex items-center rounded-md border px-1.5 py-0.5 text-[10px] font-semibold bg-secondary text-muted-foreground border-border/60">
-                        {evt.type}
-                      </span>
-                      <span className={`inline-flex items-center rounded-md border px-1.5 py-0.5 text-[10px] font-semibold ${priorityColor(evt.priority)}`}>
-                        {evt.priority}
-                      </span>
-                      {isMissed && (
-                        <span className="inline-flex items-center rounded-md border px-1.5 py-0.5 text-[10px] font-semibold bg-destructive/15 text-destructive border-destructive/20">
-                          Missed
+                <div
+                  style={{ animationDelay: `${Math.min(i * 50, 240)}ms` }}
+                  className={`bg-card border border-border/60 rounded-[1.25rem] shadow-[0_2px_12px_-4px_rgba(15,23,42,0.06)] p-4 flex items-center justify-between animate-list-item-in ${isCompleted || isMissed ? "opacity-60" : ""}`}
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <Checkbox
+                      checked={evt.completed}
+                      onCheckedChange={() => toggleEventCompletion(evt.id)}
+                      aria-label={isCompleted ? "Mark as incomplete" : "Mark as completed"}
+                      className="shrink-0"
+                    />
+                    <div className={`size-10 rounded-2xl flex items-center justify-center shrink-0 ${isPast ? "bg-muted" : "bg-primary/10"}`}>
+                      <CalendarDays className={`size-5 ${isPast ? "text-muted-foreground" : "text-primary"}`} />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <h4 className={`font-semibold text-foreground text-[0.95rem] truncate ${isCompleted ? "line-through" : ""}`}>
+                          {evt.title}
+                        </h4>
+                        <span className="inline-flex items-center rounded-md border px-1.5 py-0.5 text-[10px] font-semibold bg-secondary text-muted-foreground border-border/60">
+                          {evt.type}
                         </span>
+                        <span className={`inline-flex items-center rounded-md border px-1.5 py-0.5 text-[10px] font-semibold ${priorityColor(evt.priority)}`}>
+                          {evt.priority}
+                        </span>
+                        {isMissed && (
+                          <span className="inline-flex items-center rounded-md border px-1.5 py-0.5 text-[10px] font-semibold bg-destructive/15 text-destructive border-destructive/20">
+                            Missed
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-0.5">{formattedDate} · {formattedTime}</p>
+                      {!isCompleted && !isMissed && (
+                        <p className="text-[11px] text-primary/80 mt-0.5 font-medium">
+                          {formatCountdown(evtDate.getTime() - now)}
+                        </p>
+                      )}
+                      {evt.notes && (
+                        <p className="text-[11px] text-muted-foreground/80 mt-1 line-clamp-2">{evt.notes}</p>
                       )}
                     </div>
-                    <p className="text-xs text-muted-foreground mt-0.5">{formattedDate} · {formattedTime}</p>
-                    {!isCompleted && !isMissed && (
-                      <p className="text-[11px] text-primary/80 mt-0.5 font-medium">
-                        {formatCountdown(evtDate.getTime() - now)}
-                      </p>
-                    )}
-                    {evt.notes && (
-                      <p className="text-[11px] text-muted-foreground/80 mt-1 line-clamp-2">{evt.notes}</p>
-                    )}
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button onClick={() => handleEdit(evt)} aria-label="Edit event" className="press p-2 rounded-xl text-muted-foreground hover:text-primary hover:bg-primary/10">
+                      <Pencil className="size-4" />
+                    </button>
+                    <button onClick={() => deleteEvent(evt.id)} aria-label="Delete event" className="press p-2 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10">
+                      <Trash2 className="size-4" />
+                    </button>
                   </div>
                 </div>
-                <div className="flex items-center gap-1 shrink-0">
-                  <button onClick={() => handleEdit(evt)} aria-label="Edit event" className="press p-2 rounded-xl text-muted-foreground hover:text-primary hover:bg-primary/10">
-                    <Pencil className="size-4" />
-                  </button>
-                  <button onClick={() => deleteEvent(evt.id)} aria-label="Delete event" className="press p-2 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10">
-                    <Trash2 className="size-4" />
-                  </button>
-                </div>
-              </div>
+              </SwipeableRow>
             );
           })
         )}
