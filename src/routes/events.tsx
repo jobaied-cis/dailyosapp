@@ -6,6 +6,7 @@ import type { EventType, EventPriority, EventItem } from "@/lib/events-store";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { CalendarDays, Clock, Plus, Trash2, Calendar, Pencil, Flame, Zap, AlertTriangle } from "lucide-react";
+import { SwipeableRow } from "@/components/SwipeableRow";
 
 function pad(n: number) { return String(n).padStart(2, "0"); }
 function toDateStr(d: Date) { return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; }
