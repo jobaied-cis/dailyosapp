@@ -12,26 +12,40 @@ function toDateStr(d: Date) { return `${d.getFullYear()}-${pad(d.getMonth() + 1)
 
 const WEEKDAYS = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
 
+const MONTHS = ["january","february","march","april","may","june","july","august","september","october","november","december"];
+const MONTHS_SHORT = ["jan","feb","mar","apr","may","jun","jul","aug","sept","sep","oct","nov","dec"];
+
+function monthIndex(name: string): number {
+  const n = name.toLowerCase();
+  let i = MONTHS.indexOf(n);
+  if (i >= 0) return i;
+  i = MONTHS_SHORT.indexOf(n);
+  if (i < 0) return -1;
+  // map short index -> month index
+  const map: Record<string, number> = { jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sept:8,sep:8,oct:9,nov:10,dec:11 };
+  return map[n] ?? -1;
+}
+
 function parseQuickAdd(input: string): { title: string; date: string; time: string } {
   let text = " " + input.trim() + " ";
   const today = new Date();
   let date = toDateStr(today);
-  let time = "09:00";
+  let time = "";
   let dateFound = false;
   let timeFound = false;
 
-  // time: 2pm, 10am, 5:30pm, 14:30
-  const timeRe = /\b(\d{1,2})(?::(\d{2}))?\s*(am|pm)\b|\b(\d{1,2}):(\d{2})\b/i;
+  // time: 2pm, 10am, 5:30pm, 14:30 (optionally prefixed by "at")
+  const timeRe = /\b(at\s+)?(\d{1,2})(?::(\d{2}))?\s*(am|pm)\b|\b(\d{1,2}):(\d{2})\b/i;
   const tm = text.match(timeRe);
   if (tm) {
     let h: number, m: number;
-    if (tm[3]) {
-      h = parseInt(tm[1], 10) % 12;
-      if (tm[3].toLowerCase() === "pm") h += 12;
-      m = tm[2] ? parseInt(tm[2], 10) : 0;
+    if (tm[4]) {
+      h = parseInt(tm[2], 10) % 12;
+      if (tm[4].toLowerCase() === "pm") h += 12;
+      m = tm[3] ? parseInt(tm[3], 10) : 0;
     } else {
-      h = parseInt(tm[4], 10);
-      m = parseInt(tm[5], 10);
+      h = parseInt(tm[5], 10);
+      m = parseInt(tm[6], 10);
     }
     if (h >= 0 && h < 24 && m >= 0 && m < 60) {
       time = `${pad(h)}:${pad(m)}`;
@@ -40,20 +54,69 @@ function parseQuickAdd(input: string): { title: string; date: string; time: stri
     }
   }
 
-  // today / tomorrow
-  if (/\btoday\b/i.test(text)) {
+  // ISO date 2025-12-05
+  const isoM = text.match(/\b(\d{4})-(\d{2})-(\d{2})\b/);
+  if (isoM) {
+    date = `${isoM[1]}-${isoM[2]}-${isoM[3]}`;
+    dateFound = true;
+    text = text.replace(isoM[0], " ");
+  }
+
+  // numeric date: 12/5, 12/5/2025
+  if (!dateFound) {
+    const nm = text.match(/\b(\d{1,2})[\/\-](\d{1,2})(?:[\/\-](\d{2,4}))?\b/);
+    if (nm) {
+      const mo = parseInt(nm[1], 10), da = parseInt(nm[2], 10);
+      let y = nm[3] ? parseInt(nm[3], 10) : today.getFullYear();
+      if (y < 100) y += 2000;
+      if (mo >= 1 && mo <= 12 && da >= 1 && da <= 31) {
+        date = `${y}-${pad(mo)}-${pad(da)}`;
+        dateFound = true;
+        text = text.replace(nm[0], " ");
+      }
+    }
+  }
+
+  // month name dates: "Dec 5", "December 5, 2025", "5 Dec"
+  if (!dateFound) {
+    const mp = MONTHS.concat(MONTHS_SHORT).join("|");
+    const md1 = text.match(new RegExp(`\\b(${mp})\\s+(\\d{1,2})(?:,?\\s+(\\d{4}))?\\b`, "i"));
+    const md2 = !md1 ? text.match(new RegExp(`\\b(\\d{1,2})\\s+(${mp})(?:,?\\s+(\\d{4}))?\\b`, "i")) : null;
+    const md = md1 || md2;
+    if (md) {
+      const monName = md1 ? md[1] : md[2];
+      const dayStr = md1 ? md[2] : md[1];
+      const mo = monthIndex(monName);
+      const da = parseInt(dayStr, 10);
+      if (mo >= 0 && da >= 1 && da <= 31) {
+        const y = md[3] ? parseInt(md[3], 10) : today.getFullYear();
+        date = `${y}-${pad(mo + 1)}-${pad(da)}`;
+        dateFound = true;
+        text = text.replace(md[0], " ");
+      }
+    }
+  }
+
+  // tonight (sets default evening time if no time given)
+  if (!dateFound && /\btonight\b/i.test(text)) {
+    date = toDateStr(today); dateFound = true;
+    if (!timeFound) { time = "20:00"; timeFound = true; }
+    text = text.replace(/\btonight\b/i, " ");
+  } else if (!dateFound && /\btoday\b/i.test(text)) {
     date = toDateStr(today); dateFound = true;
     text = text.replace(/\btoday\b/i, " ");
-  } else if (/\btomorrow\b/i.test(text)) {
+  } else if (!dateFound && /\btomorrow\b/i.test(text)) {
     const d = new Date(today); d.setDate(d.getDate() + 1);
     date = toDateStr(d); dateFound = true;
     text = text.replace(/\btomorrow\b/i, " ");
-  } else {
+  } else if (!dateFound) {
     for (let i = 0; i < WEEKDAYS.length; i++) {
-      const re = new RegExp(`\\b${WEEKDAYS[i]}\\b`, "i");
-      if (re.test(text)) {
+      const re = new RegExp(`\\b(next\\s+)?${WEEKDAYS[i]}\\b`, "i");
+      const mm = text.match(re);
+      if (mm) {
         const cur = today.getDay();
         let diff = (i - cur + 7) % 7;
+        if (diff === 0 || mm[1]) diff = diff === 0 ? 7 : (mm[1] ? diff + 7 : diff);
         if (diff === 0) diff = 7;
         const d = new Date(today); d.setDate(d.getDate() + diff);
         date = toDateStr(d); dateFound = true;
@@ -63,8 +126,17 @@ function parseQuickAdd(input: string): { title: string; date: string; time: stri
     }
   }
 
-  const title = text.replace(/\s+/g, " ").trim();
-  return { title: title || input.trim(), date: dateFound ? date : toDateStr(today), time: timeFound ? time : "09:00" };
+  // clean filler words
+  let title = text.replace(/\b(on|at|the)\b/gi, " ").replace(/\s+/g, " ").trim();
+  if (!title) title = input.trim();
+
+  if (!timeFound) {
+    const n = new Date();
+    n.setHours(n.getHours() + 1, 0, 0, 0);
+    time = `${pad(n.getHours())}:${pad(n.getMinutes())}`;
+  }
+
+  return { title, date: dateFound ? date : toDateStr(today), time };
 }
 
 function getTodayStr(): string {
