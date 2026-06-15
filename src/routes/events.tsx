@@ -186,7 +186,7 @@ function TodayFocusCard({ events, now }: { events: EventItem[]; now: number }) {
     <div className="bg-card border border-primary/30 rounded-[1.25rem] p-4 shadow-[0_2px_16px_-4px_rgba(37,99,235,0.18)] space-y-2">
       <div className="flex items-center gap-2">
         <Flame className="size-4 text-primary" />
-        <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-primary">Today Focus</p>
+        <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-primary">Next Event</p>
       </div>
 
       {nextEvent ? (
@@ -362,11 +362,12 @@ function EventsPage() {
   sectionWeek.sort(byTime);
   sectionMissed.sort((a, b) => -byTime(a, b));
 
+  const todayCount = events.filter((e) => e.date === todayStr).length;
   const dashboard = [
-    { label: "Today", count: sectionToday.length, accent: "text-primary", bg: "bg-primary/10 border-primary/20" },
-    { label: "Tomorrow", count: sectionTomorrow.length, accent: "text-foreground", bg: "bg-secondary border-border/50" },
-    { label: "Week", count: sectionWeek.length, accent: "text-foreground", bg: "bg-secondary border-border/50" },
-    { label: "Missed", count: sectionMissed.length, accent: "text-destructive", bg: "bg-destructive/10 border-destructive/20" },
+    { label: "Today", count: todayCount, accent: "text-primary", bg: "bg-primary/5 border-primary/15" },
+    { label: "Tomorrow", count: sectionTomorrow.length, accent: "text-foreground", bg: "bg-secondary/60 border-border/40" },
+    { label: "Week", count: sectionWeek.length, accent: "text-foreground", bg: "bg-secondary/60 border-border/40" },
+    { label: "Missed", count: sectionMissed.length, accent: "text-destructive", bg: "bg-destructive/5 border-destructive/15" },
   ];
 
   const renderEventCard = (evt: EventItem, i: number) => {
@@ -460,16 +461,30 @@ function EventsPage() {
     );
   };
 
-  const renderSection = (title: string, list: EventItem[]) => {
-    if (list.length === 0) return null;
+  const renderSection = (
+    title: string,
+    list: EventItem[],
+    opts?: { emptyMessage?: string; subtitle?: string; alwaysShow?: boolean },
+  ) => {
+    if (list.length === 0 && !opts?.alwaysShow) return null;
     return (
-      <div className="space-y-2">
-        <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground px-1">
-          {title} ({list.length})
-        </p>
-        <div className="space-y-3">
-          {list.map((evt, i) => renderEventCard(evt, i))}
+      <div className="space-y-2.5">
+        <div className="flex items-center gap-3 px-1">
+          <p className="text-[12px] font-extrabold uppercase tracking-[0.14em] text-foreground/80">
+            {title} ({list.length})
+          </p>
+          <div className="flex-1 h-px bg-border/60" />
         </div>
+        {opts?.subtitle && list.length > 0 && (
+          <p className="text-[11px] text-muted-foreground px-1 -mt-1">{opts.subtitle}</p>
+        )}
+        {list.length === 0 ? (
+          <p className="text-sm text-muted-foreground px-1 py-2">{opts?.emptyMessage}</p>
+        ) : (
+          <div className="space-y-3">
+            {list.map((evt, i) => renderEventCard(evt, i))}
+          </div>
+        )}
       </div>
     );
   };
@@ -487,15 +502,15 @@ function EventsPage() {
         </div>
       </div>
 
-      {/* Dashboard */}
+      {/* Dashboard (compact, lighter than Next Event) */}
       <div className="grid grid-cols-4 gap-2">
         {dashboard.map((d) => (
           <div
             key={d.label}
-            className={`${d.bg} border rounded-2xl px-2 py-2.5 text-center`}
+            className={`${d.bg} border rounded-xl px-2 py-1.5 text-center`}
           >
-            <p className={`text-lg font-bold leading-none ${d.accent}`}>{d.count}</p>
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mt-1">
+            <p className={`text-base font-bold leading-none ${d.accent}`}>{d.count}</p>
+            <p className="text-[9px] font-semibold uppercase tracking-wide text-muted-foreground mt-1">
               {d.label}
             </p>
           </div>
@@ -532,10 +547,10 @@ function EventsPage() {
           </div>
         ) : (
           <>
-            {renderSection("📌 Today", sectionToday)}
+            {renderSection("📌 Today", sectionToday, { alwaysShow: true, emptyMessage: "No events today 🎉" })}
             {renderSection("📅 Tomorrow", sectionTomorrow)}
             {renderSection("📆 This Week", sectionWeek)}
-            {renderSection("❌ Missed", sectionMissed)}
+            {renderSection("❌ Missed", sectionMissed, { subtitle: "You missed these events" })}
           </>
         )}
       </div>
