@@ -362,11 +362,12 @@ function EventsPage() {
   sectionWeek.sort(byTime);
   sectionMissed.sort((a, b) => -byTime(a, b));
 
+  const todayCount = events.filter((e) => e.date === todayStr).length;
   const dashboard = [
-    { label: "Today", count: sectionToday.length, accent: "text-primary", bg: "bg-primary/10 border-primary/20" },
-    { label: "Tomorrow", count: sectionTomorrow.length, accent: "text-foreground", bg: "bg-secondary border-border/50" },
-    { label: "Week", count: sectionWeek.length, accent: "text-foreground", bg: "bg-secondary border-border/50" },
-    { label: "Missed", count: sectionMissed.length, accent: "text-destructive", bg: "bg-destructive/10 border-destructive/20" },
+    { label: "Today", count: todayCount, accent: "text-primary", bg: "bg-primary/5 border-primary/15" },
+    { label: "Tomorrow", count: sectionTomorrow.length, accent: "text-foreground", bg: "bg-secondary/60 border-border/40" },
+    { label: "Week", count: sectionWeek.length, accent: "text-foreground", bg: "bg-secondary/60 border-border/40" },
+    { label: "Missed", count: sectionMissed.length, accent: "text-destructive", bg: "bg-destructive/5 border-destructive/15" },
   ];
 
   const renderEventCard = (evt: EventItem, i: number) => {
