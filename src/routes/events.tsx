@@ -547,10 +547,10 @@ function EventsPage() {
           </div>
         ) : (
           <>
-            {renderSection("📌 Today", sectionToday)}
+            {renderSection("📌 Today", sectionToday, { alwaysShow: true, emptyMessage: "No events today 🎉" })}
             {renderSection("📅 Tomorrow", sectionTomorrow)}
             {renderSection("📆 This Week", sectionWeek)}
-            {renderSection("❌ Missed", sectionMissed)}
+            {renderSection("❌ Missed", sectionMissed, { subtitle: "You missed these events" })}
           </>
         )}
       </div>
