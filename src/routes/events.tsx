@@ -332,6 +332,148 @@ function EventsPage() {
 
   const now = Date.now();
 
+  // Grouping
+  const todayStr = getTodayStr();
+  const tomorrowD = new Date(); tomorrowD.setDate(tomorrowD.getDate() + 1);
+  const tomorrowStr = toDateStr(tomorrowD);
+  const weekEnd = new Date(); weekEnd.setDate(weekEnd.getDate() + 7); weekEnd.setHours(23, 59, 59, 999);
+  const weekEndMs = weekEnd.getTime();
+
+  const sectionToday: EventItem[] = [];
+  const sectionTomorrow: EventItem[] = [];
+  const sectionWeek: EventItem[] = [];
+  const sectionMissed: EventItem[] = [];
+
+  for (const evt of events) {
+    const status = getEventStatus(evt, now);
+    if (status === "missed") { sectionMissed.push(evt); continue; }
+    if (evt.date === todayStr) { sectionToday.push(evt); continue; }
+    if (evt.date === tomorrowStr) { sectionTomorrow.push(evt); continue; }
+    const ts = new Date(`${evt.date}T${evt.time || "00:00"}`).getTime();
+    if (ts > now && ts <= weekEndMs) { sectionWeek.push(evt); continue; }
+    if (ts > now) sectionWeek.push(evt);
+  }
+
+  const byTime = (a: EventItem, b: EventItem) =>
+    new Date(`${a.date}T${a.time || "00:00"}`).getTime() -
+    new Date(`${b.date}T${b.time || "00:00"}`).getTime();
+  sectionToday.sort(byTime);
+  sectionTomorrow.sort(byTime);
+  sectionWeek.sort(byTime);
+  sectionMissed.sort((a, b) => -byTime(a, b));
+
+  const dashboard = [
+    { label: "Today", count: sectionToday.length, accent: "text-primary", bg: "bg-primary/10 border-primary/20" },
+    { label: "Tomorrow", count: sectionTomorrow.length, accent: "text-foreground", bg: "bg-secondary border-border/50" },
+    { label: "Week", count: sectionWeek.length, accent: "text-foreground", bg: "bg-secondary border-border/50" },
+    { label: "Missed", count: sectionMissed.length, accent: "text-destructive", bg: "bg-destructive/10 border-destructive/20" },
+  ];
+
+  const renderEventCard = (evt: EventItem, i: number) => {
+    const status = getEventStatus(evt, now);
+    const evtDate = new Date(`${evt.date}T${evt.time}`);
+    const isPast = evtDate.getTime() < now;
+    const formattedDate = evtDate.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+    const formattedTime = evtDate.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+    const isCompleted = status === "completed";
+    const isMissed = status === "missed";
+
+    return (
+      <SwipeableRow
+        key={evt.id}
+        onSwipeRight={() => {
+          if (!evt.completed) {
+            toggleEventCompletion(evt.id);
+            toast.success("✅ Event completed");
+          }
+        }}
+        onSwipeLeft={() => {
+          const snapshot = evt;
+          deleteEvent(evt.id);
+          toast("Event deleted", {
+            action: {
+              label: "Undo",
+              onClick: () => addEvent({
+                title: snapshot.title,
+                date: snapshot.date,
+                time: snapshot.time,
+                type: snapshot.type,
+                priority: snapshot.priority,
+                notes: snapshot.notes,
+              }),
+            },
+          });
+        }}
+      >
+        <div
+          style={{ animationDelay: `${Math.min(i * 50, 240)}ms` }}
+          className={`bg-card border border-border/60 rounded-[1.25rem] shadow-[0_2px_12px_-4px_rgba(15,23,42,0.06)] p-4 flex items-center justify-between animate-list-item-in ${isCompleted || isMissed ? "opacity-60" : ""}`}
+        >
+          <div className="flex items-center gap-3 min-w-0">
+            <Checkbox
+              checked={evt.completed}
+              onCheckedChange={() => toggleEventCompletion(evt.id)}
+              aria-label={isCompleted ? "Mark as incomplete" : "Mark as completed"}
+              className="shrink-0"
+            />
+            <div className={`size-10 rounded-2xl flex items-center justify-center shrink-0 ${isPast ? "bg-muted" : "bg-primary/10"}`}>
+              <CalendarDays className={`size-5 ${isPast ? "text-muted-foreground" : "text-primary"}`} />
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <h4 className={`font-semibold text-foreground text-[0.95rem] truncate ${isCompleted ? "line-through" : ""}`}>
+                  {evt.title}
+                </h4>
+                <span className="inline-flex items-center rounded-md border px-1.5 py-0.5 text-[10px] font-semibold bg-secondary text-muted-foreground border-border/60">
+                  {evt.type}
+                </span>
+                <span className={`inline-flex items-center rounded-md border px-1.5 py-0.5 text-[10px] font-semibold ${priorityColor(evt.priority)}`}>
+                  {evt.priority}
+                </span>
+                {isMissed && (
+                  <span className="inline-flex items-center rounded-md border px-1.5 py-0.5 text-[10px] font-semibold bg-destructive/15 text-destructive border-destructive/20">
+                    Missed
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground mt-0.5">{formattedDate} · {formattedTime}</p>
+              {!isCompleted && !isMissed && (
+                <p className="text-[11px] text-primary/80 mt-0.5 font-medium">
+                  {formatCountdown(evtDate.getTime() - now)}
+                </p>
+              )}
+              {evt.notes && (
+                <p className="text-[11px] text-muted-foreground/80 mt-1 line-clamp-2">{evt.notes}</p>
+              )}
+            </div>
+          </div>
+          <div className="flex items-center gap-1 shrink-0">
+            <button onClick={() => handleEdit(evt)} aria-label="Edit event" className="press p-2 rounded-xl text-muted-foreground hover:text-primary hover:bg-primary/10">
+              <Pencil className="size-4" />
+            </button>
+            <button onClick={() => deleteEvent(evt.id)} aria-label="Delete event" className="press p-2 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10">
+              <Trash2 className="size-4" />
+            </button>
+          </div>
+        </div>
+      </SwipeableRow>
+    );
+  };
+
+  const renderSection = (title: string, list: EventItem[]) => {
+    if (list.length === 0) return null;
+    return (
+      <div className="space-y-2">
+        <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground px-1">
+          {title} ({list.length})
+        </p>
+        <div className="space-y-3">
+          {list.map((evt, i) => renderEventCard(evt, i))}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-6 pb-24">
       {/* Header */}
@@ -345,8 +487,25 @@ function EventsPage() {
         </div>
       </div>
 
-      {/* Today Focus */}
-      <TodayFocusCard events={events} now={now} />
+      {/* Dashboard */}
+      <div className="grid grid-cols-4 gap-2">
+        {dashboard.map((d) => (
+          <div
+            key={d.label}
+            className={`${d.bg} border rounded-2xl px-2 py-2.5 text-center`}
+          >
+            <p className={`text-lg font-bold leading-none ${d.accent}`}>{d.count}</p>
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mt-1">
+              {d.label}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      {/* Today Focus (visually stronger) */}
+      <div className="rounded-[1.35rem] p-[1.5px] bg-gradient-to-br from-primary/60 via-primary/25 to-transparent shadow-[0_10px_30px_-12px_rgba(37,99,235,0.5)]">
+        <TodayFocusCard events={events} now={now} />
+      </div>
 
       {/* Quick Add */}
       <div className="relative">
@@ -361,9 +520,8 @@ function EventsPage() {
         />
       </div>
 
-      {/* Event List */}
-
-      <div className="space-y-3">
+      {/* Event List (grouped) */}
+      <div className="space-y-6">
         {events.length === 0 ? (
           <div className="text-center text-muted-foreground py-16">
             <div className="inline-flex items-center justify-center size-16 rounded-full bg-secondary mb-5">
@@ -373,96 +531,12 @@ function EventsPage() {
             <p className="text-sm text-muted-foreground mt-1.5">Tap + to add your first event.</p>
           </div>
         ) : (
-          events.map((evt, i) => {
-            const status = getEventStatus(evt, now);
-            const evtDate = new Date(`${evt.date}T${evt.time}`);
-            const isPast = evtDate.getTime() < now;
-            const formattedDate = evtDate.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
-            const formattedTime = evtDate.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
-            const isCompleted = status === "completed";
-            const isMissed = status === "missed";
-
-            return (
-              <SwipeableRow
-                key={evt.id}
-                onSwipeRight={() => {
-                  if (!evt.completed) {
-                    toggleEventCompletion(evt.id);
-                    toast.success("✅ Event completed");
-                  }
-                }}
-                onSwipeLeft={() => {
-                  const snapshot = evt;
-                  deleteEvent(evt.id);
-                  toast("Event deleted", {
-                    action: {
-                      label: "Undo",
-                      onClick: () => addEvent({
-                        title: snapshot.title,
-                        date: snapshot.date,
-                        time: snapshot.time,
-                        type: snapshot.type,
-                        priority: snapshot.priority,
-                        notes: snapshot.notes,
-                      }),
-                    },
-                  });
-                }}
-              >
-                <div
-                  style={{ animationDelay: `${Math.min(i * 50, 240)}ms` }}
-                  className={`bg-card border border-border/60 rounded-[1.25rem] shadow-[0_2px_12px_-4px_rgba(15,23,42,0.06)] p-4 flex items-center justify-between animate-list-item-in ${isCompleted || isMissed ? "opacity-60" : ""}`}
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <Checkbox
-                      checked={evt.completed}
-                      onCheckedChange={() => toggleEventCompletion(evt.id)}
-                      aria-label={isCompleted ? "Mark as incomplete" : "Mark as completed"}
-                      className="shrink-0"
-                    />
-                    <div className={`size-10 rounded-2xl flex items-center justify-center shrink-0 ${isPast ? "bg-muted" : "bg-primary/10"}`}>
-                      <CalendarDays className={`size-5 ${isPast ? "text-muted-foreground" : "text-primary"}`} />
-                    </div>
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <h4 className={`font-semibold text-foreground text-[0.95rem] truncate ${isCompleted ? "line-through" : ""}`}>
-                          {evt.title}
-                        </h4>
-                        <span className="inline-flex items-center rounded-md border px-1.5 py-0.5 text-[10px] font-semibold bg-secondary text-muted-foreground border-border/60">
-                          {evt.type}
-                        </span>
-                        <span className={`inline-flex items-center rounded-md border px-1.5 py-0.5 text-[10px] font-semibold ${priorityColor(evt.priority)}`}>
-                          {evt.priority}
-                        </span>
-                        {isMissed && (
-                          <span className="inline-flex items-center rounded-md border px-1.5 py-0.5 text-[10px] font-semibold bg-destructive/15 text-destructive border-destructive/20">
-                            Missed
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-0.5">{formattedDate} · {formattedTime}</p>
-                      {!isCompleted && !isMissed && (
-                        <p className="text-[11px] text-primary/80 mt-0.5 font-medium">
-                          {formatCountdown(evtDate.getTime() - now)}
-                        </p>
-                      )}
-                      {evt.notes && (
-                        <p className="text-[11px] text-muted-foreground/80 mt-1 line-clamp-2">{evt.notes}</p>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1 shrink-0">
-                    <button onClick={() => handleEdit(evt)} aria-label="Edit event" className="press p-2 rounded-xl text-muted-foreground hover:text-primary hover:bg-primary/10">
-                      <Pencil className="size-4" />
-                    </button>
-                    <button onClick={() => deleteEvent(evt.id)} aria-label="Delete event" className="press p-2 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10">
-                      <Trash2 className="size-4" />
-                    </button>
-                  </div>
-                </div>
-              </SwipeableRow>
-            );
-          })
+          <>
+            {renderSection("📌 Today", sectionToday)}
+            {renderSection("📅 Tomorrow", sectionTomorrow)}
+            {renderSection("📆 This Week", sectionWeek)}
+            {renderSection("❌ Missed", sectionMissed)}
+          </>
         )}
       </div>
 
