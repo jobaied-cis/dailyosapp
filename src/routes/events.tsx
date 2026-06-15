@@ -186,7 +186,7 @@ function TodayFocusCard({ events, now }: { events: EventItem[]; now: number }) {
     <div className="bg-card border border-primary/30 rounded-[1.25rem] p-4 shadow-[0_2px_16px_-4px_rgba(37,99,235,0.18)] space-y-2">
       <div className="flex items-center gap-2">
         <Flame className="size-4 text-primary" />
-        <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-primary">Today Focus</p>
+        <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-primary">Next Event</p>
       </div>
 
       {nextEvent ? (
