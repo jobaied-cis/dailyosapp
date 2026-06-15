@@ -502,15 +502,15 @@ function EventsPage() {
         </div>
       </div>
 
-      {/* Dashboard */}
+      {/* Dashboard (compact, lighter than Next Event) */}
       <div className="grid grid-cols-4 gap-2">
         {dashboard.map((d) => (
           <div
             key={d.label}
-            className={`${d.bg} border rounded-2xl px-2 py-2.5 text-center`}
+            className={`${d.bg} border rounded-xl px-2 py-1.5 text-center`}
           >
-            <p className={`text-lg font-bold leading-none ${d.accent}`}>{d.count}</p>
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mt-1">
+            <p className={`text-base font-bold leading-none ${d.accent}`}>{d.count}</p>
+            <p className="text-[9px] font-semibold uppercase tracking-wide text-muted-foreground mt-1">
               {d.label}
             </p>
           </div>
