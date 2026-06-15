@@ -461,16 +461,30 @@ function EventsPage() {
     );
   };
 
-  const renderSection = (title: string, list: EventItem[]) => {
-    if (list.length === 0) return null;
+  const renderSection = (
+    title: string,
+    list: EventItem[],
+    opts?: { emptyMessage?: string; subtitle?: string; alwaysShow?: boolean },
+  ) => {
+    if (list.length === 0 && !opts?.alwaysShow) return null;
     return (
-      <div className="space-y-2">
-        <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground px-1">
-          {title} ({list.length})
-        </p>
-        <div className="space-y-3">
-          {list.map((evt, i) => renderEventCard(evt, i))}
+      <div className="space-y-2.5">
+        <div className="flex items-center gap-3 px-1">
+          <p className="text-[12px] font-extrabold uppercase tracking-[0.14em] text-foreground/80">
+            {title} ({list.length})
+          </p>
+          <div className="flex-1 h-px bg-border/60" />
         </div>
+        {opts?.subtitle && list.length > 0 && (
+          <p className="text-[11px] text-muted-foreground px-1 -mt-1">{opts.subtitle}</p>
+        )}
+        {list.length === 0 ? (
+          <p className="text-sm text-muted-foreground px-1 py-2">{opts?.emptyMessage}</p>
+        ) : (
+          <div className="space-y-3">
+            {list.map((evt, i) => renderEventCard(evt, i))}
+          </div>
+        )}
       </div>
     );
   };
