@@ -314,11 +314,6 @@ function Dashboard() {
                 }
               }
               const isNext = nextUpcoming?.id === evt.id;
-              const typeIcon =
-                evt.type === "Exam" ? "🎓" :
-                evt.type === "Meeting" ? "💼" :
-                evt.type === "Class" ? "🧑‍🏫" :
-                "📌";
               return (
                 <div
                   key={evt.id}
@@ -329,21 +324,31 @@ function Dashboard() {
                   }`}
                 >
                   <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2.5 min-w-0">
-                      <span className="text-xs font-mono font-medium text-muted-foreground shrink-0">
-                        {timeStr}
-                      </span>
-                      <span className="text-base shrink-0 leading-none">{typeIcon}</span>
-                      <span className="text-sm font-semibold text-foreground truncate">
-                        {evt.title}
-                      </span>
-                      {isNext && (
-                        <span className="text-[10px] font-extrabold uppercase tracking-wider text-primary bg-primary/20 border border-primary/30 px-2 py-0.5 rounded-full shrink-0 shadow-sm">
-                          NEXT 🔥
-                        </span>
-                      )}
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      {evt.type === "Exam" && <GraduationCap className="size-4 text-primary/70 shrink-0" />}
+                      {evt.type === "Meeting" && <Briefcase className="size-4 text-primary/70 shrink-0" />}
+                      {evt.type === "Class" && <BookOpen className="size-4 text-primary/70 shrink-0" />}
+                      {evt.type === "Personal" && <User className="size-4 text-primary/70 shrink-0" />}
+                      {evt.type === "Other" && <MapPin className="size-4 text-primary/70 shrink-0" />}
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-semibold text-foreground truncate">
+                            {evt.title}
+                          </span>
+                          {isNext && (
+                            <span className="text-[10px] font-extrabold uppercase tracking-wider text-primary bg-primary/20 border border-primary/30 px-2 py-0.5 rounded-full shrink-0 shadow-sm">
+                              NEXT
+                            </span>
+                          )}
+                        </div>
+                        {countdown && (
+                          <span className={}>
+                            {countdown}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1 shrink-0">
+                    <div className="flex flex-col items-end gap-0.5 shrink-0">
                       <span className="inline-flex items-center rounded-md border px-1.5 py-0.5 text-[10px] font-semibold bg-secondary text-muted-foreground border-border/60">
                         {evt.type}
                       </span>
@@ -374,11 +379,11 @@ function Dashboard() {
           </div>
         ) : (
           <div className="text-center py-2">
-            <p className="text-sm font-semibold text-foreground">No events today 😌</p>
+            <p className="text-sm font-semibold text-foreground">No events today 🎉</p>
             <p className="text-xs text-muted-foreground mt-1">Relax or plan ahead</p>
           </div>
         )}
-      </section>
+      </Link>
 
       {/* Expense Summary */}
       <section className="bg-card border border-border/60 rounded-[1.5rem] p-5 shadow-[0_4px_20px_-8px_rgba(15,23,42,0.06)]">
