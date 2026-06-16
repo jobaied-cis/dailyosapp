@@ -363,11 +363,7 @@ function Dashboard() {
                       </span>
                     </div>
                   </div>
-                  {countdown && (
-                    <p className={`text-[11px] font-medium mt-1 ml-[3.5rem] ${isNext ? "text-primary" : "text-muted-foreground"}`}>
-                      {countdown}
-                    </p>
-                  )}
+
                 </div>
               );
             })}
@@ -455,7 +451,7 @@ function Dashboard() {
             </span>
           </div>
         </div>
-      </section>
+      </Link>
     </div>
   );
 }
