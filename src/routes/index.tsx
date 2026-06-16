@@ -243,7 +243,7 @@ function Dashboard() {
           </span>
           <Link to="/missions" className="text-xs font-semibold text-muted-foreground hover:text-foreground">
             All
-          </section>
+          </Link>
         </div>
         {mission ? (
           <Link to="/missions/$missionId" params={{ missionId: mission.id }} className="press block">
