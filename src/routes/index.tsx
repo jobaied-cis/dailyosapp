@@ -451,7 +451,7 @@ function Dashboard() {
             </span>
           </div>
         </div>
-      </Link>
+      </section>
     </div>
   );
 }
