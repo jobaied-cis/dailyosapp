@@ -236,7 +236,10 @@ function Dashboard() {
 
 
       {/* Today's Mission (below Routine) */}
-      <section className="bg-card border border-border/60 rounded-[1.5rem] p-5 shadow-[0_4px_20px_-8px_rgba(15,23,42,0.06)]">
+      <Link
+        to="/events"
+        className="block bg-card border border-border/60 rounded-[1.5rem] p-5 shadow-[0_4px_20px_-8px_rgba(15,23,42,0.06)] cursor-pointer"
+      >
         <div className="flex items-center justify-between mb-3">
           <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-primary flex items-center gap-1.5">
             <Target className="size-3.5" /> Today's Mission
@@ -287,9 +290,7 @@ function Dashboard() {
           <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-primary flex items-center gap-1.5">
             <CalendarDays className="size-3.5" /> TODAY'S EVENTS ({eventCount})
           </span>
-          <Link to="/events" className="text-xs font-semibold text-muted-foreground hover:text-foreground">
-            All
-          </Link>
+          <span className="text-xs font-semibold text-muted-foreground">All</span>
         </div>
         {showEvents.length > 0 ? (
           <div className="space-y-3">
@@ -366,12 +367,9 @@ function Dashboard() {
               );
             })}
             {todaysEvents.length > 3 && (
-              <Link
-                to="/events"
-                className="press block text-center text-xs font-semibold text-primary mt-2"
-              >
-                View All
-              </Link>
+              <span className="block text-center text-xs font-semibold text-primary mt-2">
+                +{todaysEvents.length - 3} more
+              </span>
             )}
           </div>
         ) : (
