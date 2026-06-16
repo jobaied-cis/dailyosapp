@@ -342,7 +342,7 @@ function Dashboard() {
                           )}
                         </div>
                         {countdown && (
-                          <span className={}>
+                          <span className={`text-xs font-medium ${isNext ? "text-primary" : "text-muted-foreground"}`}>
                             {countdown}
                           </span>
                         )}
