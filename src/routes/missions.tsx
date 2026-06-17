@@ -1,8 +1,9 @@
 import { createFileRoute, Link, Outlet, useMatchRoute } from "@tanstack/react-router";
 import { useState, type FormEvent, type KeyboardEvent } from "react";
+import { toast } from "sonner";
 import { addMission, deleteMission, missionProgress, updateMission, useMissions } from "@/lib/missions-store";
 import { getMissionStreak } from "@/lib/mission-streak-store";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, Target } from "lucide-react";
 
 export const Route = createFileRoute("/missions")({
   head: () => ({
