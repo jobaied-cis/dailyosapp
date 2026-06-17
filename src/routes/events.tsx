@@ -157,6 +157,7 @@ function typeEmoji(type: EventType): string {
 
 function formatStartsIn(diffMs: number): string {
   if (diffMs <= 0) return "Starts now";
+  if (diffMs < 60_000) return "Starts in <1m";
   const minutes = Math.floor(diffMs / 60000);
   const hours = Math.floor(diffMs / 3600000);
   const days = Math.floor(diffMs / 86400000);
