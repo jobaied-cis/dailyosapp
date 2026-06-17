@@ -1,8 +1,9 @@
 import { createFileRoute, Link, Outlet, useMatchRoute } from "@tanstack/react-router";
 import { useState, type FormEvent, type KeyboardEvent } from "react";
+import { toast } from "sonner";
 import { addMission, deleteMission, missionProgress, updateMission, useMissions } from "@/lib/missions-store";
 import { getMissionStreak } from "@/lib/mission-streak-store";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, Target } from "lucide-react";
 
 export const Route = createFileRoute("/missions")({
   head: () => ({
@@ -72,6 +73,7 @@ function MissionsListPage() {
     setTitle("");
     setPriority(2);
     setDuration(7);
+    toast.success("Mission added");
   };
 
   const startEdit = (m: { id: string; title: string }) => {
@@ -81,7 +83,10 @@ function MissionsListPage() {
 
   const commitEdit = (id: string) => {
     const t = draftTitle.trim();
-    if (t) updateMission(id, t);
+    if (t) {
+      updateMission(id, t);
+      toast.success("Mission updated");
+    }
     setEditingId(null);
     setDraftTitle("");
   };
@@ -173,7 +178,7 @@ function MissionsListPage() {
           <button
             type="submit"
             disabled={!title.trim()}
-            className="bg-primary text-primary-foreground font-semibold text-sm px-4 rounded-lg disabled:opacity-50 transition-all duration-150 hover:opacity-90 active:scale-95"
+            className="press bg-primary text-primary-foreground font-semibold text-sm px-4 rounded-lg disabled:opacity-50 shadow-[0_4px_14px_-4px_rgba(37,99,235,0.35)]"
           >
             Add
           </button>
@@ -182,9 +187,13 @@ function MissionsListPage() {
       </form>
 
       {sortedMissions.length === 0 ? (
-        <p className="text-center text-sm text-muted-foreground py-12 border border-dashed border-border/60 rounded-xl">
-          No missions yet. Add one above.
-        </p>
+        <div className="text-center py-12 border border-dashed border-border/60 rounded-xl">
+          <div className="inline-flex items-center justify-center size-12 rounded-full bg-secondary mb-3">
+            <Target className="size-5 text-muted-foreground" />
+          </div>
+          <p className="text-base font-semibold text-foreground">No missions added</p>
+          <p className="text-sm text-muted-foreground mt-1">Create one above to get started.</p>
+        </div>
       ) : (
         <ul className="space-y-3">
           {sortedMissions.map((m) => {
@@ -311,8 +320,9 @@ function MissionsListPage() {
                 onClick={() => {
                   deleteMission(confirmId);
                   setConfirmId(null);
+                  toast("Mission deleted");
                 }}
-                className="px-4 py-2 rounded-lg text-sm font-medium bg-destructive text-destructive-foreground hover:bg-destructive/90 transition"
+                className="press px-4 py-2 rounded-lg text-sm font-medium bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
                 Delete
               </button>

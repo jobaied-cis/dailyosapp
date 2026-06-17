@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
+import { toast } from "sonner";
 import {
   useExpenses,
   addExpense,
@@ -525,7 +526,18 @@ function DayCard({
                       <Pencil className="size-4" />
                     </button>
                     <button
-                      onClick={() => deleteExpense(e.id)}
+                      onClick={() => {
+                        const snap = e;
+                        deleteExpense(e.id);
+                        toast("Entry deleted", {
+                          action: {
+                            label: "Undo",
+                            onClick: () => snap.type === "income"
+                              ? addIncome({ amount: snap.amount, title: snap.title })
+                              : addExpense({ title: snap.title, amount: snap.amount, type: "expense", category: snap.category }),
+                          },
+                        });
+                      }}
                       aria-label="Delete entry"
                       className="press text-muted-foreground/40 hover:text-destructive p-1.5 rounded-full hover:bg-destructive/5"
                     >
@@ -930,6 +942,7 @@ function AddExpenseSheet({ onClose }: { onClose: () => void }) {
     const num = parseFloat(amount);
     if (!title.trim() || Number.isNaN(num) || num <= 0) return;
     addExpense({ title, amount: num, type: "expense", category });
+    toast.success("Expense added");
     onClose();
   };
 
@@ -980,6 +993,7 @@ function AddIncomeSheet({ onClose }: { onClose: () => void }) {
     const num = parseFloat(amount);
     if (Number.isNaN(num) || num <= 0) return;
     addIncome({ amount: num, title: title.trim() || "Added money" });
+    toast.success("Income added");
     onClose();
   };
 
@@ -1035,6 +1049,7 @@ function EditExpenseSheet({
     const num = parseFloat(amount);
     if (!title.trim() || Number.isNaN(num) || num <= 0) return;
     updateExpense(expense.id, { title, amount: num, category: isIncome ? undefined : category });
+    toast.success(isIncome ? "Income updated" : "Expense updated");
     onClose();
   };
 
