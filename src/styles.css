@@ -137,9 +137,30 @@
     border-color: var(--color-border);
   }
 
+  html {
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    overscroll-behavior-y: contain;
+  }
+
+  /* Larger tap targets on touch devices for small icon buttons */
+  @media (hover: none) and (pointer: coarse) {
+    button, a[role="button"], [data-tap] {
+      touch-action: manipulation;
+    }
+  }
+
+  /* Smooth, momentum scrolling for scrollable regions */
+  .scroll-smooth-y {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
   }
 }
 
@@ -256,4 +277,30 @@ html { scroll-behavior: smooth; }
 @keyframes confetti-fall {
   0% { transform: translateY(0) rotate(0deg); opacity: 1; }
   100% { transform: translateY(110vh) rotate(720deg); opacity: 0.8; }
+}
+
+/* Micro polish: smooth card layout transitions */
+.card-anim {
+  transition: transform 220ms cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 220ms ease,
+              background-color 200ms ease,
+              border-color 200ms ease,
+              box-shadow 220ms ease;
+}
+
+/* Sonner toast smooth motion override */
+[data-sonner-toaster][data-sonner-toaster] [data-sonner-toast] {
+  transition: transform 320ms cubic-bezier(0.22, 1, 0.36, 1),
+              opacity 240ms ease,
+              box-shadow 240ms ease !important;
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
 }
