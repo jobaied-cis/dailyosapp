@@ -320,8 +320,9 @@ function MissionsListPage() {
                 onClick={() => {
                   deleteMission(confirmId);
                   setConfirmId(null);
+                  toast("Mission deleted");
                 }}
-                className="px-4 py-2 rounded-lg text-sm font-medium bg-destructive text-destructive-foreground hover:bg-destructive/90 transition"
+                className="press px-4 py-2 rounded-lg text-sm font-medium bg-destructive text-destructive-foreground hover:bg-destructive/90"
               >
                 Delete
               </button>
