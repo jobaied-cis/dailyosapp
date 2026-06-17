@@ -1038,6 +1038,7 @@ function EditExpenseSheet({
     const num = parseFloat(amount);
     if (!title.trim() || Number.isNaN(num) || num <= 0) return;
     updateExpense(expense.id, { title, amount: num, category: isIncome ? undefined : category });
+    toast.success(isIncome ? "Income updated" : "Expense updated");
     onClose();
   };
 
