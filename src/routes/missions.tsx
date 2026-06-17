@@ -187,9 +187,13 @@ function MissionsListPage() {
       </form>
 
       {sortedMissions.length === 0 ? (
-        <p className="text-center text-sm text-muted-foreground py-12 border border-dashed border-border/60 rounded-xl">
-          No missions yet. Add one above.
-        </p>
+        <div className="text-center py-12 border border-dashed border-border/60 rounded-xl">
+          <div className="inline-flex items-center justify-center size-12 rounded-full bg-secondary mb-3">
+            <Target className="size-5 text-muted-foreground" />
+          </div>
+          <p className="text-base font-semibold text-foreground">No missions added</p>
+          <p className="text-sm text-muted-foreground mt-1">Create one above to get started.</p>
+        </div>
       ) : (
         <ul className="space-y-3">
           {sortedMissions.map((m) => {
