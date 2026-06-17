@@ -526,7 +526,18 @@ function DayCard({
                       <Pencil className="size-4" />
                     </button>
                     <button
-                      onClick={() => deleteExpense(e.id)}
+                      onClick={() => {
+                        const snap = e;
+                        deleteExpense(e.id);
+                        toast("Entry deleted", {
+                          action: {
+                            label: "Undo",
+                            onClick: () => snap.type === "income"
+                              ? addIncome({ amount: snap.amount, title: snap.title })
+                              : addExpense({ title: snap.title, amount: snap.amount, type: "expense", category: snap.category }),
+                          },
+                        });
+                      }}
                       aria-label="Delete entry"
                       className="press text-muted-foreground/40 hover:text-destructive p-1.5 rounded-full hover:bg-destructive/5"
                     >
