@@ -982,6 +982,7 @@ function AddIncomeSheet({ onClose }: { onClose: () => void }) {
     const num = parseFloat(amount);
     if (Number.isNaN(num) || num <= 0) return;
     addIncome({ amount: num, title: title.trim() || "Added money" });
+    toast.success("Income added");
     onClose();
   };
 
