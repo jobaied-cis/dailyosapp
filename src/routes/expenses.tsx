@@ -931,6 +931,7 @@ function AddExpenseSheet({ onClose }: { onClose: () => void }) {
     const num = parseFloat(amount);
     if (!title.trim() || Number.isNaN(num) || num <= 0) return;
     addExpense({ title, amount: num, type: "expense", category });
+    toast.success("Expense added");
     onClose();
   };
 
