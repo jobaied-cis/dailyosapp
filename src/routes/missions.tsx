@@ -178,7 +178,7 @@ function MissionsListPage() {
           <button
             type="submit"
             disabled={!title.trim()}
-            className="bg-primary text-primary-foreground font-semibold text-sm px-4 rounded-lg disabled:opacity-50 transition-all duration-150 hover:opacity-90 active:scale-95"
+            className="press bg-primary text-primary-foreground font-semibold text-sm px-4 rounded-lg disabled:opacity-50 shadow-[0_4px_14px_-4px_rgba(37,99,235,0.35)]"
           >
             Add
           </button>
