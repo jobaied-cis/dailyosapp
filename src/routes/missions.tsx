@@ -73,6 +73,7 @@ function MissionsListPage() {
     setTitle("");
     setPriority(2);
     setDuration(7);
+    toast.success("Mission added");
   };
 
   const startEdit = (m: { id: string; title: string }) => {
@@ -82,7 +83,10 @@ function MissionsListPage() {
 
   const commitEdit = (id: string) => {
     const t = draftTitle.trim();
-    if (t) updateMission(id, t);
+    if (t) {
+      updateMission(id, t);
+      toast.success("Mission updated");
+    }
     setEditingId(null);
     setDraftTitle("");
   };
