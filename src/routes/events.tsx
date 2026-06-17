@@ -308,6 +308,7 @@ function EventsPage() {
     setConflict(null);
     resetForm();
     setSheetOpen(false);
+    toast.success("Event added successfully");
   };
 
   const handleEdit = (evt: EventItem) => {
@@ -328,6 +329,7 @@ function EventsPage() {
     setConflict(null);
     resetForm();
     setSheetOpen(false);
+    toast.success("Event updated");
   };
 
   const now = Date.now();
