@@ -454,7 +454,19 @@ function EventsPage() {
             <button onClick={() => handleEdit(evt)} aria-label="Edit event" className="press p-2 rounded-xl text-muted-foreground hover:text-primary hover:bg-primary/10">
               <Pencil className="size-4" />
             </button>
-            <button onClick={() => deleteEvent(evt.id)} aria-label="Delete event" className="press p-2 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10">
+            <button onClick={() => {
+              const snapshot = evt;
+              deleteEvent(evt.id);
+              toast("Event deleted", {
+                action: {
+                  label: "Undo",
+                  onClick: () => addEvent({
+                    title: snapshot.title, date: snapshot.date, time: snapshot.time,
+                    type: snapshot.type, priority: snapshot.priority, notes: snapshot.notes,
+                  }),
+                },
+              });
+            }} aria-label="Delete event" className="press p-2 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10">
               <Trash2 className="size-4" />
             </button>
           </div>
