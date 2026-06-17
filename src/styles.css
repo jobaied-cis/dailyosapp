@@ -137,9 +137,30 @@
     border-color: var(--color-border);
   }
 
+  html {
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    overscroll-behavior-y: contain;
+  }
+
+  /* Larger tap targets on touch devices for small icon buttons */
+  @media (hover: none) and (pointer: coarse) {
+    button, a[role="button"], [data-tap] {
+      touch-action: manipulation;
+    }
+  }
+
+  /* Smooth, momentum scrolling for scrollable regions */
+  .scroll-smooth-y {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
   }
 }
 
