@@ -306,6 +306,8 @@ function Dashboard() {
               if (!evt.completed) {
                 if (diffMs <= 0) {
                   countdown = "Now / Past";
+                } else if (diffMs < 60_000) {
+                  countdown = "Starts in <1m";
                 } else {
                   const totalMin = Math.floor(diffMs / 60000);
                   const hrs = Math.floor(totalMin / 60);
