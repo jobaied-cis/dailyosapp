@@ -279,7 +279,7 @@ function MissionsListPage() {
                       e.stopPropagation();
                       startEdit(m);
                     }}
-                    className="p-1.5 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground transition"
+                    className="p-2 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground transition min-w-9 min-h-9 inline-flex items-center justify-center"
                     aria-label="Edit mission"
                   >
                     <Pencil className="w-4 h-4" />
@@ -290,7 +290,7 @@ function MissionsListPage() {
                       e.stopPropagation();
                       setConfirmId(m.id);
                     }}
-                    className="p-1.5 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition"
+                    className="p-2 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition min-w-9 min-h-9 inline-flex items-center justify-center"
                     aria-label="Delete mission"
                   >
                     <Trash2 className="w-4 h-4" />
