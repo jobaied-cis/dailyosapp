@@ -1,4 +1,4 @@
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useSyncExternalStore } from "react";
 
 export interface Task {
   id: string;
@@ -62,16 +62,14 @@ function getSnapshot() {
   return cache;
 }
 
+const EMPTY_TASKS: Task[] = [];
 function getServerSnapshot(): Task[] {
-  return [];
+  return EMPTY_TASKS;
 }
 
 export function useTasks(): Task[] {
   const tasks = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
-  // Avoid SSR mismatch: only render real list after hydration
-  const [hydrated, setHydrated] = useState(false);
-  useEffect(() => setHydrated(true), []);
-  return hydrated ? [...tasks].sort((a, b) => a.time.localeCompare(b.time)) : [];
+  return [...tasks].sort((a, b) => a.time.localeCompare(b.time));
 }
 
 export function toggleTask(id: string) {

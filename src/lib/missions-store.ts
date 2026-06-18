@@ -86,15 +86,13 @@ function getSnapshot() {
   return cache;
 }
 
+const EMPTY_MISSIONS: Mission[] = [];
 function getServerSnapshot(): Mission[] {
-  return [];
+  return EMPTY_MISSIONS;
 }
 
 export function useMissions(): Mission[] {
-  const missions = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
-  const [hydrated, setHydrated] = useState(false);
-  useEffect(() => setHydrated(true), []);
-  return hydrated ? missions : [];
+  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
 
 export function useMission(id: string): Mission | undefined {
