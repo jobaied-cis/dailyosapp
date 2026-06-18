@@ -68,8 +68,9 @@ function getSnapshot() {
   return cache;
 }
 
+const EMPTY_EVENTS: EventItem[] = [];
 function getServerSnapshot(): EventItem[] {
-  return [];
+  return EMPTY_EVENTS;
 }
 
 function toEventDateTime(item: EventItem): number {
@@ -99,9 +100,7 @@ const statusWeight: Record<EventStatus, number> = {
 
 export function useEvents(): EventItem[] {
   const events = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
-  const [hydrated, setHydrated] = useState(false);
-  useEffect(() => setHydrated(true), []);
-  if (!hydrated) return [];
+  if (events.length === 0) return EMPTY_EVENTS;
   const now = Date.now();
   return [...events].sort((a, b) => {
     const sa = getEventStatus(a, now);

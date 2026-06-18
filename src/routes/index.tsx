@@ -67,8 +67,7 @@ function formatDayDate(startDate: number, day: number) {
   return d.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
 }
 
-function getGreeting(): string {
-  const hour = new Date().getHours();
+function getGreeting(hour: number): string {
   if (hour < 12) return "Good morning, Akash👋";
   if (hour < 18) return "Good afternoon, Akash👋";
   return "Good evening, Akash👋";
@@ -89,10 +88,16 @@ function Dashboard() {
   });
 
   const [nowTick, setNowTick] = useState(() => Date.now());
+  const [hour, setHour] = useState<number | null>(null);
   useEffect(() => {
-    const id = setInterval(() => setNowTick(Date.now()), 60_000);
+    setHour(new Date().getHours());
+    const id = setInterval(() => {
+      setNowTick(Date.now());
+      setHour(new Date().getHours());
+    }, 60_000);
     return () => clearInterval(id);
   }, []);
+  const greeting = hour === null ? "Hello, Akash 👋" : getGreeting(hour);
 
   const nowLocal = new Date();
   const todayStr = `${nowLocal.getFullYear()}-${String(nowLocal.getMonth() + 1).padStart(2, "0")}-${String(nowLocal.getDate()).padStart(2, "0")}`;
@@ -150,7 +155,7 @@ function Dashboard() {
     <div className="space-y-6">
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-[1.35rem] font-bold text-foreground tracking-tight">{getGreeting()}</h1>
+          <h1 className="text-[1.35rem] font-bold text-foreground tracking-tight">{greeting}</h1>
           <p className="text-sm text-muted-foreground mt-0.5">
             Today: {done} tasks · {eventCount} events · {formatTaka(todayExpense, taka)} spent
           </p>

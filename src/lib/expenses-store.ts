@@ -63,17 +63,14 @@ function getSnapshot() {
   return cache;
 }
 
+const EMPTY_EXPENSES: Expense[] = [];
 function getServerSnapshot(): Expense[] {
-  return [];
+  return EMPTY_EXPENSES;
 }
 
 export function useExpenses(): Expense[] {
   const expenses = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
-  const [hydrated, setHydrated] = useState(false);
-  useEffect(() => setHydrated(true), []);
-  return hydrated
-    ? [...expenses].sort((a, b) => b.createdAt - a.createdAt)
-    : [];
+  return [...expenses].sort((a, b) => b.createdAt - a.createdAt);
 }
 
 export function addExpense(input: { title: string; amount: number; type?: EntryType; category?: ExpenseCategory }) {
