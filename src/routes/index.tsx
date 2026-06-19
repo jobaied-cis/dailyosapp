@@ -48,10 +48,11 @@ function pickTodaysMission(missions: Mission[]): Mission | undefined {
   if (!missions.length) return undefined;
   const sorted = [...missions].sort((a, b) => a.priority - b.priority);
   const active = sorted.find((m) => {
+    if (isMissionEnded(m)) return false;
     const { total, done } = missionProgress(m);
     return total === 0 || done < total;
   });
-  return active ?? sorted[0];
+  return active;
 }
 
 function currentDayFor(m: Mission): number {
