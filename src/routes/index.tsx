@@ -361,7 +361,7 @@ function Dashboard() {
             )}
           </div>
         ) : (
-          <p className="text-sm text-muted-foreground py-1">No events today 🎉</p>
+          <p className="text-sm text-muted-foreground py-1">You're all clear today ✨</p>
         )}
       </Link>
 
