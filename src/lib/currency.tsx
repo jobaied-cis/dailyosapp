@@ -96,5 +96,7 @@ export function useTakaSymbol(): string {
 
 export function formatTaka(n: number, symbol: string): string {
   const value = Math.round(Math.abs(n)).toLocaleString("en-US");
-  return symbol === "BDT" ? `${value} BDT` : `${symbol}${value}`;
+  // Consistent spacing: always a thin gap between symbol/code and value.
+  if (symbol === "BDT") return `${value} BDT`;
+  return `${symbol} ${value}`;
 }
