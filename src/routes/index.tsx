@@ -404,7 +404,9 @@ function Dashboard() {
             <span className="text-xs text-muted-foreground flex items-center gap-1.5">
               <Wallet className="size-3.5 text-primary/70" /> Balance
             </span>
-            <span className="text-sm font-semibold text-foreground">{formatTaka(balance, taka)}</span>
+            <span className={`text-base font-bold ${balance < 0 ? "text-destructive" : "text-foreground"}`}>
+              {formatTaka(balance, taka)}
+            </span>
           </div>
           <div>
             <div className="flex items-center justify-between mb-1.5">
