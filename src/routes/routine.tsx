@@ -408,7 +408,12 @@ function RoutinePage() {
                       >
                         {t.completed && <Check className="size-3.5 animate-check-pop" strokeWidth={3} />}
                       </button>
-                      <div className="flex-1 min-w-0">
+                      <button
+                        type="button"
+                        onClick={() => { setEditingTask(t); setEditOpen(true); }}
+                        aria-label={`Edit ${t.title}`}
+                        className="flex-1 min-w-0 text-left cursor-pointer"
+                      >
                         <div className="flex items-start justify-between gap-2">
                           <h3
                             key={t.completed ? "done" : "todo"}
@@ -440,7 +445,7 @@ function RoutinePage() {
                           </p>
                         )}
 
-                      </div>
+                      </button>
                       <button
                         onClick={() => deleteTask(t.id)}
                         aria-label="Delete task"
