@@ -224,7 +224,7 @@ function RoutinePage() {
       <ul className="space-y-3">
         {sections.map((section) => (
           <Fragment key={section.label}>
-            <li className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground/80 px-1 select-none pt-4 pb-1">
+            <li className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground/80 px-1 select-none pt-4 pb-1 animate-fade-in-soft">
               <span>{section.icon}</span>
               <span>{section.label}</span>
             </li>
