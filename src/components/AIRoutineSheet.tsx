@@ -154,7 +154,7 @@ export function AIRoutineSheet({ onClose }: { onClose: () => void }) {
             {/* Preview list */}
             <div className="flex items-center justify-between mb-3 shrink-0">
               <p className="text-[13px] font-semibold text-foreground">
-                {selected.size} of {DUMMY_SUGGESTIONS.length} selected
+                {selected.size} of {suggestions.length} selected
               </p>
               <button
                 onClick={() => setPhase("input")}
@@ -164,7 +164,7 @@ export function AIRoutineSheet({ onClose }: { onClose: () => void }) {
               </button>
             </div>
             <ul className="space-y-2 overflow-y-auto flex-1 pr-1">
-              {DUMMY_SUGGESTIONS.map((s, i) => {
+              {suggestions.map((s, i) => {
                 const isSel = selected.has(i);
                 return (
                   <li key={i}>
