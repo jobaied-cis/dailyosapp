@@ -308,6 +308,39 @@ html { scroll-behavior: smooth; }
   animation: fade-in-soft 280ms ease-out backwards;
 }
 
+/* AI shimmer skeleton */
+@keyframes ai-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.ai-shimmer {
+  background: linear-gradient(
+    90deg,
+    hsl(var(--muted) / 0.4) 0%,
+    hsl(var(--muted) / 0.7) 50%,
+    hsl(var(--muted) / 0.4) 100%
+  );
+  background-size: 200% 100%;
+  animation: ai-shimmer 1.4s ease-in-out infinite;
+}
+
+/* AI panel slide-up reveal */
+@keyframes ai-panel-in {
+  0% { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.animate-ai-panel-in {
+  animation: ai-panel-in 220ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
+/* Sparkles gentle pulse for AI badges */
+@keyframes ai-spark {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.08); }
+}
+.animate-ai-spark {
+  animation: ai-spark 1.8s ease-in-out infinite;
+
 /* Micro polish: smooth card layout transitions */
 .card-anim {
   transition: transform 220ms cubic-bezier(0.4, 0, 0.2, 1),

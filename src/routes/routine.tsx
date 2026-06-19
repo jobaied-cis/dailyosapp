@@ -268,8 +268,22 @@ function RoutinePage() {
                 </button>
               )}
             </div>
+            {suggestLoading && !nextSuggestion && (
+              <div className="bg-card border border-primary/20 rounded-[1.25rem] p-4 animate-ai-panel-in">
+                <div className="flex items-start gap-3">
+                  <div className="size-8 rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 border border-primary/20 flex items-center justify-center shrink-0">
+                    <Sparkles className="size-4 text-primary animate-ai-spark" strokeWidth={2.5} />
+                  </div>
+                  <div className="flex-1 min-w-0 space-y-2">
+                    <div className="h-2.5 w-20 rounded ai-shimmer" />
+                    <div className="h-3.5 w-3/4 rounded ai-shimmer" />
+                    <div className="h-2.5 w-1/2 rounded ai-shimmer" />
+                  </div>
+                </div>
+              </div>
+            )}
             {nextSuggestion && (
-              <div className="bg-card border border-primary/30 rounded-[1.25rem] p-4 shadow-[0_4px_20px_-8px_rgba(37,99,235,0.25)] animate-fade-in-soft">
+              <div className="bg-card border border-primary/30 rounded-[1.25rem] p-4 shadow-[0_4px_20px_-8px_rgba(37,99,235,0.25)] animate-ai-panel-in">
                 <div className="flex items-start gap-3">
                   <div className="size-8 rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 border border-primary/20 flex items-center justify-center shrink-0">
                     <Sparkles className="size-4 text-primary" strokeWidth={2.5} />
@@ -302,8 +316,20 @@ function RoutinePage() {
                         Add
                       </button>
                       <button
-                        onClick={() => setNextSuggestion(null)}
+                        onClick={() => {
+                          const [hh, mm] = nextSuggestion.time.split(":").map(Number);
+                          const total = ((hh || 0) * 60 + (mm || 0) + 15) % (24 * 60);
+                          const nh = String(Math.floor(total / 60)).padStart(2, "0");
+                          const nm = String(total % 60).padStart(2, "0");
+                          setNextSuggestion({ ...nextSuggestion, time: `${nh}:${nm}` });
+                        }}
                         className="press text-[12px] font-semibold px-3 py-1.5 rounded-full bg-secondary text-foreground/70 hover:bg-secondary/70"
+                      >
+                        Snooze 15m
+                      </button>
+                      <button
+                        onClick={() => setNextSuggestion(null)}
+                        className="press text-[12px] font-semibold px-3 py-1.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary/60"
                       >
                         Dismiss
                       </button>
