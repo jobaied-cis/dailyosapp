@@ -234,41 +234,64 @@ function RoutinePage() {
               return (
                 <Fragment key={t.id}>
                   {hereIndex === i && (
-                    <li className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.18em] text-primary/70 px-1 select-none">
-                      <span className="flex-1 h-px bg-primary/25" />
-                      You are here
-                      <span className="flex-1 h-px bg-primary/25" />
+                    <li className="flex items-center gap-2 px-1 py-1 select-none">
+                      <span className="relative flex size-2.5 shrink-0">
+                        <span className="absolute inset-0 rounded-full bg-primary/40 animate-ping" />
+                        <span className="relative size-2.5 rounded-full bg-primary" />
+                      </span>
+                      <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">You are here</span>
+                      <span className="flex-1 h-px bg-gradient-to-r from-primary/40 to-transparent" />
                     </li>
                   )}
                   <li
                     style={{ animationDelay: `${Math.min(i * 40, 240)}ms` }}
                     className={`group bg-card border rounded-[1.25rem] shadow-[0_2px_12px_-4px_rgba(15,23,42,0.06)] animate-list-item-in transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_-6px_rgba(15,23,42,0.12)] active:translate-y-0 active:shadow-[0_2px_12px_-4px_rgba(15,23,42,0.06)] ${
-                      t.completed ? "opacity-50 scale-[0.99] border-border/60" :
-                      isActive ? "border-primary/60 shadow-[0_0_0_3px_rgba(37,99,235,0.12),0_4px_20px_-4px_rgba(37,99,235,0.25)] hover:shadow-[0_0_0_3px_rgba(37,99,235,0.12),0_8px_24px_-4px_rgba(37,99,235,0.3)]" :
-                      isMissed ? "border-destructive/40 opacity-75" :
+                      t.completed ? "opacity-70 border-border/60" :
+                      isActive ? "border-primary/60 bg-primary/[0.04] shadow-[0_0_0_3px_rgba(37,99,235,0.12),0_4px_20px_-4px_rgba(37,99,235,0.25)] hover:shadow-[0_0_0_3px_rgba(37,99,235,0.12),0_8px_24px_-4px_rgba(37,99,235,0.3)]" :
+                      isMissed ? "border-amber-500/30 bg-amber-500/[0.03]" :
                       "border-border/60"
                     }`}
                   >
                     <div
                       key={t.completed ? "done" : "todo"}
-                      className={`flex items-start gap-3.5 p-4 w-full ${t.completed ? "animate-task-complete" : ""}`}
+                      className={`flex items-start gap-3 p-4 w-full ${t.completed ? "animate-task-complete" : ""}`}
                     >
+                      {/* Left time rail */}
+                      <div className="w-14 shrink-0 flex flex-col items-start pt-0.5">
+                        <span className="text-[13px] font-mono font-semibold text-foreground/80 leading-tight">
+                          {t.time}
+                        </span>
+                        {t.endTime && (
+                          <>
+                            <span className="text-[10px] font-mono text-muted-foreground/70 leading-tight mt-0.5">
+                              {t.endTime}
+                            </span>
+                            <span className="text-[9px] font-medium text-muted-foreground/60 mt-1">
+                              {formatDuration(getTaskEndMinutes(t) - toMinutes(t.time))}
+                            </span>
+                          </>
+                        )}
+                      </div>
                       <button
                         onClick={() => toggleTask(t.id)}
                         aria-label={t.completed ? "Mark incomplete" : "Mark complete"}
-                        className={`press mt-0.5 size-7 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                        className={`press mt-0.5 size-7 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
                           t.completed
                             ? "bg-primary border-primary text-primary-foreground shadow-sm shadow-primary/25"
-                            : "border-border hover:border-primary hover:bg-primary/5"
+                            : isActive
+                            ? "border-primary ring-2 ring-primary/20 bg-primary/5 animate-pulse"
+                            : isMissed
+                            ? "border-amber-500/60 border-dashed bg-amber-500/5"
+                            : "border-muted-foreground/30 hover:border-primary hover:bg-primary/5"
                         }`}
                       >
                         {t.completed && <Check className="size-3.5 animate-check-pop" strokeWidth={3} />}
                       </button>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-baseline justify-between gap-2">
+                        <div className="flex items-start justify-between gap-2">
                           <h3
                             key={t.completed ? "done" : "todo"}
-                            className={`font-semibold text-foreground truncate text-[0.95rem] transition-colors duration-500 ${
+                            className={`font-semibold text-foreground text-[0.95rem] leading-snug line-clamp-2 break-words transition-colors duration-500 ${
                               t.completed ? "strike-anim text-muted-foreground" : ""
                             }`}
                           >
@@ -281,31 +304,16 @@ function RoutinePage() {
                               </span>
                             )}
                             {isMissed && (
-                              <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-destructive/15 text-destructive">
+                              <span className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-full border border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-400">
                                 Missed
                               </span>
                             )}
-                            {!t.completed && !isActive && !isMissed && now !== null && (
-                              <span className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-secondary text-muted-foreground">
-                                Upcoming
-                              </span>
-                            )}
-                            <div className="flex flex-col items-end gap-0.5">
-                              <span className="text-xs font-mono font-medium text-muted-foreground">
-                                {t.endTime ? `${t.time} – ${t.endTime}` : t.time}
-                              </span>
-                              {t.endTime && (
-                                <span className="text-[10px] font-medium text-muted-foreground/60">
-                                  {formatDuration(getTaskEndMinutes(t) - toMinutes(t.time))}
-                                </span>
-                              )}
-                            </div>
                           </div>
                         </div>
                         {t.note && (
                           <p
                             key={t.completed ? "note-done" : "note-todo"}
-                            className={`text-sm text-muted-foreground mt-1 leading-relaxed transition-opacity duration-500 ${t.completed ? "strike-anim opacity-70" : ""}`}
+                            className={`text-[13px] text-muted-foreground/80 mt-1 leading-relaxed transition-opacity duration-500 ${t.completed ? "strike-anim opacity-70" : ""}`}
                           >
                             {t.note}
                           </p>
@@ -327,10 +335,10 @@ function RoutinePage() {
                   const gapMin = nextStart - currentEnd;
                   if (gapMin <= 15) return null;
                   return (
-                    <li className="flex items-center gap-2 text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground/50 px-1 select-none py-1">
-                      <span className="flex-1 h-px bg-border/30" />
-                      {formatGap(gapMin)}
-                      <span className="flex-1 h-px bg-border/30" />
+                    <li className="flex justify-center select-none py-0.5">
+                      <span className="inline-flex items-center gap-1 text-[10px] font-medium text-muted-foreground/60 bg-secondary/40 px-2.5 py-0.5 rounded-full">
+                        · {formatGap(gapMin)} ·
+                      </span>
                     </li>
                   );
                 })()}
