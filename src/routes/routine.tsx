@@ -281,6 +281,9 @@ function RoutinePage() {
                     <p className="text-[15px] font-semibold text-foreground leading-snug">
                       {nextSuggestion.title}
                     </p>
+                    <p className="text-[11px] font-mono text-muted-foreground/80 mt-0.5">
+                      {nextSuggestion.time}
+                    </p>
                     <p className="text-[12px] text-muted-foreground mt-1 leading-snug">
                       {nextSuggestion.reason}
                     </p>
@@ -288,9 +291,10 @@ function RoutinePage() {
                       <button
                         onClick={() => {
                           addTask({
-                            time: now ? `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}` : "12:00",
+                            time: nextSuggestion.time,
                             title: nextSuggestion.title,
                           });
+                          toast.success("Added to your routine");
                           setNextSuggestion(null);
                         }}
                         className="press text-[12px] font-semibold px-3 py-1.5 rounded-full bg-primary text-primary-foreground shadow-sm"
