@@ -224,7 +224,7 @@ function RoutinePage() {
       <ul className="space-y-3">
         {sections.map((section) => (
           <Fragment key={section.label}>
-            <li className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground/80 px-1 select-none pt-4 pb-1">
+            <li className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground/80 px-1 select-none pt-4 pb-1 animate-fade-in-soft">
               <span>{section.icon}</span>
               <span>{section.label}</span>
             </li>
@@ -234,10 +234,10 @@ function RoutinePage() {
               return (
                 <Fragment key={t.id}>
                   {hereIndex === i && (
-                    <li className="flex items-center gap-2 px-1 py-1 select-none">
+                    <li className="flex items-center gap-2 px-1 py-1 select-none animate-fade-in-soft">
                       <span className="relative flex size-2.5 shrink-0">
-                        <span className="absolute inset-0 rounded-full bg-primary/40 animate-ping" />
-                        <span className="relative size-2.5 rounded-full bg-primary" />
+                        <span className="absolute inset-0 rounded-full bg-primary/30 animate-ping" />
+                        <span className="relative size-2.5 rounded-full bg-primary animate-dot-glow" />
                       </span>
                       <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">You are here</span>
                       <span className="flex-1 h-px bg-gradient-to-r from-primary/40 to-transparent" />
@@ -245,7 +245,7 @@ function RoutinePage() {
                   )}
                   <li
                     style={{ animationDelay: `${Math.min(i * 40, 240)}ms` }}
-                    className={`group bg-card border rounded-[1.25rem] shadow-[0_2px_12px_-4px_rgba(15,23,42,0.06)] animate-list-item-in transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_-6px_rgba(15,23,42,0.12)] active:translate-y-0 active:shadow-[0_2px_12px_-4px_rgba(15,23,42,0.06)] ${
+                    className={`press group bg-card border rounded-[1.25rem] shadow-[0_2px_12px_-4px_rgba(15,23,42,0.06)] animate-list-item-in transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_-6px_rgba(15,23,42,0.12)] active:scale-[0.98] active:shadow-[0_4px_16px_-4px_rgba(15,23,42,0.14)] ${
                       t.completed ? "opacity-70 border-border/60" :
                       isActive ? "border-primary/60 bg-primary/[0.04] shadow-[0_0_0_3px_rgba(37,99,235,0.12),0_4px_20px_-4px_rgba(37,99,235,0.25)] hover:shadow-[0_0_0_3px_rgba(37,99,235,0.12),0_8px_24px_-4px_rgba(37,99,235,0.3)]" :
                       isMissed ? "border-amber-500/30 bg-amber-500/[0.03]" :
@@ -254,7 +254,7 @@ function RoutinePage() {
                   >
                     <div
                       key={t.completed ? "done" : "todo"}
-                      className={`flex items-start gap-3 p-4 w-full ${t.completed ? "animate-task-complete" : ""}`}
+                      className={`flex items-start gap-3 p-4 w-full ${t.completed ? "animate-task-bounce" : ""}`}
                     >
                       {/* Left time rail */}
                       <div className="w-14 shrink-0 flex flex-col items-start pt-0.5">
@@ -335,7 +335,7 @@ function RoutinePage() {
                   const gapMin = nextStart - currentEnd;
                   if (gapMin <= 15) return null;
                   return (
-                    <li className="flex justify-center select-none py-0.5">
+                    <li className="flex justify-center select-none py-0.5 animate-fade-in-soft">
                       <span className="inline-flex items-center gap-1 text-[10px] font-medium text-muted-foreground/60 bg-secondary/40 px-2.5 py-0.5 rounded-full">
                         · {formatGap(gapMin)} ·
                       </span>
@@ -348,10 +348,10 @@ function RoutinePage() {
           </Fragment>
         ))}
         {hereIndex === -1 && tasks.length > 0 && (
-          <li className="flex items-center gap-2 px-1 py-1 select-none">
+          <li className="flex items-center gap-2 px-1 py-1 select-none animate-fade-in-soft">
             <span className="relative flex size-2.5 shrink-0">
-              <span className="absolute inset-0 rounded-full bg-primary/40 animate-ping" />
-              <span className="relative size-2.5 rounded-full bg-primary" />
+              <span className="absolute inset-0 rounded-full bg-primary/30 animate-ping" />
+              <span className="relative size-2.5 rounded-full bg-primary animate-dot-glow" />
             </span>
             <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">You are here</span>
             <span className="flex-1 h-px bg-gradient-to-r from-primary/40 to-transparent" />
