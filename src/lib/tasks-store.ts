@@ -81,6 +81,7 @@ export function toggleTask(id: string) {
 
 export function addTask(input: { time: string; endTime?: string; title: string; note?: string }) {
   ensureInit();
+  if (!isValidTitle(input.title)) return;
   const task: Task = {
     id: crypto.randomUUID(),
     time: input.time,
