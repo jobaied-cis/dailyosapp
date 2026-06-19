@@ -259,7 +259,7 @@ export function AIRoutineSheet({ onClose }: { onClose: () => void }) {
                 Add to routine
               </button>
             </div>
-          </>
+          </div>
         )}
       </div>
     </div>
