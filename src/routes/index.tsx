@@ -200,7 +200,8 @@ function Dashboard() {
             <div className="shrink-0">
               <ProgressRing value={total ? done / total : 0} size={72} stroke={7}>
                 <div className="text-center">
-                <div className="text-[16px] font-semibold text-foreground leading-[1.3]">{Math.round(pct)}%</div>
+                  <div className="text-[16px] font-semibold text-foreground leading-[1.3]">{Math.round(pct)}%</div>
+                </div>
               </ProgressRing>
             </div>
             <ul className="flex-1 min-w-0 space-y-1.5">
