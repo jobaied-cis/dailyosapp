@@ -156,7 +156,7 @@ function Dashboard() {
   return (
     <div className="space-y-4">
       {/* Greeting */}
-      <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-primary/10 via-card to-card p-4 shadow-sm">
+      <div className="relative overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/10 via-card to-card/80 p-4 shadow-md ring-1 ring-inset ring-white/5">
         <div className="pointer-events-none absolute -top-8 -right-8 size-32 rounded-full bg-primary/15 blur-3xl" />
         <div className="relative flex items-start justify-between gap-3">
           <div className="min-w-0">
@@ -232,7 +232,7 @@ function Dashboard() {
 
       <Link
         to="/routine"
-        className="press flex items-center justify-center gap-2.5 w-full bg-primary text-primary-foreground rounded-xl py-3.5 text-sm font-semibold shadow-[0_4px_20px_-4px_rgba(37,99,235,0.35)] hover:shadow-[0_6px_28px_-4px_rgba(37,99,235,0.45)] transition-shadow"
+        className="press flex items-center justify-center gap-2.5 w-full bg-gradient-to-br from-primary to-primary/85 text-primary-foreground rounded-xl py-3.5 text-sm font-semibold shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 active:scale-[0.97] transition-all duration-150"
       >
         Open today's routine <ArrowRight className="size-4" />
       </Link>
@@ -361,7 +361,7 @@ function Dashboard() {
             )}
           </div>
         ) : (
-          <p className="text-sm text-muted-foreground py-1">No events today 🎉</p>
+          <p className="text-sm text-muted-foreground py-1">You're all clear today ✨</p>
         )}
       </Link>
 
