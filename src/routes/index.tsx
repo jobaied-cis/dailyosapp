@@ -5,6 +5,7 @@ import { ProgressRing } from "@/components/ProgressRing";
 import {
   useMissions,
   missionProgress,
+  isMissionEnded,
   type Mission,
 } from "@/lib/missions-store";
 import { useEvents } from "@/lib/events-store";
