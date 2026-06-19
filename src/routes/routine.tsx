@@ -132,18 +132,18 @@ function RoutinePage() {
 
       {/* Summary cards */}
       <div className="grid grid-cols-3 gap-3">
-        <div className="bg-card border border-border/60 rounded-2xl p-4 text-center">
-          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground mb-1">Done</p>
-          <p className="text-2xl font-bold text-foreground">{done}</p>
-        </div>
-        <div className="bg-card border border-border/60 rounded-2xl p-4 text-center">
-          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground mb-1">Left</p>
-          <p className="text-2xl font-bold text-foreground">{total - done}</p>
-        </div>
-        <div className="bg-card border border-border/60 rounded-2xl p-4 text-center">
-          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground mb-1">Planned</p>
-          <p className="text-2xl font-bold text-foreground">{formatDuration(plannedMin) || "0m"}</p>
-        </div>
+        <button type="button" className="press bg-card border border-border/60 rounded-2xl p-3.5 text-center transition-all active:scale-[0.98]">
+          <p className="text-[26px] font-bold text-foreground leading-none">{done}</p>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground mt-1.5">Done</p>
+        </button>
+        <button type="button" className="press bg-card border border-border/60 rounded-2xl p-3.5 text-center transition-all active:scale-[0.98]">
+          <p className={`text-[26px] font-bold leading-none ${total - done > 0 ? "text-foreground" : "text-muted-foreground/60"}`}>{total - done}</p>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground mt-1.5">Left</p>
+        </button>
+        <button type="button" className="press bg-card border border-border/60 rounded-2xl p-3.5 text-center transition-all active:scale-[0.98]">
+          <p className="text-[20px] font-bold text-foreground leading-none">{formatDuration(plannedMin) || "0m"}</p>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground mt-1.5">Planned</p>
+        </button>
       </div>
 
       {/* Progress */}
@@ -202,9 +202,21 @@ function RoutinePage() {
             </div>
           );
         }
+        const nextUp = tasks.find((t, idx) => !t.completed && taskMeta[idx].start > nowMin);
+        const minsUntil = nextUp ? toMinutes(nextUp.time) - nowMin : 0;
         return (
-          <div className="bg-card/60 border border-border/40 rounded-[1.25rem] p-5 text-center">
-            <p className="text-sm text-muted-foreground">No active task right now 😌</p>
+          <div className="bg-card/60 border border-border/40 rounded-[1.25rem] p-4 text-center">
+            {nextUp ? (
+              <p className="text-sm text-muted-foreground">
+                <span className="text-foreground/70 font-medium">Free time</span>
+                {" · next up: "}
+                <span className="text-foreground font-semibold">{nextUp.title}</span>
+                {" "}
+                <span className="font-mono text-xs">({nextUp.time}{minsUntil > 0 ? ` · ${formatDuration(minsUntil)}` : ""})</span>
+              </p>
+            ) : (
+              <p className="text-sm text-muted-foreground">You&apos;re done for today ✨</p>
+            )}
           </div>
         );
       })()}
@@ -212,10 +224,9 @@ function RoutinePage() {
       <ul className="space-y-3">
         {sections.map((section) => (
           <Fragment key={section.label}>
-            <li className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground/80 px-1 select-none pt-1">
-              <span className="flex-1 h-px bg-border/60" />
-              {section.label} {section.icon}
-              <span className="flex-1 h-px bg-border/60" />
+            <li className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground/80 px-1 select-none pt-4 pb-1">
+              <span>{section.icon}</span>
+              <span>{section.label}</span>
             </li>
             {section.tasks.map((t, si) => {
               const i = section.originalIndices[si];
@@ -223,41 +234,64 @@ function RoutinePage() {
               return (
                 <Fragment key={t.id}>
                   {hereIndex === i && (
-                    <li className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.18em] text-primary/70 px-1 select-none">
-                      <span className="flex-1 h-px bg-primary/25" />
-                      You are here
-                      <span className="flex-1 h-px bg-primary/25" />
+                    <li className="flex items-center gap-2 px-1 py-1 select-none">
+                      <span className="relative flex size-2.5 shrink-0">
+                        <span className="absolute inset-0 rounded-full bg-primary/40 animate-ping" />
+                        <span className="relative size-2.5 rounded-full bg-primary" />
+                      </span>
+                      <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">You are here</span>
+                      <span className="flex-1 h-px bg-gradient-to-r from-primary/40 to-transparent" />
                     </li>
                   )}
                   <li
                     style={{ animationDelay: `${Math.min(i * 40, 240)}ms` }}
                     className={`group bg-card border rounded-[1.25rem] shadow-[0_2px_12px_-4px_rgba(15,23,42,0.06)] animate-list-item-in transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_-6px_rgba(15,23,42,0.12)] active:translate-y-0 active:shadow-[0_2px_12px_-4px_rgba(15,23,42,0.06)] ${
-                      t.completed ? "opacity-50 scale-[0.99] border-border/60" :
-                      isActive ? "border-primary/60 shadow-[0_0_0_3px_rgba(37,99,235,0.12),0_4px_20px_-4px_rgba(37,99,235,0.25)] hover:shadow-[0_0_0_3px_rgba(37,99,235,0.12),0_8px_24px_-4px_rgba(37,99,235,0.3)]" :
-                      isMissed ? "border-destructive/40 opacity-75" :
+                      t.completed ? "opacity-70 border-border/60" :
+                      isActive ? "border-primary/60 bg-primary/[0.04] shadow-[0_0_0_3px_rgba(37,99,235,0.12),0_4px_20px_-4px_rgba(37,99,235,0.25)] hover:shadow-[0_0_0_3px_rgba(37,99,235,0.12),0_8px_24px_-4px_rgba(37,99,235,0.3)]" :
+                      isMissed ? "border-amber-500/30 bg-amber-500/[0.03]" :
                       "border-border/60"
                     }`}
                   >
                     <div
                       key={t.completed ? "done" : "todo"}
-                      className={`flex items-start gap-3.5 p-4 w-full ${t.completed ? "animate-task-complete" : ""}`}
+                      className={`flex items-start gap-3 p-4 w-full ${t.completed ? "animate-task-complete" : ""}`}
                     >
+                      {/* Left time rail */}
+                      <div className="w-14 shrink-0 flex flex-col items-start pt-0.5">
+                        <span className="text-[13px] font-mono font-semibold text-foreground/80 leading-tight">
+                          {t.time}
+                        </span>
+                        {t.endTime && (
+                          <>
+                            <span className="text-[10px] font-mono text-muted-foreground/70 leading-tight mt-0.5">
+                              {t.endTime}
+                            </span>
+                            <span className="text-[9px] font-medium text-muted-foreground/60 mt-1">
+                              {formatDuration(getTaskEndMinutes(t) - toMinutes(t.time))}
+                            </span>
+                          </>
+                        )}
+                      </div>
                       <button
                         onClick={() => toggleTask(t.id)}
                         aria-label={t.completed ? "Mark incomplete" : "Mark complete"}
-                        className={`press mt-0.5 size-7 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                        className={`press mt-0.5 size-7 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
                           t.completed
                             ? "bg-primary border-primary text-primary-foreground shadow-sm shadow-primary/25"
-                            : "border-border hover:border-primary hover:bg-primary/5"
+                            : isActive
+                            ? "border-primary ring-2 ring-primary/20 bg-primary/5 animate-pulse"
+                            : isMissed
+                            ? "border-amber-500/60 border-dashed bg-amber-500/5"
+                            : "border-muted-foreground/30 hover:border-primary hover:bg-primary/5"
                         }`}
                       >
                         {t.completed && <Check className="size-3.5 animate-check-pop" strokeWidth={3} />}
                       </button>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-baseline justify-between gap-2">
+                        <div className="flex items-start justify-between gap-2">
                           <h3
                             key={t.completed ? "done" : "todo"}
-                            className={`font-semibold text-foreground truncate text-[0.95rem] transition-colors duration-500 ${
+                            className={`font-semibold text-foreground text-[0.95rem] leading-snug line-clamp-2 break-words transition-colors duration-500 ${
                               t.completed ? "strike-anim text-muted-foreground" : ""
                             }`}
                           >
@@ -270,31 +304,16 @@ function RoutinePage() {
                               </span>
                             )}
                             {isMissed && (
-                              <span className="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-destructive/15 text-destructive">
+                              <span className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-full border border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-400">
                                 Missed
                               </span>
                             )}
-                            {!t.completed && !isActive && !isMissed && now !== null && (
-                              <span className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-secondary text-muted-foreground">
-                                Upcoming
-                              </span>
-                            )}
-                            <div className="flex flex-col items-end gap-0.5">
-                              <span className="text-xs font-mono font-medium text-muted-foreground">
-                                {t.endTime ? `${t.time} – ${t.endTime}` : t.time}
-                              </span>
-                              {t.endTime && (
-                                <span className="text-[10px] font-medium text-muted-foreground/60">
-                                  {formatDuration(getTaskEndMinutes(t) - toMinutes(t.time))}
-                                </span>
-                              )}
-                            </div>
                           </div>
                         </div>
                         {t.note && (
                           <p
                             key={t.completed ? "note-done" : "note-todo"}
-                            className={`text-sm text-muted-foreground mt-1 leading-relaxed transition-opacity duration-500 ${t.completed ? "strike-anim opacity-70" : ""}`}
+                            className={`text-[13px] text-muted-foreground/80 mt-1 leading-relaxed transition-opacity duration-500 ${t.completed ? "strike-anim opacity-70" : ""}`}
                           >
                             {t.note}
                           </p>
@@ -316,10 +335,10 @@ function RoutinePage() {
                   const gapMin = nextStart - currentEnd;
                   if (gapMin <= 15) return null;
                   return (
-                    <li className="flex items-center gap-2 text-[10px] font-medium uppercase tracking-[0.18em] text-muted-foreground/50 px-1 select-none py-1">
-                      <span className="flex-1 h-px bg-border/30" />
-                      {formatGap(gapMin)}
-                      <span className="flex-1 h-px bg-border/30" />
+                    <li className="flex justify-center select-none py-0.5">
+                      <span className="inline-flex items-center gap-1 text-[10px] font-medium text-muted-foreground/60 bg-secondary/40 px-2.5 py-0.5 rounded-full">
+                        · {formatGap(gapMin)} ·
+                      </span>
                     </li>
                   );
                 })()}
@@ -329,10 +348,13 @@ function RoutinePage() {
           </Fragment>
         ))}
         {hereIndex === -1 && tasks.length > 0 && (
-          <li className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.18em] text-primary/70 px-1 select-none">
-            <span className="flex-1 h-px bg-primary/25" />
-            You are here
-            <span className="flex-1 h-px bg-primary/25" />
+          <li className="flex items-center gap-2 px-1 py-1 select-none">
+            <span className="relative flex size-2.5 shrink-0">
+              <span className="absolute inset-0 rounded-full bg-primary/40 animate-ping" />
+              <span className="relative size-2.5 rounded-full bg-primary" />
+            </span>
+            <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">You are here</span>
+            <span className="flex-1 h-px bg-gradient-to-r from-primary/40 to-transparent" />
           </li>
         )}
 
@@ -399,14 +421,14 @@ function AddTaskSheet({ onClose }: { onClose: () => void }) {
             <X className="size-5" />
           </button>
         </div>
-        <form onSubmit={submit} className="space-y-4">
+        <form onSubmit={submit} className="space-y-5">
           <div className="grid grid-cols-2 gap-3">
             <Field label="Start">
               <input
                 type="time"
                 value={time}
                 onChange={(e) => setTime(e.target.value)}
-                className="w-full bg-secondary rounded-xl px-4 py-3.5 text-foreground outline-none focus:ring-2 focus:ring-primary/30 font-medium"
+                className="w-full bg-secondary rounded-xl px-4 py-3.5 text-foreground outline-none focus:ring-2 focus:ring-primary/40 focus:bg-card focus:shadow-[0_0_0_4px_rgba(37,99,235,0.08)] transition-all font-medium"
               />
             </Field>
             <Field label="End">
@@ -414,7 +436,7 @@ function AddTaskSheet({ onClose }: { onClose: () => void }) {
                 type="time"
                 value={endTime}
                 onChange={(e) => setEndTime(e.target.value)}
-                className="w-full bg-secondary rounded-xl px-4 py-3.5 text-foreground outline-none focus:ring-2 focus:ring-primary/30 font-medium"
+                className="w-full bg-secondary rounded-xl px-4 py-3.5 text-foreground outline-none focus:ring-2 focus:ring-primary/40 focus:bg-card focus:shadow-[0_0_0_4px_rgba(37,99,235,0.08)] transition-all font-medium"
               />
             </Field>
           </div>
@@ -425,7 +447,7 @@ function AddTaskSheet({ onClose }: { onClose: () => void }) {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g. Morning run"
-              className="w-full bg-secondary rounded-xl px-4 py-3.5 text-foreground outline-none focus:ring-2 focus:ring-primary/30 placeholder:text-muted-foreground/60 font-medium"
+              className="w-full bg-secondary rounded-xl px-4 py-3.5 text-foreground outline-none focus:ring-2 focus:ring-primary/40 focus:bg-card focus:shadow-[0_0_0_4px_rgba(37,99,235,0.08)] transition-all placeholder:text-muted-foreground/60 font-medium"
             />
           </Field>
           <Field label="Note (optional)">
@@ -434,13 +456,13 @@ function AddTaskSheet({ onClose }: { onClose: () => void }) {
               onChange={(e) => setNote(e.target.value)}
               rows={2}
               placeholder="Anything to remember…"
-              className="w-full bg-secondary rounded-xl px-4 py-3.5 text-foreground outline-none focus:ring-2 focus:ring-primary/30 placeholder:text-muted-foreground/60 resize-none font-medium"
+              className="w-full bg-secondary rounded-xl px-4 py-3.5 text-foreground outline-none focus:ring-2 focus:ring-primary/40 focus:bg-card focus:shadow-[0_0_0_4px_rgba(37,99,235,0.08)] transition-all placeholder:text-muted-foreground/60 resize-none font-medium"
             />
           </Field>
           <button
             type="submit"
             disabled={!title.trim()}
-            className="press w-full bg-primary text-primary-foreground rounded-[1.25rem] py-4 font-semibold shadow-[0_4px_16px_-4px_rgba(37,99,235,0.35)] disabled:opacity-45 disabled:shadow-none mt-2"
+            className="press w-full bg-gradient-to-br from-primary to-primary/85 text-primary-foreground rounded-[1.25rem] py-4 font-semibold shadow-[0_8px_24px_-6px_rgba(37,99,235,0.45)] hover:shadow-[0_12px_32px_-6px_rgba(37,99,235,0.55)] disabled:opacity-45 disabled:shadow-none mt-2 transition-shadow"
           >
             Add task
           </button>
@@ -481,14 +503,14 @@ function EditTaskSheet({ task, onClose }: { task: Task; onClose: () => void }) {
             <X className="size-5" />
           </button>
         </div>
-        <form onSubmit={submit} className="space-y-4">
+        <form onSubmit={submit} className="space-y-5">
           <div className="grid grid-cols-2 gap-3">
             <Field label="Start">
               <input
                 type="time"
                 value={time}
                 onChange={(e) => setTime(e.target.value)}
-                className="w-full bg-secondary rounded-xl px-4 py-3.5 text-foreground outline-none focus:ring-2 focus:ring-primary/30 font-medium"
+                className="w-full bg-secondary rounded-xl px-4 py-3.5 text-foreground outline-none focus:ring-2 focus:ring-primary/40 focus:bg-card focus:shadow-[0_0_0_4px_rgba(37,99,235,0.08)] transition-all font-medium"
               />
             </Field>
             <Field label="End">
@@ -496,7 +518,7 @@ function EditTaskSheet({ task, onClose }: { task: Task; onClose: () => void }) {
                 type="time"
                 value={endTime}
                 onChange={(e) => setEndTime(e.target.value)}
-                className="w-full bg-secondary rounded-xl px-4 py-3.5 text-foreground outline-none focus:ring-2 focus:ring-primary/30 font-medium"
+                className="w-full bg-secondary rounded-xl px-4 py-3.5 text-foreground outline-none focus:ring-2 focus:ring-primary/40 focus:bg-card focus:shadow-[0_0_0_4px_rgba(37,99,235,0.08)] transition-all font-medium"
               />
             </Field>
           </div>
@@ -506,7 +528,7 @@ function EditTaskSheet({ task, onClose }: { task: Task; onClose: () => void }) {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g. Morning run"
-              className="w-full bg-secondary rounded-xl px-4 py-3.5 text-foreground outline-none focus:ring-2 focus:ring-primary/30 placeholder:text-muted-foreground/60 font-medium"
+              className="w-full bg-secondary rounded-xl px-4 py-3.5 text-foreground outline-none focus:ring-2 focus:ring-primary/40 focus:bg-card focus:shadow-[0_0_0_4px_rgba(37,99,235,0.08)] transition-all placeholder:text-muted-foreground/60 font-medium"
             />
           </Field>
           <Field label="Note (optional)">
@@ -515,13 +537,13 @@ function EditTaskSheet({ task, onClose }: { task: Task; onClose: () => void }) {
               onChange={(e) => setNote(e.target.value)}
               rows={2}
               placeholder="Anything to remember…"
-              className="w-full bg-secondary rounded-xl px-4 py-3.5 text-foreground outline-none focus:ring-2 focus:ring-primary/30 placeholder:text-muted-foreground/60 resize-none font-medium"
+              className="w-full bg-secondary rounded-xl px-4 py-3.5 text-foreground outline-none focus:ring-2 focus:ring-primary/40 focus:bg-card focus:shadow-[0_0_0_4px_rgba(37,99,235,0.08)] transition-all placeholder:text-muted-foreground/60 resize-none font-medium"
             />
           </Field>
           <button
             type="submit"
             disabled={!title.trim()}
-            className="press w-full bg-primary text-primary-foreground rounded-[1.25rem] py-4 font-semibold shadow-[0_4px_16px_-4px_rgba(37,99,235,0.35)] disabled:opacity-45 disabled:shadow-none mt-2"
+            className="press w-full bg-gradient-to-br from-primary to-primary/85 text-primary-foreground rounded-[1.25rem] py-4 font-semibold shadow-[0_8px_24px_-6px_rgba(37,99,235,0.45)] hover:shadow-[0_12px_32px_-6px_rgba(37,99,235,0.55)] disabled:opacity-45 disabled:shadow-none mt-2 transition-shadow"
           >
             Save changes
           </button>
