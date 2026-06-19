@@ -156,9 +156,9 @@ function Dashboard() {
   const taka = useTakaSymbol();
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 stagger-sections">
       {/* Greeting */}
-      <div className="relative overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/10 via-card to-card/80 p-4 shadow-md ring-1 ring-inset ring-white/5">
+      <div className="relative overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/10 via-card to-card/80 p-4 shadow-lg ring-1 ring-inset ring-white/5">
         <div className="pointer-events-none absolute -top-8 -right-8 size-32 rounded-full bg-primary/15 blur-3xl" />
         <div className="relative flex items-start justify-between gap-3">
           <div className="min-w-0">
@@ -179,10 +179,15 @@ function Dashboard() {
       </div>
 
       {/* Today's Routine */}
-      <Link to="/routine" className={`block ${CARD} ${PRESS}`}>
+      <Link to="/routine" className={`block ${CARD} shadow-md ${PRESS}`}>
         <div className="flex items-center justify-between mb-3">
-          <span className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+          <span className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
             Today's Routine
+            {streak > 0 && (
+              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-600 normal-case tracking-normal">
+                · {streak}-day streak 🔥
+              </span>
+            )}
           </span>
           <span className="text-xs font-mono font-semibold text-muted-foreground">
             {Math.round(pct)}% · {done}/{total}
