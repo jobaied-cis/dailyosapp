@@ -5,6 +5,7 @@ import { ProgressRing } from "@/components/ProgressRing";
 import {
   useMissions,
   missionProgress,
+  isMissionEnded,
   type Mission,
 } from "@/lib/missions-store";
 import { useEvents } from "@/lib/events-store";
@@ -47,10 +48,11 @@ function pickTodaysMission(missions: Mission[]): Mission | undefined {
   if (!missions.length) return undefined;
   const sorted = [...missions].sort((a, b) => a.priority - b.priority);
   const active = sorted.find((m) => {
+    if (isMissionEnded(m)) return false;
     const { total, done } = missionProgress(m);
     return total === 0 || done < total;
   });
-  return active ?? sorted[0];
+  return active;
 }
 
 function currentDayFor(m: Mission): number {
@@ -209,7 +211,7 @@ function Dashboard() {
                     <span
                       className={`text-sm truncate flex-1 ${
                         t.completed
-                          ? "line-through text-muted-foreground/60"
+                          ? "line-through text-muted-foreground"
                           : isCurrent
                           ? "font-semibold text-foreground"
                           : "text-foreground/75"
@@ -255,23 +257,37 @@ function Dashboard() {
             </p>
             {(() => {
               const { pct } = missionProgress(mission);
+              const clamped = Math.min(100, Math.max(0, pct));
               const daysLeft = Math.max(0, mission.days - currentDay);
               return (
                 <div className="mt-3 space-y-1.5">
                   <div className="h-1.5 bg-muted rounded-full overflow-hidden">
                     <div
                       className="h-full bg-primary rounded-full transition-all"
-                      style={{ width: `${pct}%` }}
+                      style={{ width: `${clamped}%` }}
                     />
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-semibold text-foreground">{pct}%</span>
+                    <span className="text-sm font-semibold text-foreground">{clamped}%</span>
                     <span className="text-xs text-muted-foreground">{daysLeft} days left</span>
                   </div>
                 </div>
               );
             })()}
           </Link>
+        ) : missions.length > 0 ? (
+          <div>
+            <p className="text-sm font-semibold text-foreground">Completed ✓</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              All your missions are complete. Time for the next one.
+            </p>
+            <Link
+              to="/missions"
+              className="press mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-primary"
+            >
+              Start new mission <ArrowRight className="size-3.5" />
+            </Link>
+          </div>
         ) : (
           <p className="text-sm text-muted-foreground">No active mission 🎯</p>
         )}

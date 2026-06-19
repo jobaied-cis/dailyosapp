@@ -211,3 +211,13 @@ export function missionProgress(m: Mission) {
   const pct = total ? Math.round((done / total) * 100) : 0;
   return { total, done, pct };
 }
+
+export function missionEndTs(m: Mission): number {
+  const start = new Date(m.startDate);
+  start.setHours(0, 0, 0, 0);
+  return start.getTime() + Math.max(1, m.days) * 86400000;
+}
+
+export function isMissionEnded(m: Mission): boolean {
+  return Date.now() >= missionEndTs(m);
+}

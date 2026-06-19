@@ -101,10 +101,10 @@ function NavItem({
     <Link
       to={to}
       activeOptions={{ exact }}
-      className="press flex flex-col items-center justify-center gap-1 py-2.5 rounded-[1rem] text-muted-foreground data-[status=active]:bg-primary data-[status=active]:text-primary-foreground data-[status=active]:shadow-md"
+      className="press flex flex-col items-center justify-center gap-1 py-2.5 px-1 rounded-[1rem] text-muted-foreground data-[status=active]:bg-primary data-[status=active]:text-primary-foreground data-[status=active]:shadow-md min-w-0"
     >
       {icon}
-      <span className="text-[11px] font-semibold leading-none">{label}</span>
+      <span className="text-[10px] font-semibold leading-none w-full text-center truncate">{label}</span>
     </Link>
   );
 }

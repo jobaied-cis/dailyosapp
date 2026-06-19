@@ -10,14 +10,16 @@ export interface Task {
 }
 
 const STORAGE_KEY = "dailyos.tasks.v1";
-const SEED: Task[] = [
-  { id: "s1", time: "07:00", title: "Morning hydration", note: "Big glass of water", completed: false },
-  { id: "s2", time: "07:30", title: "Stretch & breathe", note: "10 minutes", completed: false },
-  { id: "s3", time: "09:00", title: "Deep work block", completed: false },
-  { id: "s4", time: "13:00", title: "Lunch & walk", completed: false },
-  { id: "s5", time: "18:00", title: "Workout", note: "Push day", completed: false },
-  { id: "s6", time: "21:30", title: "Read 20 pages", completed: false },
-];
+const SEED: Task[] = [];
+const MIN_TITLE_LEN = 2;
+
+function isValidTitle(s: string | undefined): boolean {
+  if (!s) return false;
+  const t = s.trim();
+  if (t.length < MIN_TITLE_LEN) return false;
+  // require at least one letter or number (block pure punctuation / random keymashes are OK but must have some structure — keep permissive)
+  return /[\p{L}\p{N}]/u.test(t);
+}
 
 const listeners = new Set<() => void>();
 let cache: Task[] = [];
@@ -79,6 +81,7 @@ export function toggleTask(id: string) {
 
 export function addTask(input: { time: string; endTime?: string; title: string; note?: string }) {
   ensureInit();
+  if (!isValidTitle(input.title)) return;
   const task: Task = {
     id: crypto.randomUUID(),
     time: input.time,
@@ -102,6 +105,7 @@ export function resetDay() {
 
 export function editTask(id: string, updates: Partial<Omit<Task, "id" | "completed">>) {
   ensureInit();
+  if (updates.title !== undefined && !isValidTitle(updates.title)) return;
   persist(
     cache.map((t) => {
       if (t.id !== id) return t;
