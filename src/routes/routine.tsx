@@ -681,7 +681,7 @@ function EditTaskSheet({ task, onClose }: { task: Task; onClose: () => void }) {
             disabled={!title.trim()}
             className="press w-full bg-gradient-to-br from-primary to-primary/85 text-primary-foreground rounded-[1.25rem] py-4 font-semibold shadow-[0_8px_24px_-6px_rgba(37,99,235,0.45)] hover:shadow-[0_12px_32px_-6px_rgba(37,99,235,0.55)] disabled:opacity-45 disabled:shadow-none mt-2 transition-shadow"
           >
-            Save changes
+            Update task
           </button>
         </form>
       </div>
