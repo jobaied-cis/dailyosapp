@@ -401,19 +401,19 @@ function Dashboard() {
         )}
         <div className="space-y-2.5">
           <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+            <span className="text-[12px] font-medium text-muted-foreground leading-[1.4] flex items-center gap-1.5">
               <Wallet className="size-3.5 text-primary/70" /> Balance
             </span>
-            <span className={`text-base font-bold ${balance < 0 ? "text-destructive" : "text-foreground"}`}>
+            <span className={`text-[16px] font-semibold leading-[1.3] ${balance < 0 ? "text-destructive" : "text-foreground"}`}>
               {formatTaka(balance, taka)}
             </span>
           </div>
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+              <span className="text-[12px] font-medium text-muted-foreground leading-[1.4] flex items-center gap-1.5">
                 <TrendingDown className="size-3.5 text-primary/70" /> Today
               </span>
-              <span className="text-sm font-semibold text-foreground flex items-center gap-1.5">
+              <span className="text-[16px] font-semibold text-foreground leading-[1.3] flex items-center gap-1.5">
                 {dailyLimit > 0 ? (
                   <span>{todayExpense.toLocaleString()} / {formatTaka(dailyLimit, taka)}</span>
                 ) : (
@@ -431,11 +431,11 @@ function Dashboard() {
                   />
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className={`text-[10px] font-bold ${limitExceeded ? "text-red-500" : "text-muted-foreground"}`}>
+                  <span className={`text-[11px] font-semibold leading-[1.3] ${limitExceeded ? "text-red-500" : "text-muted-foreground"}`}>
                     {Math.round((todayExpense / dailyLimit) * 100)}%
                   </span>
                   {limitExceeded && (
-                    <span className="text-[10px] font-bold text-red-500 flex items-center gap-1">
+                    <span className="text-[11px] font-semibold text-red-500 leading-[1.3] flex items-center gap-1">
                       <AlertTriangle className="size-3" /> Over limit
                     </span>
                   )}
@@ -444,16 +444,16 @@ function Dashboard() {
             )}
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+            <span className="text-[12px] font-medium text-muted-foreground leading-[1.4] flex items-center gap-1.5">
               <CalendarDays className="size-3.5 text-primary/70" /> This Month
             </span>
-            <span className="text-sm font-semibold text-foreground">{formatTaka(monthExpense, taka)}</span>
+            <span className="text-[16px] font-semibold text-foreground leading-[1.3]">{formatTaka(monthExpense, taka)}</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+            <span className="text-[12px] font-medium text-muted-foreground leading-[1.4] flex items-center gap-1.5">
               <Target className="size-3.5 text-primary/70" /> Remaining
             </span>
-            <span className={`text-sm font-semibold ${dailyLimit > 0 && dailyLimit - todayExpense < 0 ? "text-destructive" : "text-foreground"}`}>
+            <span className={`text-[16px] font-semibold leading-[1.3] ${dailyLimit > 0 && dailyLimit - todayExpense < 0 ? "text-destructive" : "text-foreground"}`}>
               {dailyLimit > 0 ? formatTaka(dailyLimit - todayExpense, taka) : "—"}
             </span>
           </div>
