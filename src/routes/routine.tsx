@@ -335,7 +335,7 @@ function RoutinePage() {
                   const gapMin = nextStart - currentEnd;
                   if (gapMin <= 15) return null;
                   return (
-                    <li className="flex justify-center select-none py-0.5">
+                    <li className="flex justify-center select-none py-0.5 animate-fade-in-soft">
                       <span className="inline-flex items-center gap-1 text-[10px] font-medium text-muted-foreground/60 bg-secondary/40 px-2.5 py-0.5 rounded-full">
                         · {formatGap(gapMin)} ·
                       </span>
