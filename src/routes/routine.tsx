@@ -4,6 +4,8 @@ import { addTask, deleteTask, editTask, toggleTask, useTasks, type Task } from "
 import { useStreak } from "@/lib/streak-store";
 import { Check, ClipboardList, Pencil, Play, Pause, Plus, Sparkles, Trash2, X } from "lucide-react";
 import { AIRoutineSheet } from "@/components/AIRoutineSheet";
+import { suggestNextTask } from "@/lib/ai-routine.functions";
+import { toast } from "sonner";
 
 function toMinutes(hhmm: string): number {
   const [h, m] = hhmm.split(":").map(Number);
@@ -48,7 +50,8 @@ function RoutinePage() {
   const tasks = useTasks();
   const [open, setOpen] = useState(false);
   const [aiOpen, setAiOpen] = useState(false);
-  const [nextSuggestion, setNextSuggestion] = useState<{ title: string; reason: string } | null>(null);
+  const [nextSuggestion, setNextSuggestion] = useState<{ title: string; time: string; reason: string } | null>(null);
+  const [suggestLoading, setSuggestLoading] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [focusTask, setFocusTask] = useState<Task | null>(null);
@@ -224,18 +227,44 @@ function RoutinePage() {
               {!nextSuggestion && (
                 <button
                   type="button"
-                  onClick={() =>
-                    setNextSuggestion({
-                      title: nextUp ? `Warm-up before ${nextUp.title}` : "10-min reset walk",
-                      reason: nextUp && minsUntil > 0
-                        ? `You have ${formatDuration(minsUntil)} free before your next block.`
-                        : "A short reset keeps your energy steady.",
-                    })
-                  }
-                  className="press mt-3 inline-flex items-center gap-1.5 text-[12px] font-semibold px-3 py-1.5 rounded-full bg-primary/10 text-primary hover:bg-primary/15 border border-primary/20 transition-colors"
+                  disabled={suggestLoading}
+                  onClick={async () => {
+                    setSuggestLoading(true);
+                    const nowStr = now
+                      ? `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`
+                      : "12:00";
+                    try {
+                      const res = await suggestNextTask({
+                        data: {
+                          now: nowStr,
+                          tasks: tasks.map((t) => ({
+                            time: t.time,
+                            endTime: t.endTime,
+                            title: t.title,
+                            completed: t.completed,
+                          })),
+                        },
+                      });
+                      setNextSuggestion(res);
+                    } catch (err) {
+                      console.error(err);
+                      toast.error("AI not available");
+                      // Fallback suggestion
+                      setNextSuggestion({
+                        title: nextUp ? `Warm-up before ${nextUp.title}` : "10-min reset walk",
+                        time: nowStr,
+                        reason: nextUp && minsUntil > 0
+                          ? `You have ${formatDuration(minsUntil)} free before your next block.`
+                          : "A short reset keeps your energy steady.",
+                      });
+                    } finally {
+                      setSuggestLoading(false);
+                    }
+                  }}
+                  className="press mt-3 inline-flex items-center gap-1.5 text-[12px] font-semibold px-3 py-1.5 rounded-full bg-primary/10 text-primary hover:bg-primary/15 border border-primary/20 transition-colors disabled:opacity-60"
                 >
                   <Sparkles className="size-3.5" strokeWidth={2.5} />
-                  What should I do next?
+                  {suggestLoading ? "Thinking…" : "What should I do next?"}
                 </button>
               )}
             </div>
@@ -252,6 +281,9 @@ function RoutinePage() {
                     <p className="text-[15px] font-semibold text-foreground leading-snug">
                       {nextSuggestion.title}
                     </p>
+                    <p className="text-[11px] font-mono text-muted-foreground/80 mt-0.5">
+                      {nextSuggestion.time}
+                    </p>
                     <p className="text-[12px] text-muted-foreground mt-1 leading-snug">
                       {nextSuggestion.reason}
                     </p>
@@ -259,9 +291,10 @@ function RoutinePage() {
                       <button
                         onClick={() => {
                           addTask({
-                            time: now ? `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}` : "12:00",
+                            time: nextSuggestion.time,
                             title: nextSuggestion.title,
                           });
+                          toast.success("Added to your routine");
                           setNextSuggestion(null);
                         }}
                         className="press text-[12px] font-semibold px-3 py-1.5 rounded-full bg-primary text-primary-foreground shadow-sm"

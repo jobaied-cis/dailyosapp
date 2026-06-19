@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { Sparkles, X, Check, ArrowLeft } from "lucide-react";
-import { addTask } from "@/lib/tasks-store";
+import { toast } from "sonner";
+import { addTask, useTasks } from "@/lib/tasks-store";
+import { generateRoutine } from "@/lib/ai-routine.functions";
 
 const QUICK_CHIPS = [
   "Plan my study day",
@@ -16,27 +18,44 @@ type Suggestion = {
   note?: string;
 };
 
-const DUMMY_SUGGESTIONS: Suggestion[] = [
-  { time: "07:00", endTime: "07:30", title: "Morning stretch", note: "Light mobility + water" },
-  { time: "07:30", endTime: "08:30", title: "Deep work — study", note: "Focus block 1" },
-  { time: "09:00", endTime: "10:30", title: "Class", note: "Lecture" },
-  { time: "11:00", endTime: "12:00", title: "Review notes" },
-  { time: "14:00", endTime: "15:30", title: "Class" },
-  { time: "17:00", endTime: "18:00", title: "Gym", note: "Strength day" },
-  { time: "20:00", endTime: "21:00", title: "Wind-down + read" },
-];
-
 export function AIRoutineSheet({ onClose }: { onClose: () => void }) {
+  const existing = useTasks();
   const [prompt, setPrompt] = useState("");
   const [phase, setPhase] = useState<"input" | "loading" | "result">("input");
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [selected, setSelected] = useState<Set<number>>(new Set());
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
+    const text = prompt.trim();
+    if (!text) {
+      toast.error("Describe your day first");
+      return;
+    }
     setPhase("loading");
-    setTimeout(() => {
-      setSelected(new Set(DUMMY_SUGGESTIONS.map((_, i) => i)));
+    try {
+      const result = await generateRoutine({
+        data: {
+          prompt: text,
+          existingTasks: existing.map((t) => ({
+            time: t.time,
+            endTime: t.endTime,
+            title: t.title,
+          })),
+        },
+      });
+      if (!result.tasks.length) {
+        toast.error("AI returned no tasks — try rephrasing");
+        setPhase("input");
+        return;
+      }
+      setSuggestions(result.tasks);
+      setSelected(new Set(result.tasks.map((_, i) => i)));
       setPhase("result");
-    }, 700);
+    } catch (err) {
+      console.error(err);
+      toast.error("AI not available");
+      setPhase("input");
+    }
   };
 
   const handleChip = (text: string) => {
@@ -53,11 +72,14 @@ export function AIRoutineSheet({ onClose }: { onClose: () => void }) {
   };
 
   const handleAdd = () => {
-    DUMMY_SUGGESTIONS.forEach((s, i) => {
-      if (selected.has(i)) {
+    let added = 0;
+    suggestions.forEach((s, i) => {
+      if (selected.has(i) && s.title.trim()) {
         addTask({ time: s.time, endTime: s.endTime, title: s.title, note: s.note });
+        added++;
       }
     });
+    if (added > 0) toast.success(`Added ${added} task${added > 1 ? "s" : ""} to your routine`);
     onClose();
   };
 
@@ -132,7 +154,7 @@ export function AIRoutineSheet({ onClose }: { onClose: () => void }) {
             {/* Preview list */}
             <div className="flex items-center justify-between mb-3 shrink-0">
               <p className="text-[13px] font-semibold text-foreground">
-                {selected.size} of {DUMMY_SUGGESTIONS.length} selected
+                {selected.size} of {suggestions.length} selected
               </p>
               <button
                 onClick={() => setPhase("input")}
@@ -142,7 +164,7 @@ export function AIRoutineSheet({ onClose }: { onClose: () => void }) {
               </button>
             </div>
             <ul className="space-y-2 overflow-y-auto flex-1 pr-1">
-              {DUMMY_SUGGESTIONS.map((s, i) => {
+              {suggestions.map((s, i) => {
                 const isSel = selected.has(i);
                 return (
                   <li key={i}>
