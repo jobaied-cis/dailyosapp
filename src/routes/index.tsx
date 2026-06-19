@@ -189,7 +189,7 @@ function Dashboard() {
               </span>
             )}
           </span>
-          <span className="text-xs font-mono font-semibold text-muted-foreground">
+          <span className="text-xs font-mono font-semibold text-muted-foreground leading-[1.3]">
             {Math.round(pct)}% · {done}/{total}
           </span>
         </div>
