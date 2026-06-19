@@ -75,7 +75,7 @@ function getGreeting(hour: number): string {
 }
 
 const CARD = "rounded-2xl p-4 border border-border/60 bg-card shadow-sm";
-const PRESS = "transition-transform duration-150 active:scale-[0.98] active:shadow-md";
+const PRESS = "press will-change-transform";
 
 function Dashboard() {
   const tasks = useTasks();
