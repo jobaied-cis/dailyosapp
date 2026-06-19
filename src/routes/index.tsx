@@ -348,16 +348,16 @@ function Dashboard() {
                       {evt.type === "Other" && <MapPin className="size-4 text-primary/70 shrink-0" />}
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-semibold text-foreground truncate">
+                          <span className="text-[14px] font-semibold text-foreground leading-[1.5] truncate">
                             {evt.title}
                           </span>
                           {isNext && (
-                            <span className="text-[9px] font-bold uppercase tracking-wider text-primary bg-primary/15 border border-primary/30 px-1.5 py-0.5 rounded-full shrink-0">
+                            <span className="text-[9px] font-bold uppercase tracking-wider text-primary bg-primary/15 border border-primary/30 px-1.5 py-0.5 rounded-full shrink-0 leading-none">
                               Now
                             </span>
                           )}
                         </div>
-                        <span className={`text-xs ${isNext ? "text-primary" : "text-muted-foreground"}`}>
+                        <span className={`text-[12px] font-medium leading-[1.4] ${isNext ? "text-primary" : "text-muted-foreground"}`}>
                           {timeStr}{countdown ? ` · ${countdown}` : ""}
                         </span>
                       </div>
