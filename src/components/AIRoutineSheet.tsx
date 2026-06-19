@@ -89,15 +89,22 @@ export function AIRoutineSheet({ onClose }: { onClose: () => void }) {
         {/* Header */}
         <div className="flex items-start justify-between mb-4 shrink-0">
           <div className="flex items-start gap-3">
-            <div className="size-9 rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 border border-primary/20 flex items-center justify-center shrink-0">
-              <Sparkles className="size-4 text-primary" strokeWidth={2.5} />
+            <div className="size-9 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/25 flex items-center justify-center shrink-0 shadow-[0_4px_12px_-4px_rgba(37,99,235,0.25)]">
+              <Sparkles
+                className={`size-4 text-primary ${phase === "loading" ? "animate-ai-spark" : ""}`}
+                strokeWidth={2.5}
+              />
             </div>
             <div>
               <h3 className="text-lg font-bold text-foreground tracking-tight leading-tight">
                 AI Routine Assistant
               </h3>
               <p className="text-[13px] text-muted-foreground mt-0.5 leading-snug">
-                Describe your day. I&apos;ll draft a routine.
+                {phase === "loading"
+                  ? "Drafting your routine…"
+                  : phase === "result"
+                  ? "Review and pick what to add."
+                  : "Describe your day. I'll draft a routine."}
               </p>
             </div>
           </div>
