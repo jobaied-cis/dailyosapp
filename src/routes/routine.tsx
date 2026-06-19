@@ -268,8 +268,22 @@ function RoutinePage() {
                 </button>
               )}
             </div>
+            {suggestLoading && !nextSuggestion && (
+              <div className="bg-card border border-primary/20 rounded-[1.25rem] p-4 animate-ai-panel-in">
+                <div className="flex items-start gap-3">
+                  <div className="size-8 rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 border border-primary/20 flex items-center justify-center shrink-0">
+                    <Sparkles className="size-4 text-primary animate-ai-spark" strokeWidth={2.5} />
+                  </div>
+                  <div className="flex-1 min-w-0 space-y-2">
+                    <div className="h-2.5 w-20 rounded ai-shimmer" />
+                    <div className="h-3.5 w-3/4 rounded ai-shimmer" />
+                    <div className="h-2.5 w-1/2 rounded ai-shimmer" />
+                  </div>
+                </div>
+              </div>
+            )}
             {nextSuggestion && (
-              <div className="bg-card border border-primary/30 rounded-[1.25rem] p-4 shadow-[0_4px_20px_-8px_rgba(37,99,235,0.25)] animate-fade-in-soft">
+              <div className="bg-card border border-primary/30 rounded-[1.25rem] p-4 shadow-[0_4px_20px_-8px_rgba(37,99,235,0.25)] animate-ai-panel-in">
                 <div className="flex items-start gap-3">
                   <div className="size-8 rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 border border-primary/20 flex items-center justify-center shrink-0">
                     <Sparkles className="size-4 text-primary" strokeWidth={2.5} />
