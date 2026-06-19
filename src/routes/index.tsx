@@ -181,7 +181,7 @@ function Dashboard() {
       {/* Today's Routine */}
       <Link to="/routine" className={`block ${CARD} shadow-md ${PRESS}`}>
         <div className="flex items-center justify-between mb-3">
-          <span className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
+          <span className="text-[11px] font-medium uppercase tracking-[0.5px] leading-[1.3] text-muted-foreground flex items-center gap-1.5">
             Today's Routine
             {streak > 0 && (
               <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-600 normal-case tracking-normal">
@@ -247,7 +247,7 @@ function Dashboard() {
       {/* Today's Mission */}
       <section className={`${CARD} ${PRESS}`}>
         <div className="flex items-center justify-between mb-3">
-          <span className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
+          <span className="text-[11px] font-medium uppercase tracking-[0.5px] leading-[1.3] text-muted-foreground flex items-center gap-1.5">
             <Target className="size-3.5" /> Today's Mission
           </span>
           <Link to="/missions" className="text-xs font-semibold text-muted-foreground hover:text-foreground">
@@ -301,7 +301,7 @@ function Dashboard() {
       {/* Today's Events */}
       <Link to="/events" className={`block ${CARD} ${PRESS}`}>
         <div className="flex items-center justify-between mb-3">
-          <span className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
+          <span className="text-[11px] font-medium uppercase tracking-[0.5px] leading-[1.3] text-muted-foreground flex items-center gap-1.5">
             <CalendarDays className="size-3.5" /> Today's Events
           </span>
           <span className="text-xs font-semibold text-muted-foreground">All</span>
@@ -389,7 +389,7 @@ function Dashboard() {
       {/* Expense Summary */}
       <section className={CARD}>
         <div className="flex items-center justify-between mb-3">
-          <span className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
+          <span className="text-[11px] font-medium uppercase tracking-[0.5px] leading-[1.3] text-muted-foreground flex items-center gap-1.5">
             <Wallet className="size-3.5" /> Expense Summary
           </span>
           <Link to="/expenses" className="text-xs font-semibold text-muted-foreground hover:text-foreground">
