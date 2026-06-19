@@ -9,10 +9,8 @@ import {
 } from "@/lib/missions-store";
 import { useEvents } from "@/lib/events-store";
 import {
-  ClipboardList,
   Flame,
   ArrowRight,
-  Sunrise,
   Target,
   Wallet,
   TrendingDown,
@@ -23,6 +21,7 @@ import {
   BookOpen,
   MapPin,
   User,
+  Check,
 } from "lucide-react";
 import { useExpenses, getDailyLimit } from "@/lib/expenses-store";
 import { useStreak } from "@/lib/streak-store";
@@ -72,6 +71,9 @@ function getGreeting(hour: number): string {
   if (hour < 18) return "Good afternoon, Akash👋";
   return "Good evening, Akash👋";
 }
+
+const CARD = "rounded-2xl p-4 border border-border/60 bg-card shadow-sm";
+const PRESS = "transition-transform duration-150 active:scale-[0.98] active:shadow-md";
 
 function Dashboard() {
   const tasks = useTasks();
@@ -152,98 +154,93 @@ function Dashboard() {
   const taka = useTakaSymbol();
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-[1.35rem] font-bold text-foreground tracking-tight">{greeting}</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            Today: {done} tasks · {eventCount} events · {formatTaka(todayExpense, taka)} spent
-          </p>
-          <p className="text-sm font-medium text-muted-foreground tracking-wide mt-1">{today}</p>
+    <div className="space-y-4">
+      {/* Greeting */}
+      <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-primary/10 via-card to-card p-4 shadow-sm">
+        <div className="pointer-events-none absolute -top-8 -right-8 size-32 rounded-full bg-primary/15 blur-3xl" />
+        <div className="relative flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h1 className="text-[1.4rem] font-semibold text-foreground tracking-tight leading-tight">
+              {greeting}
+            </h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              {done} tasks · {eventCount} events · {formatTaka(todayExpense, taka)} spent
+            </p>
+            <p className="text-xs text-muted-foreground tracking-wide mt-1">{today}</p>
+          </div>
+          {streak > 0 && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 text-amber-600 px-2.5 py-1 text-[11px] font-bold border border-amber-500/20 shrink-0">
+              <Flame className="size-3.5" /> {streak}
+            </span>
+          )}
         </div>
-        {streak > 0 && (
-          <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 text-amber-600 px-2.5 py-1 text-[11px] font-bold border border-amber-500/20 shrink-0">
-            <Flame className="size-3.5" /> {streak} day streak
-          </span>
-        )}
       </div>
 
-      <section className="bg-card border border-border/60 rounded-[1.75rem] p-5 shadow-[0_8px_32px_-12px_rgba(15,23,42,0.08)]">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="font-bold text-foreground text-base tracking-tight">Today's Routine</h2>
+      {/* Today's Routine */}
+      <Link to="/routine" className={`block ${CARD} ${PRESS}`}>
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+            Today's Routine
+          </span>
           <span className="text-xs font-mono font-semibold text-muted-foreground">
-            {Math.round(pct)}% · {done}/{total} tasks
+            {Math.round(pct)}% · {done}/{total}
           </span>
         </div>
-        <div className="flex items-center gap-5">
-          <div className="shrink-0">
-            <ProgressRing value={total ? done / total : 0} size={88} stroke={8}>
-              <div className="text-center">
-                <div className="text-base font-bold text-foreground leading-none">{Math.round(pct)}%</div>
-                <div className="text-[10px] font-mono text-muted-foreground mt-0.5">{done}/{total}</div>
-              </div>
-            </ProgressRing>
-          </div>
-          <ul className="flex-1 min-w-0 space-y-1.5">
-            {total === 0 && (
-              <li className="text-sm text-muted-foreground">No routine today 😌</li>
-            )}
-            {tasks.slice(0, 4).map((t) => {
-              const isCurrent = next && t.id === next.id;
-              return (
-                <li key={t.id} className="flex items-center gap-2 min-w-0">
-                  <span className="text-[10px] font-mono text-muted-foreground w-10 shrink-0">{t.time}</span>
-                  <span
-                    className={`text-sm truncate flex-1 ${
-                      t.completed
-                        ? "line-through text-muted-foreground/70"
-                        : isCurrent
-                        ? "font-semibold text-foreground"
-                        : "text-foreground/80"
-                    }`}
-                  >
-                    {t.title}
-                  </span>
-                  {isCurrent && (
-                    <span className="text-[9px] font-bold uppercase tracking-wider text-primary bg-primary/10 px-1.5 py-0.5 rounded-full shrink-0">
-                      Now
+        {total === 0 ? (
+          <p className="text-sm text-muted-foreground py-2">No routine today 😌</p>
+        ) : (
+          <div className="flex items-center gap-4">
+            <div className="shrink-0">
+              <ProgressRing value={total ? done / total : 0} size={72} stroke={7}>
+                <div className="text-center">
+                  <div className="text-sm font-semibold text-foreground leading-none">{Math.round(pct)}%</div>
+                </div>
+              </ProgressRing>
+            </div>
+            <ul className="flex-1 min-w-0 space-y-1.5">
+              {tasks.slice(0, 4).map((t) => {
+                const isCurrent = next && t.id === next.id;
+                return (
+                  <li key={t.id} className="flex items-center gap-2 min-w-0">
+                    <span className="text-[10px] font-mono text-muted-foreground w-10 shrink-0">{t.time}</span>
+                    {t.completed ? (
+                      <Check className="size-3 text-primary/60 shrink-0" />
+                    ) : null}
+                    <span
+                      className={`text-sm truncate flex-1 ${
+                        t.completed
+                          ? "line-through text-muted-foreground/60"
+                          : isCurrent
+                          ? "font-semibold text-foreground"
+                          : "text-foreground/75"
+                      }`}
+                    >
+                      {t.title}
                     </span>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      </section>
-
-      {total === 0 && (
-        <div className="bg-card border border-border/60 rounded-[1.5rem] p-8 shadow-[0_4px_20px_-8px_rgba(15,23,42,0.06)] text-center">
-          <ClipboardList className="size-10 text-primary/30 mx-auto mb-4" />
-          <h3 className="font-bold text-foreground text-base">No tasks yet</h3>
-          <p className="text-sm text-muted-foreground mt-1.5">Add your first routine to get started.</p>
-        </div>
-      )}
-
-      {!next && total > 0 && (
-        <div className="bg-card border border-border/60 rounded-[1.5rem] p-6 shadow-[0_4px_20px_-8px_rgba(15,23,42,0.06)] text-center">
-          <Sunrise className="size-8 text-primary/40 mx-auto mb-3" />
-          <h3 className="font-bold text-foreground">All caught up</h3>
-          <p className="text-sm text-muted-foreground mt-1">Every task is complete. Enjoy your day.</p>
-        </div>
-      )}
+                    {isCurrent && (
+                      <span className="text-[9px] font-bold uppercase tracking-wider text-primary bg-primary/10 px-1.5 py-0.5 rounded-full shrink-0">
+                        Now
+                      </span>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        )}
+      </Link>
 
       <Link
         to="/routine"
-        className="press flex items-center justify-center gap-2.5 w-full bg-primary text-primary-foreground rounded-[1.25rem] py-4 font-semibold shadow-[0_4px_20px_-4px_rgba(37,99,235,0.35)] hover:shadow-[0_6px_28px_-4px_rgba(37,99,235,0.45)]"
+        className="press flex items-center justify-center gap-2.5 w-full bg-primary text-primary-foreground rounded-xl py-3.5 text-sm font-semibold shadow-[0_4px_20px_-4px_rgba(37,99,235,0.35)] hover:shadow-[0_6px_28px_-4px_rgba(37,99,235,0.45)] transition-shadow"
       >
         Open today's routine <ArrowRight className="size-4" />
       </Link>
 
-
-      {/* Today's Mission (below Routine) */}
-      <section className="bg-card border border-border/60 rounded-[1.5rem] p-5 shadow-[0_4px_20px_-8px_rgba(15,23,42,0.06)]">
+      {/* Today's Mission */}
+      <section className={`${CARD} ${PRESS}`}>
         <div className="flex items-center justify-between mb-3">
-          <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-primary flex items-center gap-1.5">
+          <span className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
             <Target className="size-3.5" /> Today's Mission
           </span>
           <Link to="/missions" className="text-xs font-semibold text-muted-foreground hover:text-foreground">
@@ -251,19 +248,14 @@ function Dashboard() {
           </Link>
         </div>
         {mission ? (
-          <Link to="/missions/$missionId" params={{ missionId: mission.id }} className="press block">
-            <h3 className="font-bold text-foreground text-[1.05rem]">{mission.title}</h3>
-            <p className="text-sm text-muted-foreground mt-1">
+          <Link to="/missions/$missionId" params={{ missionId: mission.id }} className="block">
+            <h3 className="text-base font-semibold text-foreground">{mission.title}</h3>
+            <p className="text-xs text-muted-foreground mt-1">
               Day {currentDay} — {formatDayDate(mission.startDate, currentDay)}
             </p>
             {(() => {
-              const { total, done, pct } = missionProgress(mission);
+              const { pct } = missionProgress(mission);
               const daysLeft = Math.max(0, mission.days - currentDay);
-              const motivation =
-                pct === 100 ? "Completed 🎉" :
-                pct >= 70 ? "Almost done 🔥" :
-                pct >= 30 ? "Keep going 💪" :
-                "Let's begin 🚀";
               return (
                 <div className="mt-3 space-y-1.5">
                   <div className="h-1.5 bg-muted rounded-full overflow-hidden">
@@ -273,10 +265,9 @@ function Dashboard() {
                     />
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-foreground">{pct}% complete</span>
+                    <span className="text-sm font-semibold text-foreground">{pct}%</span>
                     <span className="text-xs text-muted-foreground">{daysLeft} days left</span>
                   </div>
-                  <p className="text-xs font-semibold text-primary">{motivation}</p>
                 </div>
               );
             })()}
@@ -286,25 +277,21 @@ function Dashboard() {
         )}
       </section>
 
-
-      <Link
-        to="/events"
-        className="block bg-card border border-border/60 rounded-[1.5rem] p-5 shadow-[0_4px_20px_-8px_rgba(15,23,42,0.06)] cursor-pointer"
-      >
+      {/* Today's Events */}
+      <Link to="/events" className={`block ${CARD} ${PRESS}`}>
         <div className="flex items-center justify-between mb-3">
-          <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-primary flex items-center gap-1.5">
-            <CalendarDays className="size-3.5" /> TODAY'S EVENTS ({eventCount})
+          <span className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
+            <CalendarDays className="size-3.5" /> Today's Events
           </span>
           <span className="text-xs font-semibold text-muted-foreground">All</span>
         </div>
         {showEvents.length > 0 ? (
-          <div className="space-y-3">
+          <div className="space-y-2.5">
             {showEvents.map((evt) => {
               const [h, m] = evt.time.split(":");
-              const hour = parseInt(h, 10);
-              const ampm = hour >= 12 ? "PM" : "AM";
-              const displayHour = hour % 12 || 12;
-              const timeStr = `${displayHour}:${m} ${ampm}`;
+              const hourNum = parseInt(h, 10);
+              const ampm = hourNum >= 12 ? "PM" : "AM";
+              const displayHour = hourNum % 12 || 12;
               const eventTs = new Date(`${evt.date}T${evt.time}`).getTime();
               const diffMs = eventTs - nowTick;
               let countdown = "";
@@ -321,12 +308,13 @@ function Dashboard() {
                 }
               }
               const isNext = nextUpcoming?.id === evt.id;
+              const timeStr = `${displayHour}:${m} ${ampm}`;
               return (
                 <div
                   key={evt.id}
-                  className={`rounded-xl px-2.5 py-2 -mx-1 transition-colors ${
+                  className={`rounded-xl px-2.5 py-2 -mx-1 ${
                     isNext
-                      ? "border border-primary/40 bg-primary/5 shadow-[0_0_0_3px_rgba(37,99,235,0.08)]"
+                      ? "border border-primary/40 bg-primary/5"
                       : "border border-transparent"
                   }`}
                 >
@@ -343,55 +331,44 @@ function Dashboard() {
                             {evt.title}
                           </span>
                           {isNext && (
-                            <span className="text-[10px] font-extrabold uppercase tracking-wider text-primary bg-primary/20 border border-primary/30 px-2 py-0.5 rounded-full shrink-0 shadow-sm">
-                              NEXT
+                            <span className="text-[9px] font-bold uppercase tracking-wider text-primary bg-primary/15 border border-primary/30 px-1.5 py-0.5 rounded-full shrink-0">
+                              Now
                             </span>
                           )}
                         </div>
-                        {countdown && (
-                          <span className={`text-xs font-medium ${isNext ? "text-primary" : "text-muted-foreground"}`}>
-                            {countdown}
-                          </span>
-                        )}
+                        <span className={`text-xs ${isNext ? "text-primary" : "text-muted-foreground"}`}>
+                          {timeStr}{countdown ? ` · ${countdown}` : ""}
+                        </span>
                       </div>
                     </div>
-                    <div className="flex flex-col items-end gap-0.5 shrink-0">
-                      <span className="inline-flex items-center rounded-md border px-1.5 py-0.5 text-[10px] font-semibold bg-secondary text-muted-foreground border-border/60">
-                        {evt.type}
-                      </span>
-                      <span className={`inline-flex items-center rounded-md border px-1.5 py-0.5 text-[10px] font-bold ${
-                        evt.priority === "High"
-                          ? "bg-red-500/15 text-red-600 border-red-500/30"
-                          : evt.priority === "Medium"
-                          ? "bg-amber-500/20 text-amber-700 border-amber-500/30"
-                          : "bg-emerald-500/15 text-emerald-600 border-emerald-500/30"
-                      }`}>
-                        {evt.priority}
-                      </span>
-                    </div>
+                    <span className={`inline-flex items-center rounded-md border px-1.5 py-0.5 text-[10px] font-bold shrink-0 ${
+                      evt.priority === "High"
+                        ? "bg-red-500/15 text-red-600 border-red-500/30"
+                        : evt.priority === "Medium"
+                        ? "bg-amber-500/20 text-amber-700 border-amber-500/30"
+                        : "bg-emerald-500/15 text-emerald-600 border-emerald-500/30"
+                    }`}>
+                      {evt.priority}
+                    </span>
                   </div>
-
                 </div>
               );
             })}
             {todaysEvents.length > 3 && (
-              <span className="block text-center text-xs font-semibold text-primary mt-2">
+              <span className="block text-center text-xs font-semibold text-primary mt-1">
                 +{todaysEvents.length - 3} more
               </span>
             )}
           </div>
         ) : (
-          <div className="text-center py-2">
-            <p className="text-sm font-semibold text-foreground">No events today 🎉</p>
-            <p className="text-xs text-muted-foreground mt-1">Relax or plan ahead</p>
-          </div>
+          <p className="text-sm text-muted-foreground py-1">No events today 🎉</p>
         )}
       </Link>
 
       {/* Expense Summary */}
-      <section className="bg-card border border-border/60 rounded-[1.5rem] p-5 shadow-[0_4px_20px_-8px_rgba(15,23,42,0.06)]">
+      <section className={CARD}>
         <div className="flex items-center justify-between mb-3">
-          <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-primary flex items-center gap-1.5">
+          <span className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
             <Wallet className="size-3.5" /> Expense Summary
           </span>
           <Link to="/expenses" className="text-xs font-semibold text-muted-foreground hover:text-foreground">
@@ -403,17 +380,17 @@ function Dashboard() {
         )}
         <div className="space-y-2.5">
           <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground flex items-center gap-1.5">
+            <span className="text-xs text-muted-foreground flex items-center gap-1.5">
               <Wallet className="size-3.5 text-primary/70" /> Balance
             </span>
-            <span className="text-sm font-bold text-foreground">{formatTaka(balance, taka)}</span>
+            <span className="text-sm font-semibold text-foreground">{formatTaka(balance, taka)}</span>
           </div>
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <span className="text-sm text-muted-foreground flex items-center gap-1.5">
+              <span className="text-xs text-muted-foreground flex items-center gap-1.5">
                 <TrendingDown className="size-3.5 text-primary/70" /> Today
               </span>
-              <span className="text-sm font-bold text-foreground flex items-center gap-1.5">
+              <span className="text-sm font-semibold text-foreground flex items-center gap-1.5">
                 {dailyLimit > 0 ? (
                   <span>{todayExpense.toLocaleString()} / {formatTaka(dailyLimit, taka)}</span>
                 ) : (
@@ -444,16 +421,16 @@ function Dashboard() {
             )}
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground flex items-center gap-1.5">
+            <span className="text-xs text-muted-foreground flex items-center gap-1.5">
               <CalendarDays className="size-3.5 text-primary/70" /> This Month
             </span>
-            <span className="text-sm font-bold text-foreground">{formatTaka(monthExpense, taka)}</span>
+            <span className="text-sm font-semibold text-foreground">{formatTaka(monthExpense, taka)}</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground flex items-center gap-1.5">
+            <span className="text-xs text-muted-foreground flex items-center gap-1.5">
               <Target className="size-3.5 text-primary/70" /> Remaining
             </span>
-            <span className={`text-sm font-bold ${dailyLimit > 0 && dailyLimit - todayExpense < 0 ? "text-destructive" : "text-foreground"}`}>
+            <span className={`text-sm font-semibold ${dailyLimit > 0 && dailyLimit - todayExpense < 0 ? "text-destructive" : "text-foreground"}`}>
               {dailyLimit > 0 ? formatTaka(dailyLimit - todayExpense, taka) : "—"}
             </span>
           </div>
