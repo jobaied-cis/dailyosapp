@@ -348,10 +348,10 @@ function RoutinePage() {
           </Fragment>
         ))}
         {hereIndex === -1 && tasks.length > 0 && (
-          <li className="flex items-center gap-2 px-1 py-1 select-none">
+          <li className="flex items-center gap-2 px-1 py-1 select-none animate-fade-in-soft">
             <span className="relative flex size-2.5 shrink-0">
-              <span className="absolute inset-0 rounded-full bg-primary/40 animate-ping" />
-              <span className="relative size-2.5 rounded-full bg-primary" />
+              <span className="absolute inset-0 rounded-full bg-primary/30 animate-ping" />
+              <span className="relative size-2.5 rounded-full bg-primary animate-dot-glow" />
             </span>
             <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">You are here</span>
             <span className="flex-1 h-px bg-gradient-to-r from-primary/40 to-transparent" />
