@@ -256,8 +256,8 @@ function Dashboard() {
         </div>
         {mission ? (
           <Link to="/missions/$missionId" params={{ missionId: mission.id }} className="block">
-            <h3 className="text-base font-semibold text-foreground">{mission.title}</h3>
-            <p className="text-xs text-muted-foreground mt-1">
+            <h3 className="text-[16px] font-semibold text-foreground leading-[1.3]">{mission.title}</h3>
+            <p className="text-[12px] font-medium text-muted-foreground leading-[1.4] mt-1">
               Day {currentDay} — {formatDayDate(mission.startDate, currentDay)}
             </p>
             {(() => {
@@ -273,8 +273,8 @@ function Dashboard() {
                     />
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-semibold text-foreground">{clamped}%</span>
-                    <span className="text-xs text-muted-foreground">{daysLeft} days left</span>
+                    <span className="text-[16px] font-semibold text-foreground leading-[1.3]">{clamped}%</span>
+                    <span className="text-[12px] font-medium text-muted-foreground leading-[1.4]">{daysLeft} days left</span>
                   </div>
                 </div>
               );
