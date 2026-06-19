@@ -302,8 +302,20 @@ function RoutinePage() {
                         Add
                       </button>
                       <button
-                        onClick={() => setNextSuggestion(null)}
+                        onClick={() => {
+                          const [hh, mm] = nextSuggestion.time.split(":").map(Number);
+                          const total = ((hh || 0) * 60 + (mm || 0) + 15) % (24 * 60);
+                          const nh = String(Math.floor(total / 60)).padStart(2, "0");
+                          const nm = String(total % 60).padStart(2, "0");
+                          setNextSuggestion({ ...nextSuggestion, time: `${nh}:${nm}` });
+                        }}
                         className="press text-[12px] font-semibold px-3 py-1.5 rounded-full bg-secondary text-foreground/70 hover:bg-secondary/70"
+                      >
+                        Snooze 15m
+                      </button>
+                      <button
+                        onClick={() => setNextSuggestion(null)}
+                        className="press text-[12px] font-semibold px-3 py-1.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary/60"
                       >
                         Dismiss
                       </button>
