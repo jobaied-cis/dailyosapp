@@ -2,7 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, Fragment } from "react";
 import { addTask, deleteTask, editTask, toggleTask, useTasks, type Task } from "@/lib/tasks-store";
 import { useStreak } from "@/lib/streak-store";
-import { Check, ClipboardList, Pencil, Play, Pause, Plus, Trash2, X } from "lucide-react";
+import { Check, ClipboardList, Pencil, Play, Pause, Plus, Sparkles, Trash2, X } from "lucide-react";
+import { AIRoutineSheet } from "@/components/AIRoutineSheet";
 
 function toMinutes(hhmm: string): number {
   const [h, m] = hhmm.split(":").map(Number);
