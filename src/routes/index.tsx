@@ -162,16 +162,16 @@ function Dashboard() {
         <div className="pointer-events-none absolute -top-8 -right-8 size-32 rounded-full bg-primary/15 blur-3xl" />
         <div className="relative flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <h1 className="text-[1.4rem] font-semibold text-foreground tracking-tight leading-tight">
+            <h1 className="text-[22px] font-bold text-foreground tracking-tight leading-[1.2]">
               {greeting}
             </h1>
-            <p className="text-sm text-muted-foreground mt-1">
+            <p className="text-[13px] font-medium text-muted-foreground leading-[1.4] mt-1">
               {done} tasks · {eventCount} events · {formatTaka(todayExpense, taka)} spent
             </p>
-            <p className="text-xs text-muted-foreground tracking-wide mt-1">{today}</p>
+            <p className="text-[11px] font-medium text-muted-foreground tracking-[0.5px] leading-[1.3] mt-1">{today}</p>
           </div>
           {streak > 0 && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 text-amber-600 px-2.5 py-1 text-[11px] font-bold border border-amber-500/20 shrink-0">
+            <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 text-amber-600 px-2.5 py-1 text-[11px] font-semibold border border-amber-500/20 shrink-0 leading-none">
               <Flame className="size-3.5" /> {streak}
             </span>
           )}
