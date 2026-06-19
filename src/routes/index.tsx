@@ -162,16 +162,16 @@ function Dashboard() {
         <div className="pointer-events-none absolute -top-8 -right-8 size-32 rounded-full bg-primary/15 blur-3xl" />
         <div className="relative flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <h1 className="text-[1.4rem] font-semibold text-foreground tracking-tight leading-tight">
+            <h1 className="text-[22px] font-bold text-foreground tracking-tight leading-[1.2]">
               {greeting}
             </h1>
-            <p className="text-sm text-muted-foreground mt-1">
+            <p className="text-[13px] font-medium text-muted-foreground leading-[1.4] mt-1">
               {done} tasks · {eventCount} events · {formatTaka(todayExpense, taka)} spent
             </p>
-            <p className="text-xs text-muted-foreground tracking-wide mt-1">{today}</p>
+            <p className="text-[11px] font-medium text-muted-foreground tracking-[0.5px] leading-[1.3] mt-1">{today}</p>
           </div>
           {streak > 0 && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 text-amber-600 px-2.5 py-1 text-[11px] font-bold border border-amber-500/20 shrink-0">
+            <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 text-amber-600 px-2.5 py-1 text-[11px] font-semibold border border-amber-500/20 shrink-0 leading-none">
               <Flame className="size-3.5" /> {streak}
             </span>
           )}
@@ -181,7 +181,7 @@ function Dashboard() {
       {/* Today's Routine */}
       <Link to="/routine" className={`block ${CARD} shadow-md ${PRESS}`}>
         <div className="flex items-center justify-between mb-3">
-          <span className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
+          <span className="text-[11px] font-medium uppercase tracking-[0.5px] leading-[1.3] text-muted-foreground flex items-center gap-1.5">
             Today's Routine
             {streak > 0 && (
               <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-600 normal-case tracking-normal">
@@ -189,7 +189,7 @@ function Dashboard() {
               </span>
             )}
           </span>
-          <span className="text-xs font-mono font-semibold text-muted-foreground">
+          <span className="text-xs font-mono font-semibold text-muted-foreground leading-[1.3]">
             {Math.round(pct)}% · {done}/{total}
           </span>
         </div>
@@ -200,7 +200,7 @@ function Dashboard() {
             <div className="shrink-0">
               <ProgressRing value={total ? done / total : 0} size={72} stroke={7}>
                 <div className="text-center">
-                  <div className="text-sm font-semibold text-foreground leading-none">{Math.round(pct)}%</div>
+                  <div className="text-[16px] font-semibold text-foreground leading-[1.3]">{Math.round(pct)}%</div>
                 </div>
               </ProgressRing>
             </div>
@@ -214,12 +214,12 @@ function Dashboard() {
                       <Check className="size-3 text-primary/60 shrink-0" />
                     ) : null}
                     <span
-                      className={`text-sm truncate flex-1 ${
+                      className={`text-[14px] truncate flex-1 leading-[1.5] ${
                         t.completed
-                          ? "line-through text-muted-foreground"
+                          ? "font-normal line-through text-[#9CA3AF]"
                           : isCurrent
-                          ? "font-semibold text-foreground"
-                          : "text-foreground/75"
+                          ? "font-semibold text-[#1F2D50] dark:text-foreground"
+                          : "font-medium text-[#6B7280] dark:text-foreground/75"
                       }`}
                     >
                       {t.title}
@@ -239,7 +239,7 @@ function Dashboard() {
 
       <Link
         to="/routine"
-        className="press flex items-center justify-center gap-2.5 w-full bg-gradient-to-br from-primary to-primary/85 text-primary-foreground rounded-xl py-3.5 text-sm font-semibold shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 active:scale-[0.97] transition-all duration-150"
+        className="press flex items-center justify-center gap-2.5 w-full bg-gradient-to-br from-primary to-primary/85 text-primary-foreground rounded-xl py-3.5 text-[14px] font-semibold leading-[1.2] shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 active:scale-[0.97] transition-all duration-150"
       >
         Open today's routine <ArrowRight className="size-4" />
       </Link>
@@ -247,7 +247,7 @@ function Dashboard() {
       {/* Today's Mission */}
       <section className={`${CARD} ${PRESS}`}>
         <div className="flex items-center justify-between mb-3">
-          <span className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
+          <span className="text-[11px] font-medium uppercase tracking-[0.5px] leading-[1.3] text-muted-foreground flex items-center gap-1.5">
             <Target className="size-3.5" /> Today's Mission
           </span>
           <Link to="/missions" className="text-xs font-semibold text-muted-foreground hover:text-foreground">
@@ -256,8 +256,8 @@ function Dashboard() {
         </div>
         {mission ? (
           <Link to="/missions/$missionId" params={{ missionId: mission.id }} className="block">
-            <h3 className="text-base font-semibold text-foreground">{mission.title}</h3>
-            <p className="text-xs text-muted-foreground mt-1">
+            <h3 className="text-[16px] font-semibold text-foreground leading-[1.3]">{mission.title}</h3>
+            <p className="text-[12px] font-medium text-muted-foreground leading-[1.4] mt-1">
               Day {currentDay} — {formatDayDate(mission.startDate, currentDay)}
             </p>
             {(() => {
@@ -273,8 +273,8 @@ function Dashboard() {
                     />
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-semibold text-foreground">{clamped}%</span>
-                    <span className="text-xs text-muted-foreground">{daysLeft} days left</span>
+                    <span className="text-[16px] font-semibold text-foreground leading-[1.3]">{clamped}%</span>
+                    <span className="text-[12px] font-medium text-muted-foreground leading-[1.4]">{daysLeft} days left</span>
                   </div>
                 </div>
               );
@@ -301,7 +301,7 @@ function Dashboard() {
       {/* Today's Events */}
       <Link to="/events" className={`block ${CARD} ${PRESS}`}>
         <div className="flex items-center justify-between mb-3">
-          <span className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
+          <span className="text-[11px] font-medium uppercase tracking-[0.5px] leading-[1.3] text-muted-foreground flex items-center gap-1.5">
             <CalendarDays className="size-3.5" /> Today's Events
           </span>
           <span className="text-xs font-semibold text-muted-foreground">All</span>
@@ -348,16 +348,16 @@ function Dashboard() {
                       {evt.type === "Other" && <MapPin className="size-4 text-primary/70 shrink-0" />}
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-semibold text-foreground truncate">
+                          <span className="text-[14px] font-semibold text-foreground leading-[1.5] truncate">
                             {evt.title}
                           </span>
                           {isNext && (
-                            <span className="text-[9px] font-bold uppercase tracking-wider text-primary bg-primary/15 border border-primary/30 px-1.5 py-0.5 rounded-full shrink-0">
+                            <span className="text-[9px] font-bold uppercase tracking-wider text-primary bg-primary/15 border border-primary/30 px-1.5 py-0.5 rounded-full shrink-0 leading-none">
                               Now
                             </span>
                           )}
                         </div>
-                        <span className={`text-xs ${isNext ? "text-primary" : "text-muted-foreground"}`}>
+                        <span className={`text-[12px] font-medium leading-[1.4] ${isNext ? "text-primary" : "text-muted-foreground"}`}>
                           {timeStr}{countdown ? ` · ${countdown}` : ""}
                         </span>
                       </div>
@@ -389,7 +389,7 @@ function Dashboard() {
       {/* Expense Summary */}
       <section className={CARD}>
         <div className="flex items-center justify-between mb-3">
-          <span className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
+          <span className="text-[11px] font-medium uppercase tracking-[0.5px] leading-[1.3] text-muted-foreground flex items-center gap-1.5">
             <Wallet className="size-3.5" /> Expense Summary
           </span>
           <Link to="/expenses" className="text-xs font-semibold text-muted-foreground hover:text-foreground">
@@ -401,19 +401,19 @@ function Dashboard() {
         )}
         <div className="space-y-2.5">
           <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+            <span className="text-[12px] font-medium text-muted-foreground leading-[1.4] flex items-center gap-1.5">
               <Wallet className="size-3.5 text-primary/70" /> Balance
             </span>
-            <span className={`text-base font-bold ${balance < 0 ? "text-destructive" : "text-foreground"}`}>
+            <span className={`text-[16px] font-semibold leading-[1.3] ${balance < 0 ? "text-destructive" : "text-foreground"}`}>
               {formatTaka(balance, taka)}
             </span>
           </div>
           <div>
             <div className="flex items-center justify-between mb-1.5">
-              <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+              <span className="text-[12px] font-medium text-muted-foreground leading-[1.4] flex items-center gap-1.5">
                 <TrendingDown className="size-3.5 text-primary/70" /> Today
               </span>
-              <span className="text-sm font-semibold text-foreground flex items-center gap-1.5">
+              <span className="text-[16px] font-semibold text-foreground leading-[1.3] flex items-center gap-1.5">
                 {dailyLimit > 0 ? (
                   <span>{todayExpense.toLocaleString()} / {formatTaka(dailyLimit, taka)}</span>
                 ) : (
@@ -431,11 +431,11 @@ function Dashboard() {
                   />
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className={`text-[10px] font-bold ${limitExceeded ? "text-red-500" : "text-muted-foreground"}`}>
+                  <span className={`text-[11px] font-semibold leading-[1.3] ${limitExceeded ? "text-red-500" : "text-muted-foreground"}`}>
                     {Math.round((todayExpense / dailyLimit) * 100)}%
                   </span>
                   {limitExceeded && (
-                    <span className="text-[10px] font-bold text-red-500 flex items-center gap-1">
+                    <span className="text-[11px] font-semibold text-red-500 leading-[1.3] flex items-center gap-1">
                       <AlertTriangle className="size-3" /> Over limit
                     </span>
                   )}
@@ -444,16 +444,16 @@ function Dashboard() {
             )}
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+            <span className="text-[12px] font-medium text-muted-foreground leading-[1.4] flex items-center gap-1.5">
               <CalendarDays className="size-3.5 text-primary/70" /> This Month
             </span>
-            <span className="text-sm font-semibold text-foreground">{formatTaka(monthExpense, taka)}</span>
+            <span className="text-[16px] font-semibold text-foreground leading-[1.3]">{formatTaka(monthExpense, taka)}</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+            <span className="text-[12px] font-medium text-muted-foreground leading-[1.4] flex items-center gap-1.5">
               <Target className="size-3.5 text-primary/70" /> Remaining
             </span>
-            <span className={`text-sm font-semibold ${dailyLimit > 0 && dailyLimit - todayExpense < 0 ? "text-destructive" : "text-foreground"}`}>
+            <span className={`text-[16px] font-semibold leading-[1.3] ${dailyLimit > 0 && dailyLimit - todayExpense < 0 ? "text-destructive" : "text-foreground"}`}>
               {dailyLimit > 0 ? formatTaka(dailyLimit - todayExpense, taka) : "—"}
             </span>
           </div>
