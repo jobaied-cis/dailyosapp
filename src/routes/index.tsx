@@ -211,7 +211,7 @@ function Dashboard() {
                     <span
                       className={`text-sm truncate flex-1 ${
                         t.completed
-                          ? "line-through text-muted-foreground/60"
+                          ? "line-through text-muted-foreground"
                           : isCurrent
                           ? "font-semibold text-foreground"
                           : "text-foreground/75"
