@@ -2,7 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, Fragment } from "react";
 import { addTask, deleteTask, editTask, toggleTask, useTasks, type Task } from "@/lib/tasks-store";
 import { useStreak } from "@/lib/streak-store";
-import { Check, ClipboardList, Pencil, Play, Pause, Plus, Trash2, X } from "lucide-react";
+import { Check, ClipboardList, Pencil, Play, Pause, Plus, Sparkles, Trash2, X } from "lucide-react";
+import { AIRoutineSheet } from "@/components/AIRoutineSheet";
 
 function toMinutes(hhmm: string): number {
   const [h, m] = hhmm.split(":").map(Number);
@@ -46,6 +47,8 @@ export const Route = createFileRoute("/routine")({
 function RoutinePage() {
   const tasks = useTasks();
   const [open, setOpen] = useState(false);
+  const [aiOpen, setAiOpen] = useState(false);
+  const [nextSuggestion, setNextSuggestion] = useState<{ title: string; reason: string } | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [focusTask, setFocusTask] = useState<Task | null>(null);
@@ -205,17 +208,76 @@ function RoutinePage() {
         const nextUp = tasks.find((t, idx) => !t.completed && taskMeta[idx].start > nowMin);
         const minsUntil = nextUp ? toMinutes(nextUp.time) - nowMin : 0;
         return (
-          <div className="bg-card/60 border border-border/40 rounded-[1.25rem] p-4 text-center">
-            {nextUp ? (
-              <p className="text-sm text-muted-foreground">
-                <span className="text-foreground/70 font-medium">Free time</span>
-                {" · next up: "}
-                <span className="text-foreground font-semibold">{nextUp.title}</span>
-                {" "}
-                <span className="font-mono text-xs">({nextUp.time}{minsUntil > 0 ? ` · ${formatDuration(minsUntil)}` : ""})</span>
-              </p>
-            ) : (
-              <p className="text-sm text-muted-foreground">You&apos;re done for today ✨</p>
+          <div className="space-y-2">
+            <div className="bg-card/60 border border-border/40 rounded-[1.25rem] p-4 text-center">
+              {nextUp ? (
+                <p className="text-sm text-muted-foreground">
+                  <span className="text-foreground/70 font-medium">Free time</span>
+                  {" · next up: "}
+                  <span className="text-foreground font-semibold">{nextUp.title}</span>
+                  {" "}
+                  <span className="font-mono text-xs">({nextUp.time}{minsUntil > 0 ? ` · ${formatDuration(minsUntil)}` : ""})</span>
+                </p>
+              ) : (
+                <p className="text-sm text-muted-foreground">You&apos;re done for today ✨</p>
+              )}
+              {!nextSuggestion && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    setNextSuggestion({
+                      title: nextUp ? `Warm-up before ${nextUp.title}` : "10-min reset walk",
+                      reason: nextUp && minsUntil > 0
+                        ? `You have ${formatDuration(minsUntil)} free before your next block.`
+                        : "A short reset keeps your energy steady.",
+                    })
+                  }
+                  className="press mt-3 inline-flex items-center gap-1.5 text-[12px] font-semibold px-3 py-1.5 rounded-full bg-primary/10 text-primary hover:bg-primary/15 border border-primary/20 transition-colors"
+                >
+                  <Sparkles className="size-3.5" strokeWidth={2.5} />
+                  What should I do next?
+                </button>
+              )}
+            </div>
+            {nextSuggestion && (
+              <div className="bg-card border border-primary/30 rounded-[1.25rem] p-4 shadow-[0_4px_20px_-8px_rgba(37,99,235,0.25)] animate-fade-in-soft">
+                <div className="flex items-start gap-3">
+                  <div className="size-8 rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 border border-primary/20 flex items-center justify-center shrink-0">
+                    <Sparkles className="size-4 text-primary" strokeWidth={2.5} />
+                  </div>
+                  <div className="flex-1 min-w-0 text-left">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary mb-0.5">
+                      AI suggestion
+                    </p>
+                    <p className="text-[15px] font-semibold text-foreground leading-snug">
+                      {nextSuggestion.title}
+                    </p>
+                    <p className="text-[12px] text-muted-foreground mt-1 leading-snug">
+                      {nextSuggestion.reason}
+                    </p>
+                    <div className="flex gap-2 mt-3">
+                      <button
+                        onClick={() => {
+                          addTask({
+                            time: now ? `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}` : "12:00",
+                            title: nextSuggestion.title,
+                          });
+                          setNextSuggestion(null);
+                        }}
+                        className="press text-[12px] font-semibold px-3 py-1.5 rounded-full bg-primary text-primary-foreground shadow-sm"
+                      >
+                        Add
+                      </button>
+                      <button
+                        onClick={() => setNextSuggestion(null)}
+                        className="press text-[12px] font-semibold px-3 py-1.5 rounded-full bg-secondary text-foreground/70 hover:bg-secondary/70"
+                      >
+                        Dismiss
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
             )}
           </div>
         );
@@ -370,6 +432,15 @@ function RoutinePage() {
       </ul>
 
       <button
+        onClick={() => setAiOpen(true)}
+        aria-label="AI Assist"
+        title="AI Assist"
+        className="press fixed bottom-24 right-1/2 translate-x-[calc(50%+3.75rem)] size-12 rounded-full bg-card border border-primary/30 text-primary shadow-[0_8px_24px_-8px_rgba(37,99,235,0.35)] flex items-center justify-center hover:shadow-[0_12px_32px_-8px_rgba(37,99,235,0.45)] hover:border-primary/50 transition-all"
+      >
+        <Sparkles className="size-5" strokeWidth={2.5} />
+      </button>
+
+      <button
         onClick={() => setOpen(true)}
         aria-label="Add task"
         className="press fixed bottom-24 right-1/2 translate-x-[calc(50%+7.5rem)] size-14 rounded-full bg-primary text-primary-foreground shadow-[0_8px_28px_-6px_rgba(37,99,235,0.45)] flex items-center justify-center hover:shadow-[0_12px_36px_-6px_rgba(37,99,235,0.55)]"
@@ -378,6 +449,7 @@ function RoutinePage() {
       </button>
 
       {open && <AddTaskSheet onClose={() => setOpen(false)} />}
+      {aiOpen && <AIRoutineSheet onClose={() => setAiOpen(false)} />}
       {editOpen && editingTask && (
         <EditTaskSheet task={editingTask} onClose={() => { setEditOpen(false); setEditingTask(null); }} />
       )}
