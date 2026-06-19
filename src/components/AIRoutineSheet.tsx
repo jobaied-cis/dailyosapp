@@ -117,8 +117,34 @@ export function AIRoutineSheet({ onClose }: { onClose: () => void }) {
           </button>
         </div>
 
-        {phase !== "result" ? (
-          <div className="space-y-4 overflow-y-auto">
+        {phase === "loading" ? (
+          <div className="space-y-3 animate-ai-panel-in">
+            <div className="flex items-center gap-2 text-[12px] font-semibold text-primary mb-1">
+              <Sparkles className="size-3.5 animate-ai-spark" strokeWidth={2.5} />
+              <span>Drafting your routine…</span>
+            </div>
+            <ul className="space-y-2">
+              {[0, 1, 2, 3, 4].map((i) => (
+                <li
+                  key={i}
+                  className="flex items-start gap-3 p-3 rounded-2xl border border-border/50 bg-card"
+                  style={{ animationDelay: `${i * 60}ms` }}
+                >
+                  <div className="size-5 rounded-md ai-shimmer shrink-0 mt-0.5" />
+                  <div className="w-16 shrink-0 space-y-1.5">
+                    <div className="h-2.5 w-10 rounded ai-shimmer" />
+                    <div className="h-2 w-8 rounded ai-shimmer" />
+                  </div>
+                  <div className="flex-1 min-w-0 space-y-2">
+                    <div className="h-3 rounded ai-shimmer" style={{ width: `${60 + (i * 7) % 30}%` }} />
+                    <div className="h-2.5 w-2/3 rounded ai-shimmer" />
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : phase === "input" ? (
+          <div className="space-y-4 overflow-y-auto animate-ai-panel-in">
             {/* Quick chips */}
             <div className="flex flex-wrap gap-2">
               {QUICK_CHIPS.map((c) => (
@@ -145,11 +171,10 @@ export function AIRoutineSheet({ onClose }: { onClose: () => void }) {
             {/* Generate button */}
             <button
               onClick={handleGenerate}
-              disabled={phase === "loading"}
-              className="press w-full inline-flex items-center justify-center gap-2 bg-gradient-to-r from-primary to-primary/85 text-primary-foreground font-semibold py-3.5 rounded-2xl text-[15px] shadow-[0_8px_24px_-8px_rgba(37,99,235,0.5)] hover:shadow-[0_12px_28px_-8px_rgba(37,99,235,0.6)] disabled:opacity-70 disabled:cursor-wait transition-all"
+              className="press w-full inline-flex items-center justify-center gap-2 bg-gradient-to-r from-primary to-primary/85 text-primary-foreground font-semibold py-3.5 rounded-2xl text-[15px] shadow-[0_8px_24px_-8px_rgba(37,99,235,0.5)] hover:shadow-[0_12px_28px_-8px_rgba(37,99,235,0.6)] transition-all"
             >
               <Sparkles className="size-4" strokeWidth={2.5} />
-              {phase === "loading" ? "Thinking…" : "Generate routine"}
+              Generate routine
             </button>
 
             <p className="text-[11px] text-muted-foreground/70 text-center pt-1">
@@ -157,7 +182,7 @@ export function AIRoutineSheet({ onClose }: { onClose: () => void }) {
             </p>
           </div>
         ) : (
-          <>
+          <div className="contents animate-ai-panel-in">
             {/* Preview list */}
             <div className="flex items-center justify-between mb-3 shrink-0">
               <p className="text-[13px] font-semibold text-foreground">
