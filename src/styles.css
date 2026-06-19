@@ -340,6 +340,8 @@ html { scroll-behavior: smooth; }
 }
 .animate-ai-spark {
   animation: ai-spark 1.8s ease-in-out infinite;
+}
+
 
 /* Micro polish: smooth card layout transitions */
 .card-anim {
