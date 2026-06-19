@@ -182,7 +182,7 @@ export function AIRoutineSheet({ onClose }: { onClose: () => void }) {
             </p>
           </div>
         ) : (
-          <div className="contents animate-ai-panel-in">
+          <div className="flex-1 flex flex-col min-h-0 animate-ai-panel-in">
             {/* Preview list */}
             <div className="flex items-center justify-between mb-3 shrink-0">
               <p className="text-[13px] font-semibold text-foreground">
