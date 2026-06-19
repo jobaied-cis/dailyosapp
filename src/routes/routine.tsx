@@ -421,7 +421,7 @@ function AddTaskSheet({ onClose }: { onClose: () => void }) {
             <X className="size-5" />
           </button>
         </div>
-        <form onSubmit={submit} className="space-y-4">
+        <form onSubmit={submit} className="space-y-5">
           <div className="grid grid-cols-2 gap-3">
             <Field label="Start">
               <input
@@ -503,7 +503,7 @@ function EditTaskSheet({ task, onClose }: { task: Task; onClose: () => void }) {
             <X className="size-5" />
           </button>
         </div>
-        <form onSubmit={submit} className="space-y-4">
+        <form onSubmit={submit} className="space-y-5">
           <div className="grid grid-cols-2 gap-3">
             <Field label="Start">
               <input
