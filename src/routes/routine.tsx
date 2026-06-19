@@ -202,9 +202,21 @@ function RoutinePage() {
             </div>
           );
         }
+        const nextUp = tasks.find((t, idx) => !t.completed && taskMeta[idx].start > nowMin);
+        const minsUntil = nextUp ? toMinutes(nextUp.time) - nowMin : 0;
         return (
-          <div className="bg-card/60 border border-border/40 rounded-[1.25rem] p-5 text-center">
-            <p className="text-sm text-muted-foreground">No active task right now 😌</p>
+          <div className="bg-card/60 border border-border/40 rounded-[1.25rem] p-4 text-center">
+            {nextUp ? (
+              <p className="text-sm text-muted-foreground">
+                <span className="text-foreground/70 font-medium">Free time</span>
+                {" · next up: "}
+                <span className="text-foreground font-semibold">{nextUp.title}</span>
+                {" "}
+                <span className="font-mono text-xs">({nextUp.time}{minsUntil > 0 ? ` · ${formatDuration(minsUntil)}` : ""})</span>
+              </p>
+            ) : (
+              <p className="text-sm text-muted-foreground">You&apos;re done for today ✨</p>
+            )}
           </div>
         );
       })()}
