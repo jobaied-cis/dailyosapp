@@ -105,6 +105,7 @@ export function resetDay() {
 
 export function editTask(id: string, updates: Partial<Omit<Task, "id" | "completed">>) {
   ensureInit();
+  if (updates.title !== undefined && !isValidTitle(updates.title)) return;
   persist(
     cache.map((t) => {
       if (t.id !== id) return t;
