@@ -132,18 +132,18 @@ function RoutinePage() {
 
       {/* Summary cards */}
       <div className="grid grid-cols-3 gap-3">
-        <div className="bg-card border border-border/60 rounded-2xl p-4 text-center">
-          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground mb-1">Done</p>
-          <p className="text-2xl font-bold text-foreground">{done}</p>
-        </div>
-        <div className="bg-card border border-border/60 rounded-2xl p-4 text-center">
-          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground mb-1">Left</p>
-          <p className="text-2xl font-bold text-foreground">{total - done}</p>
-        </div>
-        <div className="bg-card border border-border/60 rounded-2xl p-4 text-center">
-          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground mb-1">Planned</p>
-          <p className="text-2xl font-bold text-foreground">{formatDuration(plannedMin) || "0m"}</p>
-        </div>
+        <button type="button" className="press bg-card border border-border/60 rounded-2xl p-3.5 text-center transition-all active:scale-[0.98]">
+          <p className="text-[26px] font-bold text-foreground leading-none">{done}</p>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground mt-1.5">Done</p>
+        </button>
+        <button type="button" className="press bg-card border border-border/60 rounded-2xl p-3.5 text-center transition-all active:scale-[0.98]">
+          <p className={`text-[26px] font-bold leading-none ${total - done > 0 ? "text-foreground" : "text-muted-foreground/60"}`}>{total - done}</p>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground mt-1.5">Left</p>
+        </button>
+        <button type="button" className="press bg-card border border-border/60 rounded-2xl p-3.5 text-center transition-all active:scale-[0.98]">
+          <p className="text-[20px] font-bold text-foreground leading-none">{formatDuration(plannedMin) || "0m"}</p>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground mt-1.5">Planned</p>
+        </button>
       </div>
 
       {/* Progress */}
