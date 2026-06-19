@@ -214,12 +214,12 @@ function Dashboard() {
                       <Check className="size-3 text-primary/60 shrink-0" />
                     ) : null}
                     <span
-                      className={`text-sm truncate flex-1 ${
+                      className={`text-[14px] truncate flex-1 leading-[1.5] ${
                         t.completed
-                          ? "line-through text-muted-foreground"
+                          ? "font-normal line-through text-[#9CA3AF]"
                           : isCurrent
-                          ? "font-semibold text-foreground"
-                          : "text-foreground/75"
+                          ? "font-semibold text-[#1F2D50] dark:text-foreground"
+                          : "font-medium text-[#6B7280] dark:text-foreground/75"
                       }`}
                     >
                       {t.title}
