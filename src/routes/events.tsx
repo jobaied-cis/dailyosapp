@@ -54,7 +54,7 @@ function TodayFocusCard({ events, now }: { events: EventItem[]; now: number }) {
   const within60 = nextEvent ? nextEvent.timeMs - now < 60 * 60_000 : false;
 
   return (
-    <div className="bg-card border border-primary/30 rounded-[1.25rem] p-4 shadow-[0_2px_16px_-4px_rgba(37,99,235,0.18)] space-y-2">
+    <div className={`bg-card border border-primary/30 rounded-[1.25rem] p-4 shadow-[0_2px_16px_-4px_rgba(37,99,235,0.18)] space-y-2 animate-events-entrance ${within60 ? "animate-glow-pulse" : ""}`}>
       <div className="flex items-center gap-2">
         <Flame className="size-4 text-primary" />
         <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-primary">Next Event</p>
@@ -86,6 +86,60 @@ function TodayFocusCard({ events, now }: { events: EventItem[]; now: number }) {
       )}
     </div>
   );
+}
+
+function WeekStrip({
+  events,
+  onDayTap,
+}: {
+  events: EventItem[];
+  onDayTap: (dateStr: string, hasEvent: boolean, cellEl: HTMLButtonElement) => void;
+}) {
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const counts = new Map<string, number>();
+  for (const e of events) counts.set(e.date, (counts.get(e.date) ?? 0) + 1);
+  const days = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(today); d.setDate(d.getDate() + i);
+    return d;
+  });
+  return (
+    <div className="flex gap-1.5 overflow-x-auto -mx-1 px-1 pb-1 scrollbar-none">
+      {days.map((d, i) => {
+        const dateStr = toDateStr(d);
+        const has = (counts.get(dateStr) ?? 0) > 0;
+        const isToday = i === 0;
+        return (
+          <button
+            key={dateStr}
+            onClick={(e) => onDayTap(dateStr, has, e.currentTarget)}
+            className={`press shrink-0 w-[44px] py-2 rounded-2xl border flex flex-col items-center gap-1 ${
+              isToday
+                ? "bg-primary text-primary-foreground border-primary shadow-[0_4px_14px_-4px_rgba(37,99,235,0.5)]"
+                : "bg-card text-foreground border-border/60"
+            }`}
+            aria-label={d.toDateString()}
+          >
+            <span className={`text-[10px] font-semibold uppercase tracking-wide ${isToday ? "text-primary-foreground/80" : "text-muted-foreground"}`}>
+              {d.toLocaleDateString(undefined, { weekday: "short" }).slice(0, 3)}
+            </span>
+            <span className="text-sm font-bold leading-none tabular-nums">{d.getDate()}</span>
+            <span
+              className={`size-1.5 rounded-full ${
+                has ? (isToday ? "bg-primary-foreground" : "bg-primary") : "bg-transparent"
+              }`}
+            />
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function focusLineText(n: number): string {
+  if (n === 0) return "Light day today, plan ahead? ✨";
+  if (n === 1) return "You have 1 event today — you've got this 💪";
+  if (n >= 4) return "Busy day ahead — stay focused 🔥";
+  return `You have ${n} events today — stay sharp`;
 }
 
 export const Route = createFileRoute("/events")({
