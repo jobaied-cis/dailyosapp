@@ -30,11 +30,14 @@ const PRIORITY_LABELS: Record<number, { label: string; dot: string; bar: string 
 
 const DAY_MS = 86_400_000;
 
+type DeadlineStatus = "normal" | "near" | "overdue" | "done";
 
 function deadlineLabel(
   startDate: number,
   days: number,
-): { text: string; status: "normal" | "near" | "overdue"; lastDay: boolean } {
+  pct: number,
+): { text: string; status: DeadlineStatus; lastDay: boolean } {
+  if (pct >= 100) return { text: "Completed ✓", status: "done", lastDay: false };
   const end = startDate + days * DAY_MS;
   const diff = Math.ceil((end - Date.now()) / DAY_MS);
   if (diff < 0)
@@ -45,15 +48,17 @@ function deadlineLabel(
   return { text: `${diff} days left`, status: "normal", lastDay: false };
 }
 
-function lastActivityLabel(tasks: { createdAt: number }[]): string | null {
-  if (tasks.length === 0) return null;
-  const latest = tasks.reduce((a, t) => Math.max(a, t.createdAt), 0);
-  const diff = Math.floor((Date.now() - latest) / DAY_MS);
-  if (diff <= 0) return "Last activity: today";
-  if (diff === 1) return "Last activity: yesterday";
-  if (diff < 7) return `Last activity: ${diff}d ago`;
-  if (diff < 30) return `Last activity: ${Math.floor(diff / 7)}w ago`;
-  return `Last activity: ${Math.floor(diff / 30)}mo ago`;
+function deadlineColor(status: DeadlineStatus): string {
+  switch (status) {
+    case "done":
+      return "text-emerald-500";
+    case "overdue":
+      return "text-amber-500";
+    case "near":
+      return "text-orange-500";
+    default:
+      return "text-blue-500";
+  }
 }
 
 function MissionsListPage() {
@@ -100,10 +105,9 @@ function MissionsListPage() {
   };
 
   const sortedMissions = [...missions].sort((a, b) => a.priority - b.priority);
-  const activeCount = sortedMissions.filter((m) => {
-    const { total, done } = missionProgress(m);
-    return total === 0 || done < total;
-  }).length;
+  const activeMissions = sortedMissions.filter((m) => missionProgress(m).pct < 100);
+  const completedMissions = sortedMissions.filter((m) => missionProgress(m).pct >= 100);
+  const activeCount = activeMissions.length;
 
   const bestStreak = sortedMissions.reduce((max, m) => {
     const s = getMissionStreak(m.id).streak;
@@ -116,6 +120,119 @@ function MissionsListPage() {
           sortedMissions.length
       )
     : 0;
+
+  const renderMissionCard = (m: (typeof sortedMissions)[number], completed: boolean) => {
+    const { total, done, pct } = missionProgress(m);
+    const isEditing = editingId === m.id;
+    const pri = PRIORITY_LABELS[m.priority] || PRIORITY_LABELS[2];
+    const streakInfo = getMissionStreak(m.id);
+    const streak = streakInfo.streak;
+    const atRisk = streakInfo.atRisk;
+    const deadline = deadlineLabel(m.startDate, m.days, pct);
+    const hasStarted = done > 0;
+    return (
+      <li key={m.id} className={"relative group " + (completed ? "opacity-70" : "")}>
+        <Link
+          to="/missions/$missionId"
+          params={{ missionId: m.id }}
+          className="card-pop block relative overflow-hidden bg-card border border-border/60 rounded-xl p-4 pl-5 hover:border-primary/40 hover:shadow-md transition-all"
+        >
+          <span className={`absolute left-0 top-0 bottom-0 w-1 ${pri.bar}`} />
+          <div className="flex items-center justify-between gap-3">
+            {isEditing ? (
+              <input
+                autoFocus
+                value={draftTitle}
+                onChange={(e) => setDraftTitle(e.target.value)}
+                onBlur={() => commitEdit(m.id)}
+                onKeyDown={(e) => handleKey(e, m.id)}
+                className="flex-1 bg-secondary rounded-md px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-primary/30"
+                onClick={(e) => e.preventDefault()}
+              />
+            ) : (
+              <h3 className="font-semibold text-foreground truncate">{m.title}</h3>
+            )}
+            <span
+              className={
+                "text-sm font-bold tabular-nums shrink-0 " +
+                (completed ? "text-emerald-500" : "text-primary")
+              }
+            >
+              {pct}%
+            </span>
+          </div>
+
+          <p className="text-xs text-muted-foreground mt-1">
+            {done}/{total} tasks · {pct}%
+          </p>
+
+          <div className="mt-2 h-1.5 w-full rounded-full bg-secondary overflow-hidden">
+            <div
+              className={
+                "h-full rounded-full transition-all duration-500 ease-out " +
+                (pct >= 100 ? "bg-emerald-500" : "bg-primary")
+              }
+              style={{ width: `${pct}%` }}
+            />
+          </div>
+
+          <div className="flex items-center flex-wrap gap-x-3 gap-y-1 mt-3">
+            <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+              <span className={`w-2 h-2 rounded-full ${pri.dot}`} />
+              {pri.label}
+            </span>
+            {streak > 0 && (
+              <span className="inline-flex items-center gap-1 text-xs font-semibold text-orange-500">
+                🔥 {streak} day{streak === 1 ? "" : "s"}
+              </span>
+            )}
+            {atRisk && !completed && (
+              <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-500">
+                ⚠️ Streak at risk
+              </span>
+            )}
+            <span className={`text-xs font-medium ${deadlineColor(deadline.status)}`}>
+              {deadline.text}
+            </span>
+            {deadline.lastDay && deadline.status !== "overdue" && deadline.status !== "done" && (
+              <span className="text-xs font-semibold text-amber-500">
+                ⚠️ Last day
+              </span>
+            )}
+            {!completed && hasStarted && (
+              <span className="text-xs text-muted-foreground ml-auto">
+                Continue where you left off →
+              </span>
+            )}
+          </div>
+        </Link>
+        <div className="absolute top-3 right-14 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              startEdit(m);
+            }}
+            className="p-2 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground transition min-w-9 min-h-9 inline-flex items-center justify-center"
+            aria-label="Edit mission"
+          >
+            <Pencil className="w-4 h-4" />
+          </button>
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setConfirmId(m.id);
+            }}
+            className="p-2 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition min-w-9 min-h-9 inline-flex items-center justify-center"
+            aria-label="Delete mission"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
+        </div>
+      </li>
+    );
+  };
 
   return (
     <div className="space-y-6 pb-12">
@@ -135,9 +252,11 @@ function MissionsListPage() {
             <p className="text-xs text-muted-foreground mt-0.5">Active</p>
           </div>
           <div className="bg-card border border-border/60 rounded-xl p-3 text-center">
-            <p className="text-lg font-bold text-foreground tabular-nums">
-              {bestStreak > 0 ? `🔥 ${bestStreak}` : "—"}
-            </p>
+            {bestStreak > 0 ? (
+              <p className="text-lg font-bold text-foreground tabular-nums">🔥 {bestStreak}</p>
+            ) : (
+              <p className="text-xs font-semibold text-foreground mt-1.5">Start your streak 🔥</p>
+            )}
             <p className="text-xs text-muted-foreground mt-0.5">Best streak</p>
           </div>
           <div className="bg-card border border-border/60 rounded-xl p-3 text-center">
@@ -182,7 +301,6 @@ function MissionsListPage() {
           >
             Add
           </button>
-
         </div>
       </form>
 
@@ -195,111 +313,24 @@ function MissionsListPage() {
           <p className="text-sm text-muted-foreground mt-1">Create one above to get started.</p>
         </div>
       ) : (
-        <ul className="space-y-3">
-          {sortedMissions.map((m) => {
-            const { total, done, pct } = missionProgress(m);
-            const isEditing = editingId === m.id;
-            const pri = PRIORITY_LABELS[m.priority] || PRIORITY_LABELS[2];
-            const streakInfo = getMissionStreak(m.id);
-            const streak = streakInfo.streak;
-            const atRisk = streakInfo.atRisk;
-            const deadline = deadlineLabel(m.startDate, m.days);
-            const activity = lastActivityLabel(m.tasks);
-            return (
-              <li key={m.id} className="relative group">
-                <Link
-                  to="/missions/$missionId"
-                  params={{ missionId: m.id }}
-                  className="card-pop block relative overflow-hidden bg-card border border-border/60 rounded-xl p-4 pl-5 hover:border-primary/40 hover:shadow-md transition-all"
-                >
+        <>
+          {activeMissions.length > 0 && (
+            <ul className="space-y-3">
+              {activeMissions.map((m) => renderMissionCard(m, false))}
+            </ul>
+          )}
 
-                  <span className={`absolute left-0 top-0 bottom-0 w-1 ${pri.bar}`} />
-                  <div className="flex items-center justify-between gap-3">
-                    {isEditing ? (
-                      <input
-                        autoFocus
-                        value={draftTitle}
-                        onChange={(e) => setDraftTitle(e.target.value)}
-                        onBlur={() => commitEdit(m.id)}
-                        onKeyDown={(e) => handleKey(e, m.id)}
-                        className="flex-1 bg-secondary rounded-md px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-primary/30"
-                        onClick={(e) => e.preventDefault()}
-                      />
-                    ) : (
-                      <h3 className="font-semibold text-foreground truncate">{m.title}</h3>
-                    )}
-                    <span className="text-sm font-bold text-primary tabular-nums shrink-0">{pct}%</span>
-                  </div>
-
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {done}/{total} tasks · {pct}%
-                  </p>
-
-                  <div className="mt-2 h-1.5 w-full rounded-full bg-secondary overflow-hidden">
-                    <div
-                      className="h-full bg-primary rounded-full transition-all duration-500"
-                      style={{ width: `${pct}%` }}
-                    />
-                  </div>
-
-                  <div className="flex items-center flex-wrap gap-x-3 gap-y-1 mt-3">
-                    <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-                      <span className={`w-2 h-2 rounded-full ${pri.dot}`} />
-                      {pri.label}
-                    </span>
-                    {streak > 0 && (
-                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-orange-500">
-                        🔥 {streak} day{streak === 1 ? "" : "s"}
-                      </span>
-                    )}
-                    {atRisk && (
-                      <span className="inline-flex items-center gap-1 text-xs font-semibold text-destructive">
-                        ⚠️ Streak at risk
-                      </span>
-                    )}
-                    <span
-                      className={`text-xs font-medium ${deadline.status === "overdue" ? "text-destructive" : deadline.status === "near" ? "text-orange-500" : "text-blue-500"}`}
-                    >
-                      {deadline.text}
-                    </span>
-                    {deadline.lastDay && deadline.status !== "overdue" && (
-                      <span className="text-xs font-semibold text-orange-500">
-                        ⚠️ Last day — don't miss
-                      </span>
-                    )}
-                    {activity && (
-                      <span className="text-xs text-muted-foreground ml-auto">{activity}</span>
-                    )}
-                  </div>
-                </Link>
-                <div className="absolute top-3 right-14 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      startEdit(m);
-                    }}
-                    className="p-2 rounded-md hover:bg-accent text-muted-foreground hover:text-foreground transition min-w-9 min-h-9 inline-flex items-center justify-center"
-                    aria-label="Edit mission"
-                  >
-                    <Pencil className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setConfirmId(m.id);
-                    }}
-                    className="p-2 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition min-w-9 min-h-9 inline-flex items-center justify-center"
-                    aria-label="Delete mission"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
+          {completedMissions.length > 0 && (
+            <section className="space-y-3">
+              <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider px-1">
+                Completed 🎉
+              </h3>
+              <ul className="space-y-3">
+                {completedMissions.map((m) => renderMissionCard(m, true))}
+              </ul>
+            </section>
+          )}
+        </>
       )}
 
       {confirmId && (
