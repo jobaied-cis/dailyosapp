@@ -144,7 +144,19 @@ function RoutinePage() {
       : "On track ✅";
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 relative">
+      {milestone && (
+        <div
+          key={milestone}
+          className="pointer-events-none fixed top-20 left-1/2 -translate-x-1/2 z-[60] animate-milestone-rise"
+          aria-live="polite"
+        >
+          <div className="px-4 py-2 rounded-full bg-primary text-primary-foreground text-sm font-semibold shadow-[0_10px_30px_-6px_rgba(37,99,235,0.55)]">
+            {milestone}
+          </div>
+        </div>
+      )}
+
 
       {/* Streak */}
       {streak > 0 && (
