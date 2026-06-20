@@ -179,14 +179,14 @@ function RoutinePage() {
           const end = getTaskEndMinutes(activeTask);
           const remaining = Math.max(0, end - nowMin);
           return (
-            <div className="bg-card border border-primary/40 rounded-[1.25rem] p-5 shadow-[0_0_0_3px_rgba(37,99,235,0.08),0_8px_32px_-8px_rgba(37,99,235,0.2)] relative">
-              <button
-                onClick={() => { setEditingTask(activeTask); setEditOpen(true); }}
-                className="press absolute top-4 right-4 text-muted-foreground/50 hover:text-primary p-1.5 rounded-full hover:bg-primary/5 transition-colors"
-                aria-label="Edit task"
-              >
-                <Pencil className="size-4" />
-              </button>
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={() => { setEditingTask(activeTask); setEditOpen(true); }}
+              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setEditingTask(activeTask); setEditOpen(true); } }}
+              className="press bg-card border border-primary/40 rounded-[1.25rem] p-5 shadow-[0_0_0_3px_rgba(37,99,235,0.08),0_8px_32px_-8px_rgba(37,99,235,0.2)] relative cursor-pointer text-left w-full"
+              aria-label={`Edit ${activeTask.title}`}
+            >
               <div className="text-center">
                 <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary px-2 py-1 rounded-full bg-primary/10">
                   Now 🔥
@@ -199,10 +199,10 @@ function RoutinePage() {
                   ⏳ {formatDuration(remaining)} left
                 </p>
                 <button
-                  onClick={() => setFocusTask(activeTask)}
+                  onClick={(e) => { e.stopPropagation(); setFocusTask(activeTask); }}
                   className="press mt-4 inline-flex items-center gap-2 bg-primary text-primary-foreground font-semibold px-5 py-2.5 rounded-full text-sm shadow-[0_4px_16px_-4px_rgba(37,99,235,0.4)] hover:shadow-[0_6px_20px_-4px_rgba(37,99,235,0.5)]"
                 >
-                  <Play className="size-4" strokeWidth={2.5} /> Start Focus
+                  <Play className="size-4" strokeWidth={2.5} /> Start Focus Session ({formatDuration(Math.min(remaining, 25)) || "25m"})
                 </button>
               </div>
             </div>
