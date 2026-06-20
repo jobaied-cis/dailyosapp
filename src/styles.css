@@ -397,6 +397,30 @@ html { scroll-behavior: smooth; }
 }
 .spark-burst { animation: spark-burst 900ms cubic-bezier(0.22, 1, 0.36, 1) forwards; }
 
+/* Gentle breathing for ambient text (e.g. Free time) */
+@keyframes breathe {
+  0%, 100% { opacity: 0.85; }
+  50% { opacity: 1; }
+}
+.animate-breathe { animation: breathe 3.2s ease-in-out infinite; }
+
+/* Floating milestone toast (rises and fades) */
+@keyframes milestone-rise {
+  0% { opacity: 0; transform: translate(-50%, 6px) scale(0.96); }
+  15% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+  80% { opacity: 1; transform: translate(-50%, -10px) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -22px) scale(0.98); }
+}
+.animate-milestone-rise { animation: milestone-rise 1800ms cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+
+/* Soft green flash for successful task complete */
+@keyframes success-flash {
+  0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+  30% { box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.35); }
+  100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+}
+.animate-success-flash { animation: success-flash 520ms ease-out; }
+
 
 /* Micro polish: smooth card layout transitions */
 .card-anim {

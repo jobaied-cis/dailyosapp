@@ -5,6 +5,7 @@ import { useStreak } from "@/lib/streak-store";
 import { Check, ClipboardList, Play, Pause, Plus, Sparkles, Trash2, X } from "lucide-react";
 import { AIRoutineSheet } from "@/components/AIRoutineSheet";
 import { suggestNextTask } from "@/lib/ai-routine.functions";
+import { haptic } from "@/lib/haptic";
 import { toast } from "sonner";
 
 function toMinutes(hhmm: string): number {
@@ -68,6 +69,22 @@ function RoutinePage() {
   }, []);
   const nowMin = now ? now.getHours() * 60 + now.getMinutes() : -1;
 
+  // Milestone floating cue ("Halfway", "All done") — fires once per crossing
+  const [milestone, setMilestone] = useState<string | null>(null);
+  const [lastMilestone, setLastMilestone] = useState<number>(0);
+  useEffect(() => {
+    if (total === 0) return;
+    const reached = pct >= 100 ? 100 : pct >= 50 ? 50 : 0;
+    if (reached > lastMilestone) {
+      setLastMilestone(reached);
+      setMilestone(reached === 100 ? "All done 🎉" : "Halfway there 💪");
+      haptic(reached === 100 ? [12, 40, 12] : 10);
+      const id = setTimeout(() => setMilestone(null), 1800);
+      return () => clearTimeout(id);
+    }
+    if (reached < lastMilestone) setLastMilestone(reached);
+  }, [pct, total, lastMilestone]);
+
   // Compute per-task time intelligence based on start/end block
   const taskMeta = tasks.map((t) => {
     const start = toMinutes(t.time);
@@ -127,7 +144,19 @@ function RoutinePage() {
       : "On track ✅";
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 relative">
+      {milestone && (
+        <div
+          key={milestone}
+          className="pointer-events-none fixed top-20 left-1/2 -translate-x-1/2 z-[60] animate-milestone-rise"
+          aria-live="polite"
+        >
+          <div className="px-4 py-2 rounded-full bg-primary text-primary-foreground text-sm font-semibold shadow-[0_10px_30px_-6px_rgba(37,99,235,0.55)]">
+            {milestone}
+          </div>
+        </div>
+      )}
+
 
       {/* Streak */}
       {streak > 0 && (
@@ -217,15 +246,15 @@ function RoutinePage() {
           <div className="space-y-2">
             <div className="bg-card/60 border border-border/40 rounded-[1.25rem] p-4 text-center">
               {nextUp ? (
-                <p className="text-sm text-muted-foreground">
-                  <span className="text-foreground/70 font-medium">Free time</span>
+                <p className="text-sm text-muted-foreground animate-breathe">
+                  <span className="text-foreground/70 font-medium">🌿 Free time</span>
                   {" · next up: "}
                   <span className="text-foreground font-semibold">{nextUp.title}</span>
                   {" "}
                   <span className="font-mono text-xs">({nextUp.time}{minsUntil > 0 ? ` · ${formatDuration(minsUntil)}` : ""})</span>
                 </p>
               ) : (
-                <p className="text-sm text-muted-foreground">You&apos;re done for today ✨</p>
+                <p className="text-sm text-muted-foreground animate-task-bounce">You&apos;re done for today ✨</p>
               )}
               {!nextSuggestion && (
                 <button
@@ -307,11 +336,12 @@ function RoutinePage() {
                     <div className="flex gap-2 mt-3">
                       <button
                         onClick={() => {
+                          haptic(10);
                           addTask({
                             time: nextSuggestion.time,
                             title: nextSuggestion.title,
                           });
-                          toast.success("Added to your routine");
+                          toast.success("Added to your routine ✨");
                           setNextSuggestion(null);
                         }}
                         className="press text-[12px] font-semibold px-3 py-1.5 rounded-full bg-primary text-primary-foreground shadow-sm"
@@ -378,7 +408,7 @@ function RoutinePage() {
                   >
                     <div
                       key={t.completed ? "done" : "todo"}
-                      className={`flex items-start gap-3 p-4 w-full ${t.completed ? "animate-task-bounce" : ""}`}
+                      className={`flex items-start gap-3 p-4 w-full ${t.completed ? "animate-task-bounce animate-success-flash rounded-[1.25rem]" : ""}`}
                     >
                       {/* Left time rail */}
                       <div className="w-14 shrink-0 flex flex-col items-start pt-0.5">
@@ -397,7 +427,7 @@ function RoutinePage() {
                         )}
                       </div>
                       <button
-                        onClick={() => toggleTask(t.id)}
+                        onClick={() => { if (!t.completed) haptic(10); toggleTask(t.id); }}
                         aria-label={t.completed ? "Mark incomplete" : "Mark complete"}
                         className={`press mt-0.5 size-7 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
                           t.completed
@@ -499,7 +529,7 @@ function RoutinePage() {
       </ul>
 
       <button
-        onClick={() => setAiOpen(true)}
+        onClick={() => { haptic(6); setAiOpen(true); }}
         aria-label="AI Assist"
         title="AI Assist"
         style={{ ["--tx" as never]: "0px" }}
@@ -509,7 +539,7 @@ function RoutinePage() {
       </button>
 
       <button
-        onClick={() => setOpen(true)}
+        onClick={() => { haptic(6); setOpen(true); }}
         aria-label="Add task"
         className="press fab-glow fixed bottom-24 right-1/2 translate-x-[calc(50%+7.5rem)] size-14 rounded-full bg-primary text-primary-foreground flex items-center justify-center"
       >
