@@ -99,6 +99,17 @@ export function useMission(id: string): Mission | undefined {
   return useMissions().find((m) => m.id === id);
 }
 
+export function uniqueMissionTitle(title: string): string {
+  ensureInit();
+  const base = title.trim();
+  if (!base) return base;
+  const existing = new Set(cache.map((m) => m.title.toLowerCase()));
+  if (!existing.has(base.toLowerCase())) return base;
+  let n = 2;
+  while (existing.has(`${base} (${n})`.toLowerCase())) n++;
+  return `${base} (${n})`;
+}
+
 export function addMission(title: string, priority: number = 2, days: number = 1): string {
   ensureInit();
   const now = Date.now();
@@ -114,6 +125,7 @@ export function addMission(title: string, priority: number = 2, days: number = 1
   persist([...cache, mission]);
   return mission.id;
 }
+
 
 export function updateMission(id: string, title: string) {
   ensureInit();

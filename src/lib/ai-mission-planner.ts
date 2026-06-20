@@ -43,8 +43,11 @@ interface Curriculum {
 type TopicKey =
   | "python"
   | "javascript"
-  | "react"
   | "typescript"
+  | "react"
+  | "java"
+  | "cpp"
+  | "ai"
   | "html_css"
   | "sql"
   | "language"
@@ -56,11 +59,15 @@ type TopicKey =
   | "build"
   | "generic";
 
+// Order matters: more specific patterns first so "javascript" doesn't match "java" etc.
 const TOPIC_RULES: Array<{ key: TopicKey; patterns: RegExp[] }> = [
-  { key: "python", patterns: [/\bpython\b/i, /\bdjango\b/i, /\bflask\b/i] },
-  { key: "javascript", patterns: [/\bjavascript\b/i, /\bjs\b/i, /\bnode(\.js)?\b/i] },
-  { key: "typescript", patterns: [/\btypescript\b/i, /\bts\b/i] },
+  { key: "javascript", patterns: [/javascript/i, /\bjs\b/i, /\bnode(\.js)?\b/i] },
+  { key: "typescript", patterns: [/typescript/i, /\bts\b/i] },
   { key: "react", patterns: [/\breact\b/i, /\bnext\.?js\b/i] },
+  { key: "python", patterns: [/python/i, /\bdjango\b/i, /\bflask\b/i] },
+  { key: "java", patterns: [/\bjava\b/i, /\bspring\b/i, /\bjvm\b/i] },
+  { key: "cpp", patterns: [/\bc\+\+/i, /\bcpp\b/i] },
+  { key: "ai", patterns: [/\b(ai|ml|machine learning|deep learning|llm|neural)\b/i] },
   { key: "html_css", patterns: [/\bhtml\b/i, /\bcss\b/i, /\btailwind\b/i] },
   { key: "sql", patterns: [/\bsql\b/i, /\bpostgres\b/i, /\bmysql\b/i, /\bdatabase\b/i] },
   {
@@ -79,11 +86,13 @@ const TOPIC_RULES: Array<{ key: TopicKey; patterns: RegExp[] }> = [
 ];
 
 function detectTopic(goal: string): TopicKey {
+  const g = goal.toLowerCase();
   for (const r of TOPIC_RULES) {
-    if (r.patterns.some((p) => p.test(goal))) return r.key;
+    if (r.patterns.some((p) => p.test(g))) return r.key;
   }
   return "generic";
 }
+
 
 // ---------- RNG / helpers ----------
 
@@ -727,11 +736,80 @@ const GENERIC: Curriculum = {
   ],
 };
 
+const JAVA: Curriculum = {
+  foundations: [
+    { phase: "Foundations", title: "JDK Setup & Hello World", tasks: ["Install JDK and IntelliJ IDEA (or VS Code)", "Run your first Java class with main()", "Understand how compile + run works"] },
+    { phase: "Foundations", title: "Variables & Primitives", tasks: ["Practice int, double, boolean and String", "Convert between primitive types", "Write a program that reads input with Scanner"] },
+    { phase: "Foundations", title: "Control Flow & Loops", tasks: ["Practice if / else and switch", "Use for, while and enhanced for loops", "Solve 5 small loop exercises"] },
+  ],
+  practice: [
+    { phase: "Practice", title: "Methods & Classes", tasks: ["Write a class with fields and methods", "Practice constructors and overloading", "Refactor a script into a class"] },
+    { phase: "Practice", title: "Arrays & Collections", tasks: ["Use arrays and ArrayList", "Practice HashMap and HashSet", "Sort and filter a small dataset"] },
+    { phase: "Practice", title: "OOP: Inheritance & Interfaces", tasks: ["Create a base class and subclass", "Define and implement an interface", "Practice polymorphism with a small example"] },
+  ],
+  apply: [
+    { phase: "Apply", title: "Mini Project: CLI App", tasks: ["Plan a small CLI app (todo, bank, quiz)", "Implement the core feature with classes", "Test it with 3 sample runs"] },
+    { phase: "Apply", title: "Exceptions & File I/O", tasks: ["Read and write a text file", "Use try/catch/finally properly", "Add error messages to your CLI app"] },
+    { phase: "Apply", title: "Refactor & Package", tasks: ["Split code into multiple classes/packages", "Add Javadoc to public methods", "Build a runnable JAR"] },
+  ],
+  review: [
+    { phase: "Review", title: "Recap & Weak Spots", tasks: ["List 3 Java topics you still find hard", "Re-do the hardest exercise", "Write a short summary of what you learned"] },
+    { phase: "Review", title: "Showcase & Next Steps", tasks: ["Share your project with a friend or online", "Pick a next topic (Spring, Android, JDBC)", "Bookmark 3 resources to keep going"] },
+  ],
+};
+
+const CPP: Curriculum = {
+  foundations: [
+    { phase: "Foundations", title: "Toolchain & Hello World", tasks: ["Install a C++ compiler (g++/clang) and VS Code", "Compile and run your first program", "Learn how headers and main() work"] },
+    { phase: "Foundations", title: "Types & I/O", tasks: ["Practice int, double, bool, char and std::string", "Use std::cin and std::cout", "Write a small calculator program"] },
+    { phase: "Foundations", title: "Control Flow & Loops", tasks: ["Practice if / else and switch", "Use for, while and range-for loops", "Solve 5 small loop exercises"] },
+  ],
+  practice: [
+    { phase: "Practice", title: "Functions & References", tasks: ["Write 3 functions with parameters and return values", "Practice pass-by-value vs pass-by-reference", "Use const where it makes sense"] },
+    { phase: "Practice", title: "Arrays, Vectors & Strings", tasks: ["Practice std::vector operations", "Manipulate std::string", "Solve 5 array problems"] },
+    { phase: "Practice", title: "Classes & RAII", tasks: ["Define a class with constructor and destructor", "Practice member functions and access control", "Build a small value-type class"] },
+  ],
+  apply: [
+    { phase: "Apply", title: "Mini Project: CLI Tool", tasks: ["Plan a small CLI tool (todo, calculator, quiz)", "Implement the core feature with classes", "Test it with 3 sample runs"] },
+    { phase: "Apply", title: "Pointers & Memory", tasks: ["Practice raw pointers vs references", "Use std::unique_ptr for ownership", "Avoid leaks with RAII"] },
+    { phase: "Apply", title: "Refactor & Build", tasks: ["Split code into headers and .cpp files", "Set up a simple Makefile or CMake project", "Clean up warnings"] },
+  ],
+  review: [
+    { phase: "Review", title: "Recap & Weak Spots", tasks: ["List 3 C++ topics you still find hard", "Re-do the hardest exercise", "Write a short summary of what you learned"] },
+    { phase: "Review", title: "Showcase & Next Steps", tasks: ["Share your project with a friend or online", "Pick a next topic (STL, templates, networking)", "Bookmark 3 resources to keep going"] },
+  ],
+};
+
+const AI: Curriculum = {
+  foundations: [
+    { phase: "Foundations", title: "What AI/ML Really Is", tasks: ["Read a beginner overview of AI vs ML vs DL", "Note 3 real-world AI use-cases that interest you", "Write your own one-line definition of ML"] },
+    { phase: "Foundations", title: "Python & Math Refresh", tasks: ["Refresh Python basics (lists, dicts, functions)", "Review key math: vectors, matrices, basic stats", "Install Python, NumPy, pandas and Jupyter"] },
+    { phase: "Foundations", title: "Data Handling Basics", tasks: ["Load a CSV with pandas", "Explore the data (shape, types, missing values)", "Make 2 simple plots with matplotlib"] },
+  ],
+  practice: [
+    { phase: "Practice", title: "Supervised Learning Basics", tasks: ["Train a linear regression with scikit-learn", "Train a logistic regression on a classification dataset", "Evaluate with accuracy / RMSE"] },
+    { phase: "Practice", title: "Model Evaluation", tasks: ["Split data into train/test", "Use cross-validation", "Read a confusion matrix"] },
+    { phase: "Practice", title: "Feature Engineering", tasks: ["Handle missing values and scaling", "One-hot encode categorical features", "Try a simple feature on a real dataset"] },
+  ],
+  apply: [
+    { phase: "Apply", title: "Mini ML Project", tasks: ["Pick a small dataset (Titanic, Iris, housing)", "Build an end-to-end notebook (load → clean → model)", "Report 1 metric that defines 'good'"] },
+    { phase: "Apply", title: "Try Neural Nets", tasks: ["Build a small neural net with Keras or PyTorch", "Train it on your dataset", "Compare it to your previous model"] },
+    { phase: "Apply", title: "Use a Pretrained Model", tasks: ["Use a HuggingFace or OpenAI model for a task", "Wrap it in a small Python script", "Test it on 3 real inputs"] },
+  ],
+  review: [
+    { phase: "Review", title: "Recap & Weak Spots", tasks: ["List 3 AI topics you still find hard", "Redo the hardest exercise", "Write a short summary of what you learned"] },
+    { phase: "Review", title: "What's Next", tasks: ["Pick a next focus (NLP, vision, LLM apps)", "Bookmark 3 resources to continue", "Share your project notebook for feedback"] },
+  ],
+};
+
 const CURRICULA: Record<TopicKey, Curriculum> = {
   python: PYTHON,
   javascript: JAVASCRIPT,
   react: REACT,
   typescript: TYPESCRIPT,
+  java: JAVA,
+  cpp: CPP,
+  ai: AI,
   html_css: HTML_CSS,
   sql: SQL,
   language: LANGUAGE,
@@ -743,6 +821,7 @@ const CURRICULA: Record<TopicKey, Curriculum> = {
   build: BUILD,
   generic: GENERIC,
 };
+
 
 // ---------- Phase allocation ----------
 

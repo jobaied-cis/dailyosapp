@@ -1,7 +1,7 @@
 import { createFileRoute, Link, Outlet, useMatchRoute } from "@tanstack/react-router";
 import { useState, type FormEvent, type KeyboardEvent } from "react";
 import { toast } from "sonner";
-import { addMission, deleteMission, missionProgress, updateMission, useMissions } from "@/lib/missions-store";
+import { addMission, deleteMission, missionProgress, uniqueMissionTitle, updateMission, useMissions } from "@/lib/missions-store";
 import { getMissionStreak } from "@/lib/mission-streak-store";
 import { Pencil, Trash2, Target, Sparkles } from "lucide-react";
 import { AIMissionPlannerSheet } from "@/components/AIMissionPlannerSheet";
@@ -76,12 +76,18 @@ function MissionsListPage() {
     e.preventDefault();
     const t = title.trim();
     if (!t) return;
-    addMission(t, priority, Math.max(1, Number(duration) || 1));
+    const finalTitle = uniqueMissionTitle(t);
+    addMission(finalTitle, priority, Math.max(1, Number(duration) || 1));
     setTitle("");
     setPriority(2);
     setDuration(7);
-    toast.success("Mission added");
+    if (finalTitle !== t) {
+      toast.success(`Mission added as "${finalTitle}"`);
+    } else {
+      toast.success("Mission added");
+    }
   };
+
 
   const startEdit = (m: { id: string; title: string }) => {
     setEditingId(m.id);
@@ -132,13 +138,20 @@ function MissionsListPage() {
     const atRisk = streakInfo.atRisk;
     const deadline = deadlineLabel(m.startDate, m.days, pct);
     const hasStarted = done > 0;
+    const isEmpty = total === 0;
     return (
       <li key={m.id} className={"relative group " + (completed ? "opacity-70" : "")}>
         <Link
           to="/missions/$missionId"
           params={{ missionId: m.id }}
-          className="card-pop block relative overflow-hidden bg-card border border-border/60 rounded-xl p-4 pl-5 hover:border-primary/40 hover:shadow-md transition-all"
+          className={
+            "card-pop block relative overflow-hidden rounded-xl p-4 pl-5 hover:border-primary/40 hover:shadow-md transition-all " +
+            (isEmpty
+              ? "bg-card/60 border border-dashed border-border/70"
+              : "bg-card border border-border/60")
+          }
         >
+
           <span className={`absolute left-0 top-0 bottom-0 w-1 ${pri.bar}`} />
           <div className="flex items-center justify-between gap-3">
             {isEditing ? (
@@ -154,29 +167,40 @@ function MissionsListPage() {
             ) : (
               <h3 className="font-semibold text-foreground truncate">{m.title}</h3>
             )}
-            <span
-              className={
-                "text-sm font-bold tabular-nums shrink-0 " +
-                (completed ? "text-emerald-500" : "text-primary")
-              }
-            >
-              {pct}%
-            </span>
+            {!isEmpty && (
+              <span
+                className={
+                  "text-sm font-bold tabular-nums shrink-0 " +
+                  (completed ? "text-emerald-500" : "text-primary")
+                }
+              >
+                {pct}%
+              </span>
+            )}
           </div>
 
-          <p className="text-xs text-muted-foreground mt-1">
-            {done}/{total} tasks · {pct}%
-          </p>
+          {isEmpty ? (
+            <p className="text-xs text-muted-foreground mt-2 italic">
+              No tasks added yet — tap to start
+            </p>
+          ) : (
+            <>
+              <p className="text-xs text-muted-foreground mt-1">
+                {done}/{total} tasks · {pct}%
+              </p>
 
-          <div className="mt-2 h-1.5 w-full rounded-full bg-secondary overflow-hidden">
-            <div
-              className={
-                "h-full rounded-full transition-all duration-500 ease-out " +
-                (pct >= 100 ? "bg-emerald-500" : "bg-primary")
-              }
-              style={{ width: `${pct}%` }}
-            />
-          </div>
+              <div className="mt-2 h-1.5 w-full rounded-full bg-secondary overflow-hidden">
+                <div
+                  className={
+                    "h-full rounded-full transition-all duration-500 ease-out " +
+                    (pct >= 100 ? "bg-emerald-500" : "bg-primary")
+                  }
+                  style={{ width: `${pct}%` }}
+                />
+              </div>
+            </>
+          )}
+
 
           <div className="flex items-center flex-wrap gap-x-3 gap-y-1 mt-3">
             <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
