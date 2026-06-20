@@ -122,6 +122,8 @@ function RoutinePage() {
       ? "Starting..."
       : pct >= 75
       ? "Almost there 🔥"
+      : pct >= 50
+      ? "Halfway there 💪"
       : "On track ✅";
 
   return (
