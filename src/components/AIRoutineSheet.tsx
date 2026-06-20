@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Sparkles, X, Check, ArrowLeft } from "lucide-react";
+import { Sparkles, X, Check, ArrowLeft, WifiOff } from "lucide-react";
 import { toast } from "sonner";
 import { addTask, useTasks } from "@/lib/tasks-store";
 import { generateRoutine } from "@/lib/ai-routine.functions";
+import { useOnline } from "@/lib/use-online";
 
 const QUICK_CHIPS = [
   "Plan my study day",
