@@ -270,11 +270,13 @@ function MissionDetailPage() {
 
       <button
         onClick={() => addDay(mission.id)}
-        className="w-full flex items-center justify-center gap-2 border border-dashed border-border rounded-xl py-3 text-sm font-semibold text-muted-foreground hover:text-foreground hover:border-foreground/40"
+        className="w-full flex items-center justify-center gap-2 rounded-xl py-3 text-sm font-bold text-white press-spring animate-add-day-glow"
+        style={{ background: "linear-gradient(135deg, #378ADD 0%, #5B9EE8 100%)" }}
       >
         <Plus className="size-4" />
         Add Day
       </button>
+
 
       {celebrationDay != null && (
         <DayCompleteCelebration
