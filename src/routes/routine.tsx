@@ -1,8 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, Fragment } from "react";
-import { addTask, deleteTask, editTask, toggleTask, useTasks, type Task } from "@/lib/tasks-store";
+import { addTask, deleteTask, editTask, toggleTask, useTasks, type Task, type Repeat } from "@/lib/tasks-store";
 import { useStreak } from "@/lib/streak-store";
-import { Check, ClipboardList, Play, Pause, Plus, Sparkles, Trash2, X, BookOpen, Footprints, Coffee, Brain, Droplet, Wind } from "lucide-react";
+import { useDailySummary } from "@/lib/daily-summary-store";
+import { Check, ClipboardList, Play, Pause, Plus, Repeat as RepeatIcon, Sparkles, Trash2, X, BookOpen, Footprints, Coffee, Brain, Droplet, Wind } from "lucide-react";
 import { AIRoutineSheet } from "@/components/AIRoutineSheet";
 import { suggestNextTask } from "@/lib/ai-routine.functions";
 import { haptic } from "@/lib/haptic";
@@ -103,7 +104,18 @@ function RoutinePage() {
   const lastEnd = tasks.length ? Math.max(...tasks.map((t) => getTaskEndMinutes(t))) : 0;
   const endOfDay = now !== null && tasks.length > 0 && nowMin >= lastEnd;
   const allDone = total > 0 && done === total;
-  const streak = useStreak(allDone, endOfDay && !allDone);
+  const reachedThreshold = total > 0 && done / total >= 0.8;
+  const { streak, justBroke } = useStreak(reachedThreshold, endOfDay && !reachedThreshold);
+  const { today: todaySummary, yesterday: yesterdaySummary } = useDailySummary(done, total);
+
+  // One-shot toast when streak breaks
+  useEffect(() => {
+    if (justBroke) toast("Streak broken — start again 💪", { icon: "💔" });
+  }, [justBroke]);
+
+  const [summaryDismissed, setSummaryDismissed] = useState(false);
+  useEffect(() => { setSummaryDismissed(false); }, [allDone, endOfDay]);
+  const showSummary = total > 0 && !summaryDismissed && (allDone || endOfDay);
 
   // Index where "You are here" divider should appear (only after clock is set)
   let hereIndex = now === null ? -2 : tasks.findIndex((t) => toMinutes(t.time) > nowMin);
@@ -169,6 +181,42 @@ function RoutinePage() {
           </span>
         </div>
       )}
+
+      {/* Daily summary card */}
+      {showSummary && (() => {
+        const pctRound = todaySummary.pct;
+        const yPct = yesterdaySummary?.pct ?? null;
+        const diff = yPct !== null ? pctRound - yPct : null;
+        const emoji = allDone ? "🎉" : pctRound >= 80 ? "🔥" : pctRound >= 50 ? "💪" : "🌱";
+        return (
+          <div className="relative overflow-hidden rounded-[1.25rem] border border-primary/25 bg-gradient-to-br from-primary/10 via-card to-card p-4 shadow-[0_8px_32px_-12px_rgba(37,99,235,0.25)] animate-ai-panel-in">
+            <button
+              onClick={() => setSummaryDismissed(true)}
+              aria-label="Dismiss"
+              className="press absolute top-2.5 right-2.5 text-muted-foreground/60 hover:text-foreground p-1 rounded-full hover:bg-secondary"
+            >
+              <X className="size-4" />
+            </button>
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
+              {allDone ? "Day complete" : "Daily summary"}
+            </p>
+            <p className="text-[15px] font-semibold text-foreground mt-1.5 leading-snug">
+              You completed {todaySummary.done}/{todaySummary.total} tasks ({pctRound}%) {emoji}
+            </p>
+            {diff !== null && (
+              <p className="text-[12px] text-muted-foreground mt-1">
+                {diff > 0
+                  ? `▲ ${diff}% vs yesterday — keep it up!`
+                  : diff < 0
+                  ? `▼ ${Math.abs(diff)}% vs yesterday`
+                  : `Same as yesterday (${yPct}%)`}
+              </p>
+            )}
+          </div>
+        );
+      })()}
+
+
 
       {/* Summary + progress (merged) */}
       <div>
@@ -648,6 +696,8 @@ function AddTaskSheet({ onClose }: { onClose: () => void }) {
   const [endTime, setEndTime] = useState("08:30");
   const [title, setTitle] = useState("");
   const [note, setNote] = useState("");
+  const [repeat, setRepeat] = useState<Repeat>("none");
+  const [customDays, setCustomDays] = useState<number[]>([]);
   const [touched, setTouched] = useState(false);
   const titleEmpty = !title.trim();
   const showTitleError = touched && titleEmpty;
@@ -656,14 +706,18 @@ function AddTaskSheet({ onClose }: { onClose: () => void }) {
     e.preventDefault();
     setTouched(true);
     if (titleEmpty) return;
-    addTask({ time, endTime: endTime || undefined, title, note });
+    const finalRepeat: Repeat =
+      repeat === "custom" as never
+        ? (customDays.length > 0 ? { days: [...customDays].sort() } : "none")
+        : repeat;
+    addTask({ time, endTime: endTime || undefined, title, note, repeat: finalRepeat });
     onClose();
   };
 
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-foreground/25 backdrop-blur-md">
-      <div className="w-full max-w-md bg-card rounded-t-[1.75rem] p-6 shadow-[0_-8px_40px_-8px_rgba(15,23,42,0.15)] animate-in slide-in-from-bottom duration-300">
+      <div className="w-full max-w-md bg-card rounded-t-[1.75rem] p-6 shadow-[0_-8px_40px_-8px_rgba(15,23,42,0.15)] animate-in slide-in-from-bottom duration-300 max-h-[92vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-5">
           <h3 className="text-lg font-bold text-foreground tracking-tight">New task</h3>
           <button onClick={onClose} aria-label="Close" className="press text-muted-foreground hover:text-foreground p-1.5 rounded-full hover:bg-secondary transition-colors">
@@ -717,6 +771,12 @@ function AddTaskSheet({ onClose }: { onClose: () => void }) {
               className="w-full bg-secondary rounded-xl px-4 py-3.5 text-foreground outline-none focus:ring-2 focus:ring-primary/40 focus:bg-card focus:shadow-[0_0_0_4px_rgba(37,99,235,0.08)] transition-all placeholder:text-muted-foreground/60 resize-none font-medium"
             />
           </Field>
+          <RepeatField
+            value={repeat}
+            customDays={customDays}
+            onChange={setRepeat}
+            onCustomDaysChange={setCustomDays}
+          />
           <button
             type="submit"
             disabled={!title.trim()}
@@ -729,6 +789,96 @@ function AddTaskSheet({ onClose }: { onClose: () => void }) {
     </div>
   );
 }
+
+type RepeatChoice = "none" | "daily" | "weekdays" | "custom";
+
+function RepeatField({
+  value,
+  customDays,
+  onChange,
+  onCustomDaysChange,
+}: {
+  value: Repeat;
+  customDays: number[];
+  onChange: (r: Repeat) => void;
+  onCustomDaysChange: (d: number[]) => void;
+}) {
+  const choice: RepeatChoice =
+    value === "none" || !value ? "none"
+    : value === "daily" ? "daily"
+    : value === "weekdays" ? "weekdays"
+    : "custom";
+
+  const setChoice = (c: RepeatChoice) => {
+    if (c === "custom") {
+      onChange("custom" as never); // sheet maps this on submit
+    } else {
+      onChange(c);
+    }
+  };
+
+  const toggleDay = (d: number) => {
+    const next = customDays.includes(d)
+      ? customDays.filter((x) => x !== d)
+      : [...customDays, d];
+    onCustomDaysChange(next);
+  };
+
+  const opts: { id: RepeatChoice; label: string }[] = [
+    { id: "none", label: "Once" },
+    { id: "daily", label: "Daily" },
+    { id: "weekdays", label: "Weekdays" },
+    { id: "custom", label: "Custom" },
+  ];
+  const dayLabels = ["S", "M", "T", "W", "T", "F", "S"];
+
+  return (
+    <Field label="Repeat">
+      <div className="grid grid-cols-4 gap-1.5">
+        {opts.map((o) => {
+          const active = choice === o.id;
+          return (
+            <button
+              key={o.id}
+              type="button"
+              onClick={() => setChoice(o.id)}
+              className={`press text-[12px] font-semibold py-2.5 rounded-xl border transition-colors ${
+                active
+                  ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                  : "bg-secondary text-foreground/80 border-transparent hover:bg-secondary/70"
+              }`}
+            >
+              {o.label}
+            </button>
+          );
+        })}
+      </div>
+      {choice === "custom" && (
+        <div className="mt-3 flex gap-1.5 justify-between">
+          {dayLabels.map((label, d) => {
+            const active = customDays.includes(d);
+            return (
+              <button
+                key={d}
+                type="button"
+                onClick={() => toggleDay(d)}
+                className={`press size-9 rounded-full text-[12px] font-bold border transition-colors ${
+                  active
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-secondary text-foreground/70 border-transparent"
+                }`}
+              >
+                {label}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </Field>
+  );
+}
+
+
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (

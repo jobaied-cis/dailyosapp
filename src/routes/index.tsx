@@ -152,7 +152,8 @@ function Dashboard() {
 
   const allDone = total > 0 && done === total;
   const endOfDayMissed = !allDone && new Date().getHours() >= 23;
-  const streak = useStreak(allDone, endOfDayMissed);
+  const reached80 = total > 0 && done / total >= 0.8;
+  const { streak } = useStreak(reached80, endOfDayMissed);
   const taka = useTakaSymbol();
 
   return (
