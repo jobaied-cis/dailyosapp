@@ -112,18 +112,6 @@ export function taskShowsOnWeekday(t: Task, weekday: number): boolean {
   return true;
 }
 
-export function useTasks(): Task[] {
-  const tasks = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
-  const today = new Date().getDay();
-  return [...tasks]
-    .filter((t) => taskShowsOnWeekday(t, today))
-    .sort((a, b) => a.time.localeCompare(b.time));
-}
-
-export function toggleTask(id: string) {
-  ensureInit();
-  persist(cache.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t)));
-}
 
 function isRecurring(t: Task | undefined): boolean {
   if (!t) return false;
