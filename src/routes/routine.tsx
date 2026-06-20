@@ -538,7 +538,7 @@ function RoutinePage() {
       </button>
 
       <button
-        onClick={() => setOpen(true)}
+        onClick={() => { haptic(6); setOpen(true); }}
         aria-label="Add task"
         className="press fab-glow fixed bottom-24 right-1/2 translate-x-[calc(50%+7.5rem)] size-14 rounded-full bg-primary text-primary-foreground flex items-center justify-center"
       >
