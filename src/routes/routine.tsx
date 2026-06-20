@@ -108,7 +108,7 @@ function RoutinePage() {
   const endOfDay = now !== null && tasks.length > 0 && nowMin >= lastEnd;
   const allDone = total > 0 && done === total;
   const reachedThreshold = total > 0 && done / total >= 0.8;
-  const { streak, justBroke } = useStreak(reachedThreshold, endOfDay && !reachedThreshold);
+  const { streak, justBroke, status: streakStatus } = useStreak(reachedThreshold, endOfDay && !reachedThreshold);
   const { today: todaySummary, yesterday: yesterdaySummary } = useDailySummary(done, total);
 
   // One-shot toast when streak breaks
@@ -119,6 +119,24 @@ function RoutinePage() {
   const [summaryDismissed, setSummaryDismissed] = useState(false);
   useEffect(() => { setSummaryDismissed(false); }, [allDone, endOfDay]);
   const showSummary = total > 0 && !summaryDismissed && (allDone || endOfDay);
+
+  // Yesterday-recap card: shown once on first open of a new day.
+  const [yesterdayRecap, setYesterdayRecap] = useState<DaySummary | null>(null);
+  useEffect(() => {
+    pruneOldCompletions();
+    pruneOldExceptions();
+    const y = new Date();
+    y.setDate(y.getDate() - 1);
+    const yKey = `${y.getFullYear()}-${String(y.getMonth() + 1).padStart(2, "0")}-${String(y.getDate()).padStart(2, "0")}`;
+    const ySum = getSummaryFor(yKey);
+    if (ySum && ySum.total > 0 && getLastSeenSummaryDate() !== yKey) {
+      setYesterdayRecap(ySum);
+    }
+  }, []);
+  const dismissYesterdayRecap = () => {
+    if (yesterdayRecap) markSummarySeen(yesterdayRecap.date);
+    setYesterdayRecap(null);
+  };
 
   // Index where "You are here" divider should appear (only after clock is set)
   let hereIndex = now === null ? -2 : tasks.findIndex((t) => toMinutes(t.time) > nowMin);
