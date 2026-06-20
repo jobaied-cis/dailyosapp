@@ -304,6 +304,7 @@ function RoutinePage() {
                       });
 
                       try {
+                        if (!online) throw new Error("offline");
                         const res = await suggestNextTask({
                           data: {
                             now: nowStr,
@@ -324,26 +325,45 @@ function RoutinePage() {
                         };
                         setNextSuggestions([ai, ...alternates].slice(0, 3));
                       } catch (err) {
-                        console.error(err);
-                        toast.error("AI not available");
+                        if (!online) {
+                          toast.error("Offline — showing simple suggestions");
+                        } else {
+                          console.error(err);
+                          toast.error("AI not available");
+                        }
+                        // Time-of-day fallback (no AI required)
+                        const hr = now ? now.getHours() : 12;
+                        const todTitle =
+                          hr < 11 ? "Plan your day" : hr < 17 ? "Focused Study Block" : hr < 21 ? "Wind-down review" : "Rest & recharge";
+                        const todIcon: Suggestion["icon"] =
+                          hr < 11 ? "focus" : hr < 17 ? "study" : hr < 21 ? "breathe" : "break";
+                        const todReason =
+                          hr < 11 ? "Morning energy is great for planning."
+                          : hr < 17 ? "Peak focus hours — make them count."
+                          : hr < 21 ? "Reflect on what worked today."
+                          : "Sleep is part of the routine.";
                         const fallback: Suggestion = {
-                          icon: "focus",
-                          title: nextUp ? `Warm-up before ${nextUp.title}` : "10-min reset walk",
+                          icon: todIcon,
+                          title: nextUp ? `Warm-up before ${nextUp.title}` : todTitle,
                           time: nowStr,
-                          duration: "10m",
+                          duration: "15m",
                           reason: nextUp && minsUntil > 0
                             ? `You have ${formatDuration(minsUntil)} free before your next block.`
-                            : "A short reset keeps your energy steady.",
+                            : todReason,
                         };
                         setNextSuggestions([fallback, ...alternates].slice(0, 3));
                       } finally {
                         setSuggestLoading(false);
                       }
                     }}
-                    className={`press mt-3 inline-flex items-center gap-1.5 text-[12px] font-semibold px-3 py-1.5 rounded-full bg-primary/10 text-primary hover:bg-primary/15 border border-primary/20 transition-colors disabled:opacity-60 ${hasFreeTime && !suggestLoading ? "ai-glow" : ""}`}
+                    className={`press mt-3 inline-flex items-center gap-1.5 text-[12px] font-semibold px-3 py-1.5 rounded-full bg-primary/10 text-primary hover:bg-primary/15 border border-primary/20 transition-colors disabled:opacity-60 ${hasFreeTime && !suggestLoading && online ? "ai-glow" : ""}`}
                   >
-                    <Sparkles className={`size-3.5 ${suggestLoading ? "animate-ai-spark" : ""}`} strokeWidth={2.5} />
-                    {suggestLoading ? "Thinking…" : "What should I do next?"}
+                    {online ? (
+                      <Sparkles className={`size-3.5 ${suggestLoading ? "animate-ai-spark" : ""}`} strokeWidth={2.5} />
+                    ) : (
+                      <span className="inline-flex"><span className="size-1.5 rounded-full bg-amber-500 mr-1" />💡</span>
+                    )}
+                    {suggestLoading ? "Thinking…" : online ? "What should I do next?" : "Offline ideas"}
                   </button>
                 );
               })()}
