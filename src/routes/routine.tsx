@@ -162,7 +162,8 @@ function RoutinePage() {
         </div>
         <div className="h-2.5 rounded-full bg-secondary overflow-hidden">
           <div
-            className="h-full bg-primary rounded-full transition-all duration-[400ms] ease-in-out"
+            key={Math.round(pct)}
+            className="h-full bg-primary rounded-full transition-all duration-[400ms] ease-in-out animate-progress-pulse"
             style={{ width: `${pct}%` }}
           />
         </div>
