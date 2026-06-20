@@ -407,7 +407,7 @@ function RoutinePage() {
                   >
                     <div
                       key={t.completed ? "done" : "todo"}
-                      className={`flex items-start gap-3 p-4 w-full ${t.completed ? "animate-task-bounce" : ""}`}
+                      className={`flex items-start gap-3 p-4 w-full ${t.completed ? "animate-task-bounce animate-success-flash rounded-[1.25rem]" : ""}`}
                     >
                       {/* Left time rail */}
                       <div className="w-14 shrink-0 flex flex-col items-start pt-0.5">
