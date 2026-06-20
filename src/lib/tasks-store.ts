@@ -11,6 +11,7 @@ export type Repeat =
   | "none"
   | "daily"
   | "weekdays"
+  | "weekends"
   | { days: number[] };
 
 export interface Task {
