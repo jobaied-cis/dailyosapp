@@ -501,103 +501,114 @@ function EventsPage() {
     const isPast = evtDate.getTime() < now;
     const formattedDate = evtDate.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
     const formattedTime = evtDate.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+    const fullDate = evtDate.toLocaleDateString(undefined, { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+    const fullTime = evtDate.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
     const isCompleted = status === "completed";
     const isMissed = status === "missed";
     const isJustAdded = lastAddedId === evt.id;
+    const isJustCompleted = justCompletedId === evt.id;
+    const isExpanded = expandedIds.has(evt.id);
 
     return (
       <SwipeableRow
         key={evt.id}
-        onSwipeRight={() => {
-          if (!evt.completed) {
-            toggleEventCompletion(evt.id);
-            toast.success("✅ Event completed");
-          }
-        }}
-        onSwipeLeft={() => {
-          const snapshot = evt;
-          deleteEvent(evt.id);
-          toast("Event deleted", {
-            action: {
-              label: "Undo",
-              onClick: () => addEvent({
-                title: snapshot.title, date: snapshot.date, time: snapshot.time,
-                type: snapshot.type, priority: snapshot.priority, notes: snapshot.notes,
-              }),
-            },
-          });
-        }}
+        onSwipeRight={() => handleComplete(evt)}
+        onSwipeLeft={() => setActionSheetEvt(evt)}
       >
         <div
           style={isJustAdded ? undefined : { animationDelay: `${Math.min(i * 50, 240)}ms` }}
-          className={`bg-card border rounded-[1.25rem] shadow-[0_2px_12px_-4px_rgba(15,23,42,0.06)] p-4 flex items-center justify-between ${isJustAdded ? "animate-fly-down border-primary/40" : "animate-list-item-in border-border/60"} ${isCompleted ? "opacity-60" : ""} ${isMissed ? "opacity-80" : ""}`}
+          onClick={(e) => {
+            const t = e.target as HTMLElement;
+            if (t.closest("button,input,[role=checkbox],a")) return;
+            toggleExpanded(evt.id);
+          }}
+          className={`event-card-press bg-card border rounded-[1.25rem] shadow-[0_2px_12px_-4px_rgba(15,23,42,0.06)] p-4 cursor-pointer ${isJustAdded ? "animate-fly-down border-primary/40" : "animate-list-item-in border-border/60"} ${isCompleted ? "opacity-60" : ""} ${isMissed ? "opacity-80" : ""}`}
+          style2={undefined as never}
         >
-          <div className="flex items-center gap-3 min-w-0">
-            <Checkbox
-              checked={evt.completed}
-              onCheckedChange={() => toggleEventCompletion(evt.id)}
-              aria-label={isCompleted ? "Mark as incomplete" : "Mark as completed"}
-              className="shrink-0"
-            />
-            <div className={`size-10 rounded-2xl flex items-center justify-center shrink-0 ${isMissed ? "bg-amber-500/10" : isPast ? "bg-muted" : "bg-primary/10"}`}>
-              <CalendarDays className={`size-5 ${isMissed ? "text-amber-600" : isPast ? "text-muted-foreground" : "text-primary"}`} />
-            </div>
-            <div className="min-w-0">
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <h4 className={`font-semibold text-foreground text-[0.95rem] truncate ${isCompleted ? "line-through" : ""}`}>
-                  {evt.title}
-                </h4>
-                <span className="inline-flex items-center rounded-md border px-1.5 py-0.5 text-[10px] font-semibold bg-secondary text-muted-foreground border-border/60">
-                  {evt.type}
-                </span>
-                <span className={`inline-flex items-center rounded-md border px-1.5 py-0.5 text-[10px] font-semibold ${priorityColor(evt.priority)}`}>
-                  {evt.priority}
-                </span>
-                {isMissed && (
-                  <span className="inline-flex items-center rounded-md border px-1 py-0.5 text-[9px] font-semibold bg-amber-500/10 text-amber-600 border-amber-500/20">
-                    Catch up
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3 min-w-0">
+              <span className={isJustCompleted ? "animate-check-pop inline-block" : "inline-block"}>
+                <Checkbox
+                  checked={evt.completed}
+                  onCheckedChange={() => handleComplete(evt)}
+                  onClick={(e) => e.stopPropagation()}
+                  aria-label={isCompleted ? "Mark as incomplete" : "Mark as completed"}
+                  className="shrink-0"
+                />
+              </span>
+              <div className={`size-10 rounded-2xl flex items-center justify-center shrink-0 ${isMissed ? "bg-amber-500/10" : isPast ? "bg-muted" : "bg-primary/10"}`}>
+                <CalendarDays className={`size-5 ${isMissed ? "text-amber-600" : isPast ? "text-muted-foreground" : "text-primary"}`} />
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <h4 className={`font-semibold text-foreground text-[0.95rem] truncate ${isCompleted ? "line-through" : ""} ${isJustCompleted ? "strike-anim" : ""}`}>
+                    {evt.title}
+                  </h4>
+                  <span className="inline-flex items-center rounded-md border px-1.5 py-0.5 text-[10px] font-semibold bg-secondary text-muted-foreground border-border/60">
+                    {evt.type}
                   </span>
+                  <span className={`inline-flex items-center rounded-md border px-1.5 py-0.5 text-[10px] font-semibold ${priorityColor(evt.priority)}`}>
+                    {evt.priority}
+                  </span>
+                  {isMissed && (
+                    <span className="inline-flex items-center rounded-md border px-1 py-0.5 text-[9px] font-semibold bg-amber-500/10 text-amber-600 border-amber-500/20">
+                      Catch up
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground mt-0.5">{formattedDate} · {formattedTime}</p>
+                {!isCompleted && !isMissed && (
+                  <p className={`text-[11px] text-primary/80 mt-0.5 font-medium ${evtDate.getTime() - now < 60 * 60_000 && evtDate.getTime() > now ? "animate-countdown-pulse" : ""}`}>
+                    {formatCountdown(evtDate.getTime() - now)}
+                  </p>
+                )}
+                {!isExpanded && evt.notes && (
+                  <p className="text-[11px] text-muted-foreground/80 mt-1 line-clamp-2">{evt.notes}</p>
+                )}
+                {opts?.missed && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); snoozeToTomorrow(evt); }}
+                    className="press mt-1.5 inline-flex items-center gap-1 text-[11px] font-semibold text-amber-700 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 rounded-lg px-2 py-1"
+                  >
+                    <MoveRight className="size-3" />
+                    Move to tomorrow
+                  </button>
                 )}
               </div>
-              <p className="text-xs text-muted-foreground mt-0.5">{formattedDate} · {formattedTime}</p>
-              {!isCompleted && !isMissed && (
-                <p className={`text-[11px] text-primary/80 mt-0.5 font-medium ${evtDate.getTime() - now < 60 * 60_000 && evtDate.getTime() > now ? "animate-countdown-pulse" : ""}`}>
-                  {formatCountdown(evtDate.getTime() - now)}
-                </p>
-              )}
-              {evt.notes && (
-                <p className="text-[11px] text-muted-foreground/80 mt-1 line-clamp-2">{evt.notes}</p>
-              )}
-              {opts?.missed && (
-                <button
-                  onClick={() => snoozeToTomorrow(evt)}
-                  className="press mt-1.5 inline-flex items-center gap-1 text-[11px] font-semibold text-amber-700 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 rounded-lg px-2 py-1"
-                >
-                  <MoveRight className="size-3" />
-                  Move to tomorrow
-                </button>
-              )}
+            </div>
+            <div className="flex items-center gap-1 shrink-0">
+              <button onClick={(e) => { e.stopPropagation(); handleEdit(evt); }} aria-label="Edit event" className="press p-2 rounded-xl text-muted-foreground hover:text-primary hover:bg-primary/10">
+                <Pencil className="size-4" />
+              </button>
+              <button onClick={(e) => {
+                e.stopPropagation();
+                const snapshot = evt;
+                deleteEvent(evt.id);
+                toast("Event deleted", {
+                  action: {
+                    label: "Undo",
+                    onClick: () => addEvent({
+                      title: snapshot.title, date: snapshot.date, time: snapshot.time,
+                      type: snapshot.type, priority: snapshot.priority, notes: snapshot.notes,
+                    }),
+                  },
+                });
+              }} aria-label="Delete event" className="press p-2 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10">
+                <Trash2 className="size-4" />
+              </button>
             </div>
           </div>
-          <div className="flex items-center gap-1 shrink-0">
-            <button onClick={() => handleEdit(evt)} aria-label="Edit event" className="press p-2 rounded-xl text-muted-foreground hover:text-primary hover:bg-primary/10">
-              <Pencil className="size-4" />
-            </button>
-            <button onClick={() => {
-              const snapshot = evt;
-              deleteEvent(evt.id);
-              toast("Event deleted", {
-                action: {
-                  label: "Undo",
-                  onClick: () => addEvent({
-                    title: snapshot.title, date: snapshot.date, time: snapshot.time,
-                    type: snapshot.type, priority: snapshot.priority, notes: snapshot.notes,
-                  }),
-                },
-              });
-            }} aria-label="Delete event" className="press p-2 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10">
-              <Trash2 className="size-4" />
-            </button>
+
+          <div className={`event-expand ${isExpanded ? "is-open" : ""}`}>
+            <div className="pt-3 border-t border-border/50 space-y-1.5">
+              <p className="text-sm font-semibold text-foreground break-words">{evt.title}</p>
+              <p className="text-xs text-muted-foreground">{fullDate} · {fullTime}</p>
+              {evt.notes ? (
+                <p className="text-xs text-foreground/80 whitespace-pre-wrap break-words">{evt.notes}</p>
+              ) : (
+                <p className="text-xs text-muted-foreground/70 italic">No notes</p>
+              )}
+            </div>
           </div>
         </div>
       </SwipeableRow>
