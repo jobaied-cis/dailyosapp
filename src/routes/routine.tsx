@@ -51,7 +51,8 @@ function RoutinePage() {
   const tasks = useTasks();
   const [open, setOpen] = useState(false);
   const [aiOpen, setAiOpen] = useState(false);
-  const [nextSuggestion, setNextSuggestion] = useState<{ title: string; time: string; reason: string } | null>(null);
+  type Suggestion = { icon: "study" | "walk" | "break" | "focus" | "hydrate" | "breathe" | "ai"; title: string; time: string; duration: string; reason: string };
+  const [nextSuggestions, setNextSuggestions] = useState<Suggestion[] | null>(null);
   const [suggestLoading, setSuggestLoading] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
