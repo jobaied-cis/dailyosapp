@@ -219,3 +219,64 @@ export function editTask(id: string, updates: Partial<Omit<Task, "id" | "complet
     }),
   );
 }
+
+/**
+ * Edit a recurring task for today only — writes a per-day exception
+ * instead of mutating the template. For one-off tasks, falls back to editTask.
+ */
+export function editTaskToday(
+  id: string,
+  updates: Pick<TaskException, "time" | "endTime" | "title" | "note">,
+) {
+  ensureInit();
+  const t = cache.find((x) => x.id === id);
+  if (!t) return;
+  if (!isRecurring(t)) {
+    editTask(id, updates);
+    return;
+  }
+  if (updates.title !== undefined && !isValidTitle(updates.title)) return;
+  const patch: TaskException = {};
+  if (updates.time !== undefined) patch.time = updates.time;
+  if (updates.endTime !== undefined) patch.endTime = updates.endTime || undefined;
+  if (updates.title !== undefined) patch.title = updates.title.trim();
+  if (updates.note !== undefined) patch.note = updates.note?.trim() || undefined;
+  setException(id, patch, todayDateKey());
+}
+
+/** "Edit all future occurrences" — mutates the template. Alias of editTask. */
+export function editTaskFuture(
+  id: string,
+  updates: Partial<Omit<Task, "id" | "completed">>,
+) {
+  editTask(id, updates);
+}
+
+/** Skip a recurring task for today only. No-op for one-off tasks. */
+export function skipTaskToday(id: string) {
+  ensureInit();
+  const t = cache.find((x) => x.id === id);
+  if (!t || !isRecurring(t)) return;
+  skipToday(id, todayDateKey());
+}
+
+/** Undo a previous "skip today" or "edit only today" change. */
+export function clearTaskTodayOverride(id: string) {
+  clearException(id, todayDateKey());
+}
+
+/**
+ * Pure helper: derive today's completion stats from the rendered list
+ * (i.e. the result of useTasks()). Counts both recurring and one-off
+ * tasks because useTasks() has already overlaid per-day completion.
+ */
+export function getTodayCompletion(visibleTasks: Task[]): {
+  total: number;
+  done: number;
+  pct: number;
+} {
+  const total = visibleTasks.length;
+  const done = visibleTasks.filter((t) => t.completed).length;
+  const pct = total > 0 ? done / total : 0;
+  return { total, done, pct };
+}
