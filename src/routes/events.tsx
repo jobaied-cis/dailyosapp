@@ -621,15 +621,37 @@ function EventsPage() {
   return (
     <div className="space-y-6 pb-24">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="size-10 rounded-2xl bg-primary/10 flex items-center justify-center">
-          <CalendarDays className="size-5 text-primary" />
-        </div>
-        <div>
-          <h2 className="text-lg font-bold text-foreground tracking-tight">Events</h2>
-          <p className="text-xs text-muted-foreground">Upcoming schedule</p>
+      <div className="space-y-1.5">
+        <div className="flex items-center gap-3">
+          <div className="size-10 rounded-2xl bg-primary/10 flex items-center justify-center">
+            <CalendarDays className="size-5 text-primary" />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold text-foreground tracking-tight">Events</h2>
+            <p className="text-xs text-muted-foreground">{focusLineText(todayCount)}</p>
+          </div>
         </div>
       </div>
+
+      {/* Week strip */}
+      <WeekStrip
+        events={events}
+        onDayTap={(dateStr, has, cell) => {
+          const sec = sectionForDate(dateStr);
+          const ref =
+            sec === "today" ? sectionRefs.today.current :
+            sec === "tomorrow" ? sectionRefs.tomorrow.current :
+            sec === "week" ? sectionRefs.week.current : null;
+          if (has && ref) {
+            ref.scrollIntoView({ behavior: "smooth", block: "start" });
+          } else {
+            cell.classList.remove("animate-shake");
+            void cell.offsetWidth;
+            cell.classList.add("animate-shake");
+            window.setTimeout(() => cell.classList.remove("animate-shake"), 220);
+          }
+        }}
+      />
 
       {/* Dashboard */}
       <div className="grid grid-cols-4 gap-2">
