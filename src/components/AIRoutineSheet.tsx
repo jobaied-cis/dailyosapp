@@ -21,6 +21,7 @@ type Suggestion = {
 
 export function AIRoutineSheet({ onClose }: { onClose: () => void }) {
   const existing = useTasks();
+  const online = useOnline();
   const [prompt, setPrompt] = useState("");
   const [phase, setPhase] = useState<"input" | "loading" | "result">("input");
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
