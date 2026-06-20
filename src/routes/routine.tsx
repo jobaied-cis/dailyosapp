@@ -69,6 +69,22 @@ function RoutinePage() {
   }, []);
   const nowMin = now ? now.getHours() * 60 + now.getMinutes() : -1;
 
+  // Milestone floating cue ("Halfway", "All done") — fires once per crossing
+  const [milestone, setMilestone] = useState<string | null>(null);
+  const [lastMilestone, setLastMilestone] = useState<number>(0);
+  useEffect(() => {
+    if (total === 0) return;
+    const reached = pct >= 100 ? 100 : pct >= 50 ? 50 : 0;
+    if (reached > lastMilestone) {
+      setLastMilestone(reached);
+      setMilestone(reached === 100 ? "All done 🎉" : "Halfway there 💪");
+      haptic(reached === 100 ? [12, 40, 12] : 10);
+      const id = setTimeout(() => setMilestone(null), 1800);
+      return () => clearTimeout(id);
+    }
+    if (reached < lastMilestone) setLastMilestone(reached);
+  }, [pct, total, lastMilestone]);
+
   // Compute per-task time intelligence based on start/end block
   const taskMeta = tasks.map((t) => {
     const start = toMinutes(t.time);
