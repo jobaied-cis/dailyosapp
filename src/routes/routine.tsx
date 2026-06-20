@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, Fragment } from "react";
 import { addTask, deleteTask, editTask, toggleTask, useTasks, type Task } from "@/lib/tasks-store";
 import { useStreak } from "@/lib/streak-store";
-import { Check, ClipboardList, Play, Pause, Plus, Sparkles, Trash2, X } from "lucide-react";
+import { Check, ClipboardList, Play, Pause, Plus, Sparkles, Trash2, X, BookOpen, Footprints, Coffee, Brain, Droplet, Wind } from "lucide-react";
 import { AIRoutineSheet } from "@/components/AIRoutineSheet";
 import { suggestNextTask } from "@/lib/ai-routine.functions";
 import { haptic } from "@/lib/haptic";
@@ -51,7 +51,8 @@ function RoutinePage() {
   const tasks = useTasks();
   const [open, setOpen] = useState(false);
   const [aiOpen, setAiOpen] = useState(false);
-  const [nextSuggestion, setNextSuggestion] = useState<{ title: string; time: string; reason: string } | null>(null);
+  type Suggestion = { icon: "study" | "walk" | "break" | "focus" | "hydrate" | "breathe" | "ai"; title: string; time: string; duration: string; reason: string };
+  const [nextSuggestions, setNextSuggestions] = useState<Suggestion[] | null>(null);
   const [suggestLoading, setSuggestLoading] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
@@ -256,119 +257,169 @@ function RoutinePage() {
               ) : (
                 <p className="text-sm text-muted-foreground animate-task-bounce">You&apos;re done for today ✨</p>
               )}
-              {!nextSuggestion && (
-                <button
-                  type="button"
-                  disabled={suggestLoading}
-                  onClick={async () => {
-                    setSuggestLoading(true);
-                    const nowStr = now
-                      ? `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`
-                      : "12:00";
-                    try {
-                      const res = await suggestNextTask({
-                        data: {
-                          now: nowStr,
-                          tasks: tasks.map((t) => ({
-                            time: t.time,
-                            endTime: t.endTime,
-                            title: t.title,
-                            completed: t.completed,
-                          })),
-                        },
-                      });
-                      setNextSuggestion(res);
-                    } catch (err) {
-                      console.error(err);
-                      toast.error("AI not available");
-                      // Fallback suggestion
-                      setNextSuggestion({
-                        title: nextUp ? `Warm-up before ${nextUp.title}` : "10-min reset walk",
+              {!nextSuggestions && (() => {
+                const hasFreeTime = !nextUp || minsUntil >= 15;
+                return (
+                  <button
+                    type="button"
+                    disabled={suggestLoading}
+                    onClick={async () => {
+                      haptic(6);
+                      setSuggestLoading(true);
+                      const nowStr = now
+                        ? `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`
+                        : "12:00";
+                      // Derive contextual alternates from local state (no logic change to data)
+                      const freeMin = nextUp ? Math.max(0, minsUntil) : 60;
+                      const shortMin = Math.min(freeMin || 30, 30);
+                      const alternates: Suggestion[] = [];
+                      if (freeMin >= 20) {
+                        alternates.push({
+                          icon: "study",
+                          title: "Quick Revision",
+                          duration: `${Math.min(freeMin, 30)}m`,
+                          time: nowStr,
+                          reason: nextUp
+                            ? `You have ${formatDuration(freeMin)} before ${nextUp.title}.`
+                            : "A short focused session keeps momentum.",
+                        });
+                      }
+                      alternates.push({
+                        icon: shortMin <= 15 ? "breathe" : "walk",
+                        title: shortMin <= 15 ? "2-min Breather" : "Reset Walk",
+                        duration: shortMin <= 15 ? "2m" : "10m",
                         time: nowStr,
-                        reason: nextUp && minsUntil > 0
-                          ? `You have ${formatDuration(minsUntil)} free before your next block.`
-                          : "A short reset keeps your energy steady.",
+                        reason: "Refresh your mind before the next block.",
                       });
-                    } finally {
-                      setSuggestLoading(false);
-                    }
-                  }}
-                  className="press mt-3 inline-flex items-center gap-1.5 text-[12px] font-semibold px-3 py-1.5 rounded-full bg-primary/10 text-primary hover:bg-primary/15 border border-primary/20 transition-colors disabled:opacity-60"
-                >
-                  <Sparkles className="size-3.5" strokeWidth={2.5} />
-                  {suggestLoading ? "Thinking…" : "What should I do next?"}
-                </button>
-              )}
+                      alternates.push({
+                        icon: "hydrate",
+                        title: "Hydrate & Stretch",
+                        duration: "5m",
+                        time: nowStr,
+                        reason: "Small habit, big energy boost.",
+                      });
+
+                      try {
+                        const res = await suggestNextTask({
+                          data: {
+                            now: nowStr,
+                            tasks: tasks.map((t) => ({
+                              time: t.time,
+                              endTime: t.endTime,
+                              title: t.title,
+                              completed: t.completed,
+                            })),
+                          },
+                        });
+                        const ai: Suggestion = {
+                          icon: "ai",
+                          title: res.title,
+                          time: res.time,
+                          duration: nextUp && minsUntil > 0 ? formatDuration(Math.min(minsUntil, 45)) : "30m",
+                          reason: res.reason,
+                        };
+                        setNextSuggestions([ai, ...alternates].slice(0, 3));
+                      } catch (err) {
+                        console.error(err);
+                        toast.error("AI not available");
+                        const fallback: Suggestion = {
+                          icon: "focus",
+                          title: nextUp ? `Warm-up before ${nextUp.title}` : "10-min reset walk",
+                          time: nowStr,
+                          duration: "10m",
+                          reason: nextUp && minsUntil > 0
+                            ? `You have ${formatDuration(minsUntil)} free before your next block.`
+                            : "A short reset keeps your energy steady.",
+                        };
+                        setNextSuggestions([fallback, ...alternates].slice(0, 3));
+                      } finally {
+                        setSuggestLoading(false);
+                      }
+                    }}
+                    className={`press mt-3 inline-flex items-center gap-1.5 text-[12px] font-semibold px-3 py-1.5 rounded-full bg-primary/10 text-primary hover:bg-primary/15 border border-primary/20 transition-colors disabled:opacity-60 ${hasFreeTime && !suggestLoading ? "ai-glow" : ""}`}
+                  >
+                    <Sparkles className={`size-3.5 ${suggestLoading ? "animate-ai-spark" : ""}`} strokeWidth={2.5} />
+                    {suggestLoading ? "Thinking…" : "What should I do next?"}
+                  </button>
+                );
+              })()}
             </div>
-            {suggestLoading && !nextSuggestion && (
-              <div className="bg-card border border-primary/20 rounded-[1.25rem] p-4 animate-ai-panel-in">
-                <div className="flex items-start gap-3">
-                  <div className="size-8 rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 border border-primary/20 flex items-center justify-center shrink-0">
-                    <Sparkles className="size-4 text-primary animate-ai-spark" strokeWidth={2.5} />
-                  </div>
-                  <div className="flex-1 min-w-0 space-y-2">
-                    <div className="h-2.5 w-20 rounded ai-shimmer" />
-                    <div className="h-3.5 w-3/4 rounded ai-shimmer" />
-                    <div className="h-2.5 w-1/2 rounded ai-shimmer" />
-                  </div>
-                </div>
-              </div>
-            )}
-            {nextSuggestion && (
-              <div className="bg-card border border-primary/30 rounded-[1.25rem] p-4 shadow-[0_4px_20px_-8px_rgba(37,99,235,0.25)] animate-ai-panel-in">
-                <div className="flex items-start gap-3">
-                  <div className="size-8 rounded-xl bg-gradient-to-br from-primary/15 to-primary/5 border border-primary/20 flex items-center justify-center shrink-0">
-                    <Sparkles className="size-4 text-primary" strokeWidth={2.5} />
-                  </div>
-                  <div className="flex-1 min-w-0 text-left">
-                    <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary mb-0.5">
-                      AI suggestion
-                    </p>
-                    <p className="text-[15px] font-semibold text-foreground leading-snug">
-                      {nextSuggestion.title}
-                    </p>
-                    <p className="text-[11px] font-mono text-muted-foreground/80 mt-0.5">
-                      {nextSuggestion.time}
-                    </p>
-                    <p className="text-[12px] text-muted-foreground mt-1 leading-snug">
-                      {nextSuggestion.reason}
-                    </p>
-                    <div className="flex gap-2 mt-3">
-                      <button
-                        onClick={() => {
-                          haptic(10);
-                          addTask({
-                            time: nextSuggestion.time,
-                            title: nextSuggestion.title,
-                          });
-                          toast.success("Added to your routine ✨");
-                          setNextSuggestion(null);
-                        }}
-                        className="press text-[12px] font-semibold px-3 py-1.5 rounded-full bg-primary text-primary-foreground shadow-sm"
-                      >
-                        Add
-                      </button>
-                      <button
-                        onClick={() => {
-                          const [hh, mm] = nextSuggestion.time.split(":").map(Number);
-                          const total = ((hh || 0) * 60 + (mm || 0) + 15) % (24 * 60);
-                          const nh = String(Math.floor(total / 60)).padStart(2, "0");
-                          const nm = String(total % 60).padStart(2, "0");
-                          setNextSuggestion({ ...nextSuggestion, time: `${nh}:${nm}` });
-                        }}
-                        className="press text-[12px] font-semibold px-3 py-1.5 rounded-full bg-secondary text-foreground/70 hover:bg-secondary/70"
-                      >
-                        Snooze 15m
-                      </button>
-                      <button
-                        onClick={() => setNextSuggestion(null)}
-                        className="press text-[12px] font-semibold px-3 py-1.5 rounded-full text-muted-foreground hover:text-foreground hover:bg-secondary/60"
-                      >
-                        Dismiss
-                      </button>
+            {suggestLoading && !nextSuggestions && (
+              <div className="space-y-2">
+                {[0, 1, 2].map((i) => (
+                  <div key={i} className="bg-card border border-primary/15 rounded-[1.25rem] p-4 animate-ai-panel-in" style={{ animationDelay: `${i * 80}ms` }}>
+                    <div className="flex items-start gap-3">
+                      <div className="size-9 rounded-xl ai-shimmer shrink-0" />
+                      <div className="flex-1 min-w-0 space-y-2">
+                        <div className="h-3.5 w-1/2 rounded ai-shimmer" />
+                        <div className="h-2.5 w-3/4 rounded ai-shimmer" />
+                      </div>
                     </div>
                   </div>
+                ))}
+              </div>
+            )}
+            {nextSuggestions && (
+              <div className="space-y-2 animate-ai-panel-in">
+                <div className="flex items-center justify-between px-1">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary inline-flex items-center gap-1.5">
+                    <Sparkles className="size-3" strokeWidth={2.5} /> AI suggestions
+                  </p>
+                  <button
+                    onClick={() => setNextSuggestions(null)}
+                    className="press text-[11px] font-medium text-muted-foreground hover:text-foreground"
+                  >
+                    Dismiss
+                  </button>
                 </div>
+                {nextSuggestions.map((s, idx) => {
+                  const iconMap = {
+                    study: { Icon: BookOpen, tint: "from-blue-500/20 to-blue-500/5 text-blue-500 border-blue-500/25" },
+                    walk: { Icon: Footprints, tint: "from-emerald-500/20 to-emerald-500/5 text-emerald-500 border-emerald-500/25" },
+                    break: { Icon: Coffee, tint: "from-amber-500/20 to-amber-500/5 text-amber-500 border-amber-500/25" },
+                    focus: { Icon: Brain, tint: "from-violet-500/20 to-violet-500/5 text-violet-500 border-violet-500/25" },
+                    hydrate: { Icon: Droplet, tint: "from-sky-500/20 to-sky-500/5 text-sky-500 border-sky-500/25" },
+                    breathe: { Icon: Wind, tint: "from-teal-500/20 to-teal-500/5 text-teal-500 border-teal-500/25" },
+                    ai: { Icon: Sparkles, tint: "from-primary/20 to-primary/5 text-primary border-primary/30" },
+                  } as const;
+                  const { Icon, tint } = iconMap[s.icon];
+                  const isAi = s.icon === "ai";
+                  return (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => {
+                        haptic(10);
+                        addTask({ time: s.time, title: s.title });
+                        toast.success(`Added "${s.title}" ✨`);
+                        setNextSuggestions(null);
+                      }}
+                      className={`press w-full text-left bg-card border rounded-[1.25rem] p-3.5 transition-all hover:shadow-[0_6px_20px_-10px_rgba(37,99,235,0.35)] ${isAi ? "border-primary/30 shadow-[0_4px_16px_-10px_rgba(37,99,235,0.3)]" : "border-border/60"}`}
+                      style={{ animationDelay: `${idx * 60}ms` }}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className={`size-10 rounded-xl bg-gradient-to-br border flex items-center justify-center shrink-0 ${tint}`}>
+                          <Icon className="size-[18px]" strokeWidth={2.4} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <p className="text-[14.5px] font-semibold text-foreground leading-tight truncate">{s.title}</p>
+                            <span className="shrink-0 text-[10.5px] font-mono font-semibold px-1.5 py-0.5 rounded-md bg-secondary text-foreground/70">
+                              {s.duration}
+                            </span>
+                            {isAi && (
+                              <span className="shrink-0 text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md bg-primary/10 text-primary">
+                                AI
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[12px] text-muted-foreground mt-1 leading-snug">{s.reason}</p>
+                        </div>
+                        <Plus className="size-4 text-muted-foreground/60 shrink-0 mt-1" strokeWidth={2.5} />
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             )}
           </div>
