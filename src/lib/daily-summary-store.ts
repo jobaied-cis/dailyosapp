@@ -35,6 +35,17 @@ function write(m: Map) {
   if (typeof window !== "undefined") localStorage.setItem(KEY, JSON.stringify(m));
 }
 
+/** Read all persisted day summaries (sorted oldest→newest by date string). */
+export function readAllSummaries(): DaySummary[] {
+  const m = read();
+  return Object.values(m).sort((a, b) => a.date.localeCompare(b.date));
+}
+
+/** Get a single day's summary by YYYY-MM-DD. */
+export function getSummaryFor(dateStr: string): DaySummary | null {
+  return read()[dateStr] ?? null;
+}
+
 /** Persist today's stats; returns today + yesterday summaries. */
 export function useDailySummary(done: number, total: number): { today: DaySummary; yesterday: DaySummary | null } {
   const [data, setData] = useState<Map>({});
