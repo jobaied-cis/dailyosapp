@@ -96,17 +96,19 @@ export function AIMissionPlannerSheet({ open, onOpenChange }: Props) {
   const handleConfirm = () => {
     const g = goal.trim();
     if (!g || plan.length === 0) return;
-    const id = addMission(g, priority, days);
+    const finalTitle = uniqueMissionTitle(g);
+    const id = addMission(finalTitle, priority, days);
     for (const d of plan) {
       for (const t of d.tasks) {
         const title = t.trim();
         if (title) addTask(id, title, d.day);
       }
     }
-    toast.success("Mission created");
+    toast.success(finalTitle !== g ? `Mission created as "${finalTitle}"` : "Mission created");
     reset();
     onOpenChange(false);
   };
+
 
   const updateDayTitle = (day: number, title: string) => {
     setPlan((p) => p.map((d) => (d.day === day ? { ...d, title } : d)));
