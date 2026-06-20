@@ -4,10 +4,12 @@ interface Props {
   title: string;
   totalDays: number;
   totalTasks: number;
+  completedTasks?: number;
   finalStreak: number;
   finishedInDays?: number;
   onStartNew: () => void;
   onClose: () => void;
+  onViewMissions?: () => void;
 }
 
 const COLORS = ["#f43f5e", "#f59e0b", "#10b981", "#3b82f6", "#a855f7", "#ec4899"];
@@ -16,10 +18,12 @@ export function MissionCompleteCelebration({
   title,
   totalDays,
   totalTasks,
+  completedTasks,
   finalStreak,
   finishedInDays,
   onStartNew,
   onClose,
+  onViewMissions,
 }: Props) {
   const pieces = useMemo(
     () =>
@@ -55,8 +59,16 @@ export function MissionCompleteCelebration({
       </div>
       <div className="relative w-full max-w-sm rounded-2xl bg-card border border-border shadow-2xl animate-scale-in p-6 text-center">
         <div className="text-6xl mb-3 animate-bounce">🎉</div>
-        <h2 className="text-2xl font-bold text-foreground">Mission Complete!</h2>
+        <h2 className="text-2xl font-bold text-foreground">Mission accomplished!</h2>
         <p className="text-sm text-muted-foreground mt-1 truncate">{title}</p>
+        {finishedInDays != null && (
+          <p className="text-sm font-semibold text-primary mt-2">
+            Finished in {finishedInDays} day{finishedInDays === 1 ? "" : "s"}
+          </p>
+        )}
+        <p className="text-sm text-foreground/80 mt-1">
+          {completedTasks ?? totalTasks}/{totalTasks} tasks completed ✓
+        </p>
 
         <div className="mt-5 grid grid-cols-2 gap-2 text-left">
           <Stat label="Total days" value={String(totalDays)} />
@@ -64,12 +76,6 @@ export function MissionCompleteCelebration({
           <Stat label="Final streak" value={`🔥 ${finalStreak} day${finalStreak === 1 ? "" : "s"}`} />
           <Stat label="Completion" value="100%" />
         </div>
-
-        <p className="text-sm text-foreground/80 mt-5">
-          {finishedInDays != null
-            ? `Finished in ${finishedInDays} day${finishedInDays === 1 ? "" : "s"} — great discipline 👏`
-            : "You completed your goal — great discipline 👏"}
-        </p>
 
         <div className="mt-5 flex flex-col gap-2">
           <button
@@ -79,10 +85,10 @@ export function MissionCompleteCelebration({
             Start New Mission 🚀
           </button>
           <button
-            onClick={onClose}
+            onClick={onViewMissions ?? onClose}
             className="w-full px-4 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground transition"
           >
-            Close
+            View missions
           </button>
         </div>
       </div>

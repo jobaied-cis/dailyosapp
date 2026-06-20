@@ -108,6 +108,35 @@ function MissionDetailPage() {
     }
   }, [mission, todayDay]);
 
+  useEffect(() => {
+    if (!mission || total === 0 || pct >= 100) return;
+    const key = "dailyos.missionMilestones";
+    let store: Record<string, number[]> = {};
+    try {
+      store = JSON.parse(localStorage.getItem(key) || "{}");
+    } catch {}
+    const seen = new Set<number>(store[mission.id] || []);
+    const milestones: { v: number; msg: string }[] = [
+      { v: 25, msg: "Good start 💪" },
+      { v: 50, msg: "Halfway there 🔥" },
+      { v: 75, msg: "Almost done 🚀" },
+    ];
+    let changed = false;
+    for (const m of milestones) {
+      if (pct >= m.v && !seen.has(m.v)) {
+        seen.add(m.v);
+        changed = true;
+        toast(m.msg);
+      }
+    }
+    if (changed) {
+      store[mission.id] = Array.from(seen);
+      try {
+        localStorage.setItem(key, JSON.stringify(store));
+      } catch {}
+    }
+  }, [mission, pct, total]);
+
   if (!mission) {
     return (
       <div className="space-y-4 pb-12 animate-pulse">
@@ -285,6 +314,7 @@ function MissionDetailPage() {
             const s = pendingStreakRef.current;
             setCelebrationDay(null);
             pendingStreakRef.current = null;
+            toast.success("Day complete! 🎉");
             if (s && s > 0) {
               toast(`🔥 Streak increased to ${s} day${s === 1 ? "" : "s"}!`);
             }
@@ -297,6 +327,7 @@ function MissionDetailPage() {
           title={mission.title}
           totalDays={dayCount}
           totalTasks={total}
+          completedTasks={done}
           finalStreak={streakInfo.streak}
           finishedInDays={Math.min(
             Math.max(
@@ -306,6 +337,10 @@ function MissionDetailPage() {
             dayCount,
           )}
           onClose={() => setMissionComplete(false)}
+          onViewMissions={() => {
+            setMissionComplete(false);
+            navigate({ to: "/missions" });
+          }}
           onStartNew={() => {
             setMissionComplete(false);
             navigate({ to: "/missions" });
@@ -471,13 +506,23 @@ function DaySection({
 
       {expanded && (
         <>
+          {mission.tasks.length === 0 && isToday && (
+            <p className="text-xs font-semibold text-primary animate-pulse">
+              Add your first task 🚀
+            </p>
+          )}
           <form onSubmit={handleAdd} className="flex gap-2">
             <input
               value={value}
               onChange={(e) => setValue(e.target.value)}
               placeholder={isToday ? "What's next?" : "Add a task…"}
               maxLength={200}
-              className="flex-1 bg-secondary rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-primary/30 text-sm"
+              className={
+                "flex-1 bg-secondary rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-primary/30 text-sm " +
+                (mission.tasks.length === 0 && isToday
+                  ? "ring-2 ring-primary/40 animate-pulse"
+                  : "")
+              }
             />
             <button
               type="submit"
