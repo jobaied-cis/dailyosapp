@@ -7,7 +7,7 @@ import {
   SheetTitle,
   SheetDescription,
 } from "@/components/ui/sheet";
-import { addMission, addTask } from "@/lib/missions-store";
+import { addMission, addTask, uniqueMissionTitle } from "@/lib/missions-store";
 import {
   generatePlan,
   type Difficulty,
