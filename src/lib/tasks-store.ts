@@ -83,12 +83,13 @@ function getServerSnapshot(): Task[] {
   return EMPTY_TASKS;
 }
 
-/** Does this task's repeat rule include the given weekday? */
+/** Does this task's repeat rule include the given weekday? (0=Sun … 6=Sat) */
 export function taskShowsOnWeekday(t: Task, weekday: number): boolean {
   const r = t.repeat;
   if (!r || r === "none") return true;
   if (r === "daily") return true;
   if (r === "weekdays") return weekday >= 1 && weekday <= 5;
+  if (r === "weekends") return weekday === 0 || weekday === 6;
   if (typeof r === "object" && Array.isArray(r.days)) {
     return r.days.includes(weekday);
   }
