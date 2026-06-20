@@ -64,6 +64,7 @@ function deadlineColor(status: DeadlineStatus): string {
 
 function MissionsListPage() {
   const missions = useMissions();
+  const navigate = useNavigate();
   const [title, setTitle] = useState("");
   const [priority, setPriority] = useState(2);
   const [duration, setDuration] = useState(7);
@@ -71,22 +72,32 @@ function MissionsListPage() {
   const [draftTitle, setDraftTitle] = useState("");
   const [confirmId, setConfirmId] = useState<string | null>(null);
   const [aiOpen, setAiOpen] = useState(false);
+  const [dupOpen, setDupOpen] = useState(false);
+
+  const createMission = (rawTitle: string) => {
+    const finalTitle = uniqueMissionTitle(rawTitle);
+    const id = addMission(finalTitle, priority, Math.max(1, Number(duration) || 1));
+    setTitle("");
+    setPriority(2);
+    setDuration(7);
+    toast.success(
+      finalTitle !== rawTitle ? `Mission added as "${finalTitle}"` : "Mission added",
+    );
+    navigate({ to: "/missions/$missionId", params: { missionId: id } });
+  };
 
   const handleAdd = (e: FormEvent) => {
     e.preventDefault();
     const t = title.trim();
     if (!t) return;
-    const finalTitle = uniqueMissionTitle(t);
-    addMission(finalTitle, priority, Math.max(1, Number(duration) || 1));
-    setTitle("");
-    setPriority(2);
-    setDuration(7);
-    if (finalTitle !== t) {
-      toast.success(`Mission added as "${finalTitle}"`);
-    } else {
-      toast.success("Mission added");
+    const exists = missions.some((m) => m.title.toLowerCase() === t.toLowerCase());
+    if (exists) {
+      setDupOpen(true);
+      return;
     }
+    createMission(t);
   };
+
 
 
   const startEdit = (m: { id: string; title: string }) => {
