@@ -342,6 +342,61 @@ html { scroll-behavior: smooth; }
   animation: ai-spark 1.8s ease-in-out infinite;
 }
 
+/* AI FAB: slow float + glowing aura */
+@keyframes ai-float {
+  0%, 100% { transform: translate(var(--tx, 0), 0); }
+  50% { transform: translate(var(--tx, 0), -3px); }
+}
+@keyframes ai-glow-pulse {
+  0%, 100% { box-shadow: 0 8px 24px -8px rgba(37, 99, 235, 0.4), 0 0 0 0 rgba(37, 99, 235, 0.35); }
+  50% { box-shadow: 0 10px 30px -8px rgba(37, 99, 235, 0.55), 0 0 0 8px rgba(37, 99, 235, 0); }
+}
+.ai-float { animation: ai-float 4.5s ease-in-out infinite; }
+.ai-glow { animation: ai-glow-pulse 2.6s ease-in-out infinite; }
+
+/* Primary FAB soft glow */
+@keyframes fab-glow {
+  0%, 100% { box-shadow: 0 8px 28px -6px rgba(37, 99, 235, 0.45), 0 0 0 0 rgba(37, 99, 235, 0.25); }
+  50% { box-shadow: 0 12px 34px -6px rgba(37, 99, 235, 0.55), 0 0 0 10px rgba(37, 99, 235, 0); }
+}
+.fab-glow { animation: fab-glow 3s ease-in-out infinite; }
+
+/* Shimmer sweep across a button (AI primary CTA) */
+@keyframes btn-shimmer {
+  0% { transform: translateX(-120%) skewX(-20deg); }
+  100% { transform: translateX(220%) skewX(-20deg); }
+}
+.btn-shimmer { position: relative; overflow: hidden; isolation: isolate; }
+.btn-shimmer::after {
+  content: "";
+  position: absolute;
+  top: 0; bottom: 0;
+  left: 0;
+  width: 40%;
+  background: linear-gradient(90deg,
+    rgba(255,255,255,0) 0%,
+    rgba(255,255,255,0.28) 50%,
+    rgba(255,255,255,0) 100%);
+  animation: btn-shimmer 2.4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* Progress bar pulse when value updates */
+@keyframes progress-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.35); }
+  60% { box-shadow: 0 0 0 6px rgba(37, 99, 235, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0); }
+}
+.animate-progress-pulse { animation: progress-pulse 600ms ease-out; }
+
+/* Tiny sparkles burst for success */
+@keyframes spark-burst {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.4); }
+  30% { opacity: 1; }
+  100% { opacity: 0; transform: translate(var(--dx, 0), var(--dy, 0)) scale(1); }
+}
+.spark-burst { animation: spark-burst 900ms cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+
 
 /* Micro polish: smooth card layout transitions */
 .card-anim {
