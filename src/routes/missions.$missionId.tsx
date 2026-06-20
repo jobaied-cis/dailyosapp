@@ -498,9 +498,16 @@ function DaySection({
             />
           )}
         </div>
-        <p className="text-xs text-muted-foreground mt-0.5">
-          {dayDone}/{dayTotal} ({dayPct}%)
-        </p>
+        {isFuture && (
+          <p className="text-[11px] text-muted-foreground mt-0.5 italic">
+            You can plan ahead — tasks unlock on this day
+          </p>
+        )}
+        {dayTotal > 0 && (
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {dayDone}/{dayTotal} ({dayPct}%)
+          </p>
+        )}
       </div>
 
 
