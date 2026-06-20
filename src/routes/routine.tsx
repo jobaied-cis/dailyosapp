@@ -336,7 +336,7 @@ function RoutinePage() {
                         setSuggestLoading(false);
                       }
                     }}
-                    className={`press mt-3 inline-flex items-center gap-1.5 text-[12px] font-semibold px-3 py-1.5 rounded-full bg-primary/10 text-primary hover:bg-primary/15 border border-primary/20 transition-colors disabled:opacity-60 ${hasFreeTime && !suggestLoading ? "animate-ai-glow-pulse" : ""}`}
+                    className={`press mt-3 inline-flex items-center gap-1.5 text-[12px] font-semibold px-3 py-1.5 rounded-full bg-primary/10 text-primary hover:bg-primary/15 border border-primary/20 transition-colors disabled:opacity-60 ${hasFreeTime && !suggestLoading ? "ai-glow" : ""}`}
                   >
                     <Sparkles className={`size-3.5 ${suggestLoading ? "animate-ai-spark" : ""}`} strokeWidth={2.5} />
                     {suggestLoading ? "Thinking…" : "What should I do next?"}
