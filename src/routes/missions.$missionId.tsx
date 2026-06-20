@@ -406,13 +406,18 @@ function DaySection({
               <Lock className="size-3" /> Locked
             </span>
           )}
-          {isPast && allDone && (
+          {isPast && dayTotal > 0 && allDone && (
             <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider bg-emerald-500/15 text-emerald-500 px-2 py-0.5 rounded-full">
               <Check className="size-3" /> Done
             </span>
           )}
-          {isPast && !allDone && (
+          {isPast && dayTotal > 0 && !allDone && dayDone > 0 && (
             <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider bg-amber-500/15 text-amber-500 px-2 py-0.5 rounded-full">
+              Partial ({dayDone}/{dayTotal})
+            </span>
+          )}
+          {isPast && (dayTotal === 0 || dayDone === 0) && (
+            <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider bg-muted text-muted-foreground px-2 py-0.5 rounded-full">
               Skipped
             </span>
           )}

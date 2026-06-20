@@ -199,9 +199,9 @@ function MissionsListPage() {
                 ⚠️ Last day
               </span>
             )}
-            {!completed && hasStarted && (
+            {!completed && (
               <span className="text-xs text-muted-foreground ml-auto">
-                Continue where you left off →
+                {hasStarted ? "Continue where you left off →" : "Let's get started →"}
               </span>
             )}
           </div>
