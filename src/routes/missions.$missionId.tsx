@@ -333,6 +333,7 @@ function DaySection({
 }) {
   const [value, setValue] = useState("");
   const [expanded, setExpanded] = useState(status !== "past");
+  const [burst, setBurst] = useState(false);
 
   useEffect(() => {
     setExpanded(status !== "past");
@@ -356,9 +357,14 @@ function DaySection({
         const streak = getMissionStreak(mission.id).streak;
         onDayComplete?.(day, streak);
       }
+      setBurst(true);
+      const t = setTimeout(() => setBurst(false), 1000);
+      prevAllDoneRef.current = allDone;
+      return () => clearTimeout(t);
     }
     prevAllDoneRef.current = allDone;
   }, [allDone, mission.id, day, onDayComplete]);
+
 
   const handleAdd = (e: FormEvent) => {
     e.preventDefault();
