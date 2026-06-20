@@ -837,10 +837,61 @@ function EventsPage() {
       <button
         onClick={openAdd}
         aria-label="Add event"
-        className="press fixed bottom-24 right-5 z-40 size-14 rounded-full bg-primary text-primary-foreground shadow-[0_8px_24px_-6px_rgba(37,99,235,0.55)] flex items-center justify-center active:scale-95 transition-transform"
+        className={`fab-press fixed bottom-24 right-5 z-40 size-14 rounded-full bg-primary text-primary-foreground shadow-[0_8px_24px_-6px_rgba(37,99,235,0.55)] flex items-center justify-center transition-transform fab-glow ${fabBounce ? "animate-fab-bounce" : ""}`}
       >
         <Plus className="size-6" />
       </button>
+
+      {/* Swipe-left action sheet */}
+      <Sheet open={!!actionSheetEvt} onOpenChange={(o) => { if (!o) setActionSheetEvt(null); }}>
+        <SheetContent side="bottom" className="rounded-t-3xl p-5">
+          <SheetTitle className="text-base font-bold text-foreground mb-1">
+            {actionSheetEvt?.title || "Event"}
+          </SheetTitle>
+          <p className="text-xs text-muted-foreground mb-4">Choose an action</p>
+          <div className="space-y-2">
+            <button
+              onClick={() => {
+                if (!actionSheetEvt) return;
+                snoozeToTomorrow(actionSheetEvt);
+                setActionSheetEvt(null);
+              }}
+              className="press w-full flex items-center gap-3 p-3 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-700 font-semibold text-sm"
+            >
+              <MoveRight className="size-4" />
+              Snooze to tomorrow
+            </button>
+            <button
+              onClick={() => {
+                if (!actionSheetEvt) return;
+                const snapshot = actionSheetEvt;
+                deleteEvent(snapshot.id);
+                setActionSheetEvt(null);
+                toast("Event deleted", {
+                  action: {
+                    label: "Undo",
+                    onClick: () => addEvent({
+                      title: snapshot.title, date: snapshot.date, time: snapshot.time,
+                      type: snapshot.type, priority: snapshot.priority, notes: snapshot.notes,
+                    }),
+                  },
+                });
+              }}
+              className="press w-full flex items-center gap-3 p-3 rounded-2xl bg-destructive/10 border border-destructive/20 text-destructive font-semibold text-sm"
+            >
+              <Trash2 className="size-4" />
+              Delete event
+            </button>
+            <button
+              onClick={() => setActionSheetEvt(null)}
+              className="press w-full p-3 rounded-2xl bg-secondary text-foreground font-semibold text-sm"
+            >
+              Cancel
+            </button>
+          </div>
+        </SheetContent>
+      </Sheet>
+
 
       {/* Add/Edit Sheet */}
       <Sheet open={sheetOpen} onOpenChange={(o) => { setSheetOpen(o); if (!o) resetForm(); }}>
