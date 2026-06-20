@@ -523,8 +523,8 @@ function EventsPage() {
             toggleExpanded(evt.id);
           }}
           className={`event-card-press bg-card border rounded-[1.25rem] shadow-[0_2px_12px_-4px_rgba(15,23,42,0.06)] p-4 cursor-pointer ${isJustAdded ? "animate-fly-down border-primary/40" : "animate-list-item-in border-border/60"} ${isCompleted ? "opacity-60" : ""} ${isMissed ? "opacity-80" : ""}`}
-          style2={undefined as never}
         >
+
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3 min-w-0">
               <span className={isJustCompleted ? "animate-check-pop inline-block" : "inline-block"}>
