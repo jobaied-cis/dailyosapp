@@ -539,10 +539,14 @@ function AddTaskSheet({ onClose }: { onClose: () => void }) {
   const [endTime, setEndTime] = useState("08:30");
   const [title, setTitle] = useState("");
   const [note, setNote] = useState("");
+  const [touched, setTouched] = useState(false);
+  const titleEmpty = !title.trim();
+  const showTitleError = touched && titleEmpty;
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim()) return;
+    setTouched(true);
+    if (titleEmpty) return;
     addTask({ time, endTime: endTime || undefined, title, note });
     onClose();
   };
