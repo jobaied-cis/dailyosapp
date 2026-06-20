@@ -125,6 +125,65 @@ export function toggleTask(id: string) {
   persist(cache.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t)));
 }
 
+function isRecurring(t: Task | undefined): boolean {
+  if (!t) return false;
+  const r = t.repeat;
+  if (!r || r === "none") return false;
+  if (r === "daily" || r === "weekdays" || r === "weekends") return true;
+  if (typeof r === "object" && Array.isArray(r.days) && r.days.length > 0) return true;
+  return false;
+}
+
+function todayDateKey(d = new Date()): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+/**
+ * Returns today's visible tasks with:
+ *  - per-day completion overlay (recurring tasks)
+ *  - per-day exception overlay (edit-only-today + skip-today)
+ *  - one-off tasks keep their existing `completed` boolean.
+ */
+export function useTasks(): Task[] {
+  const tasks = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  const [, force] = useReducer((x: number) => x + 1, 0);
+  useEffect(() => {
+    const u1 = subscribeCompletions(force);
+    const u2 = subscribeExceptions(force);
+    return () => {
+      u1();
+      u2();
+    };
+  }, []);
+
+  const today = new Date();
+  const weekday = today.getDay();
+  const dateKey = todayDateKey(today);
+
+  const out: Task[] = [];
+  for (const raw of tasks) {
+    if (!taskShowsOnWeekday(raw, weekday)) continue;
+    const recurring = isRecurring(raw);
+    const ex = recurring ? getException(raw.id, dateKey) : undefined;
+    if (ex?.skipped) continue;
+    const withException = ex ? applyException(raw, ex) : raw;
+    const completed = recurring ? isCompletedOn(raw.id, dateKey) : raw.completed;
+    out.push({ ...withException, completed });
+  }
+  return out.sort((a, b) => a.time.localeCompare(b.time));
+}
+
+export function toggleTask(id: string) {
+  ensureInit();
+  const t = cache.find((x) => x.id === id);
+  if (t && isRecurring(t)) {
+    const dateKey = todayDateKey();
+    setCompletedOn(id, !isCompletedOn(id, dateKey), dateKey);
+    return;
+  }
+  persist(cache.map((x) => (x.id === id ? { ...x, completed: !x.completed } : x)));
+}
+
 export function addTask(input: { time: string; endTime?: string; title: string; note?: string; repeat?: Repeat }) {
   ensureInit();
   if (!isValidTitle(input.title)) return;
@@ -143,6 +202,9 @@ export function addTask(input: { time: string; endTime?: string; title: string; 
 export function deleteTask(id: string) {
   ensureInit();
   persist(cache.filter((t) => t.id !== id));
+  // Sweep per-day data tied to this id.
+  clearCompletionsForTask(id);
+  clearExceptionsForTask(id);
 }
 
 export function resetDay() {
