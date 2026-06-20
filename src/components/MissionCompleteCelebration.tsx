@@ -4,10 +4,12 @@ interface Props {
   title: string;
   totalDays: number;
   totalTasks: number;
+  completedTasks?: number;
   finalStreak: number;
   finishedInDays?: number;
   onStartNew: () => void;
   onClose: () => void;
+  onViewMissions?: () => void;
 }
 
 const COLORS = ["#f43f5e", "#f59e0b", "#10b981", "#3b82f6", "#a855f7", "#ec4899"];
@@ -16,10 +18,12 @@ export function MissionCompleteCelebration({
   title,
   totalDays,
   totalTasks,
+  completedTasks,
   finalStreak,
   finishedInDays,
   onStartNew,
   onClose,
+  onViewMissions,
 }: Props) {
   const pieces = useMemo(
     () =>
