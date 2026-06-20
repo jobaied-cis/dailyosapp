@@ -218,12 +218,9 @@ export function AIRoutineSheet({ onClose }: { onClose: () => void }) {
                       >
                         {isSel && <Check className="size-3.5" strokeWidth={3} />}
                       </div>
-                      <div className="w-16 shrink-0 flex flex-col">
-                        <span className="text-[12px] font-mono font-semibold text-foreground/80 leading-tight">
-                          {s.time}
-                        </span>
-                        <span className="text-[10px] font-mono text-muted-foreground/70 leading-tight">
-                          {s.endTime}
+                      <div className="w-[88px] shrink-0 flex flex-col pt-0.5">
+                        <span className="text-[12px] font-mono font-semibold text-foreground/85 leading-tight">
+                          {s.time}–{s.endTime}
                         </span>
                       </div>
                       <div className="flex-1 min-w-0">
