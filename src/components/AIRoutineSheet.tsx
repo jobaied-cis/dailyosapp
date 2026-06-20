@@ -171,7 +171,7 @@ export function AIRoutineSheet({ onClose }: { onClose: () => void }) {
             {/* Generate button */}
             <button
               onClick={handleGenerate}
-              className="press w-full inline-flex items-center justify-center gap-2 bg-gradient-to-r from-primary to-primary/85 text-primary-foreground font-semibold py-3.5 rounded-2xl text-[15px] shadow-[0_8px_24px_-8px_rgba(37,99,235,0.5)] hover:shadow-[0_12px_28px_-8px_rgba(37,99,235,0.6)] transition-all"
+              className="press btn-shimmer w-full inline-flex items-center justify-center gap-2 bg-gradient-to-r from-primary to-primary/85 text-primary-foreground font-semibold py-3.5 rounded-2xl text-[15px] shadow-[0_8px_24px_-8px_rgba(37,99,235,0.5)] hover:shadow-[0_12px_28px_-8px_rgba(37,99,235,0.6)] transition-all"
             >
               <Sparkles className="size-4" strokeWidth={2.5} />
               Generate routine
