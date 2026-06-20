@@ -355,13 +355,13 @@ function RoutinePage() {
               return (
                 <Fragment key={t.id}>
                   {hereIndex === i && (
-                    <li className="flex items-center gap-2 px-1 py-1 select-none animate-fade-in-soft">
-                      <span className="relative flex size-2.5 shrink-0">
-                        <span className="absolute inset-0 rounded-full bg-primary/30 animate-ping" />
-                        <span className="relative size-2.5 rounded-full bg-primary animate-dot-glow" />
+                    <li className="flex items-center gap-2.5 px-1 py-1.5 select-none animate-fade-in-soft sticky top-0 z-10">
+                      <span className="relative flex size-3 shrink-0">
+                        <span className="absolute inset-0 rounded-full bg-primary/40 animate-ping" />
+                        <span className="relative size-3 rounded-full bg-primary shadow-[0_0_12px_2px_rgba(55,138,221,0.7)] animate-dot-glow" />
                       </span>
                       <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">You are here</span>
-                      <span className="flex-1 h-px bg-gradient-to-r from-primary/40 to-transparent" />
+                      <span className="flex-1 h-[2px] rounded-full bg-gradient-to-r from-primary via-primary/70 to-transparent" />
                     </li>
                   )}
                   <li
