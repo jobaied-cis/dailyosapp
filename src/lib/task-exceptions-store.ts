@@ -42,6 +42,15 @@ function read(): ExceptionMap {
 
 function write(m: ExceptionMap) {
   if (typeof window !== "undefined") localStorage.setItem(KEY, JSON.stringify(m));
+  listeners.forEach((l) => l());
+}
+
+const listeners = new Set<() => void>();
+export function subscribeExceptions(cb: () => void): () => void {
+  listeners.add(cb);
+  return () => {
+    listeners.delete(cb);
+  };
 }
 
 export function getException(taskId: string, date: Date | string = new Date()): TaskException | undefined {
