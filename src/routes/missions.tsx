@@ -1,4 +1,4 @@
-import { createFileRoute, Link, Outlet, useMatchRoute } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useMatchRoute, useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent, type KeyboardEvent } from "react";
 import { toast } from "sonner";
 import { addMission, deleteMission, missionProgress, uniqueMissionTitle, updateMission, useMissions } from "@/lib/missions-store";
