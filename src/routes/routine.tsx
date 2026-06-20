@@ -426,7 +426,7 @@ function RoutinePage() {
                         )}
                       </div>
                       <button
-                        onClick={() => toggleTask(t.id)}
+                        onClick={() => { if (!t.completed) haptic(10); toggleTask(t.id); }}
                         aria-label={t.completed ? "Mark incomplete" : "Mark complete"}
                         className={`press mt-0.5 size-7 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
                           t.completed
