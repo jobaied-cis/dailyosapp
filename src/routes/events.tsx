@@ -244,6 +244,53 @@ function EventsPage() {
     return () => clearTimeout(id);
   }, [lastAddedId]);
 
+  // FAB bounce: when no events, or after ~8s of user inactivity
+  useEffect(() => {
+    let idleTimer: number | undefined;
+    let loopTimer: number | undefined;
+    const trigger = () => { setFabBounce(true); window.setTimeout(() => setFabBounce(false), 750); };
+    const scheduleIdle = () => {
+      window.clearTimeout(idleTimer);
+      idleTimer = window.setTimeout(trigger, 8000);
+    };
+    const onActivity = () => scheduleIdle();
+    if (events.length === 0) {
+      trigger();
+      loopTimer = window.setInterval(trigger, 3200) as unknown as number;
+    } else {
+      scheduleIdle();
+      window.addEventListener("pointerdown", onActivity, { passive: true });
+      window.addEventListener("keydown", onActivity);
+      window.addEventListener("scroll", onActivity, { passive: true });
+    }
+    return () => {
+      window.clearTimeout(idleTimer);
+      if (loopTimer) window.clearInterval(loopTimer);
+      window.removeEventListener("pointerdown", onActivity);
+      window.removeEventListener("keydown", onActivity);
+      window.removeEventListener("scroll", onActivity);
+    };
+  }, [events.length]);
+
+  const toggleExpanded = (id: string) => {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const handleComplete = (evt: EventItem) => {
+    if (!evt.completed) {
+      setJustCompletedId(evt.id);
+      window.setTimeout(() => setJustCompletedId((c) => (c === evt.id ? null : c)), 700);
+      toast.success("Done ✓");
+    }
+    toggleEventCompletion(evt.id);
+  };
+
+  const snoozeToTomorrowEvt = (evt: EventItem) => snoozeToTomorrow(evt);
+
   const triggerShake = (field: string) => {
     setShakeField(field);
     setTimeout(() => setShakeField(null), 200);
