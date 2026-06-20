@@ -167,29 +167,40 @@ function MissionsListPage() {
             ) : (
               <h3 className="font-semibold text-foreground truncate">{m.title}</h3>
             )}
-            <span
-              className={
-                "text-sm font-bold tabular-nums shrink-0 " +
-                (completed ? "text-emerald-500" : "text-primary")
-              }
-            >
-              {pct}%
-            </span>
+            {!isEmpty && (
+              <span
+                className={
+                  "text-sm font-bold tabular-nums shrink-0 " +
+                  (completed ? "text-emerald-500" : "text-primary")
+                }
+              >
+                {pct}%
+              </span>
+            )}
           </div>
 
-          <p className="text-xs text-muted-foreground mt-1">
-            {done}/{total} tasks · {pct}%
-          </p>
+          {isEmpty ? (
+            <p className="text-xs text-muted-foreground mt-2 italic">
+              No tasks added yet — tap to start
+            </p>
+          ) : (
+            <>
+              <p className="text-xs text-muted-foreground mt-1">
+                {done}/{total} tasks · {pct}%
+              </p>
 
-          <div className="mt-2 h-1.5 w-full rounded-full bg-secondary overflow-hidden">
-            <div
-              className={
-                "h-full rounded-full transition-all duration-500 ease-out " +
-                (pct >= 100 ? "bg-emerald-500" : "bg-primary")
-              }
-              style={{ width: `${pct}%` }}
-            />
-          </div>
+              <div className="mt-2 h-1.5 w-full rounded-full bg-secondary overflow-hidden">
+                <div
+                  className={
+                    "h-full rounded-full transition-all duration-500 ease-out " +
+                    (pct >= 100 ? "bg-emerald-500" : "bg-primary")
+                  }
+                  style={{ width: `${pct}%` }}
+                />
+              </div>
+            </>
+          )}
+
 
           <div className="flex items-center flex-wrap gap-x-3 gap-y-1 mt-3">
             <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
