@@ -635,10 +635,14 @@ function EditTaskSheet({ task, onClose }: { task: Task; onClose: () => void }) {
   const [endTime, setEndTime] = useState(task.endTime || "");
   const [title, setTitle] = useState(task.title);
   const [note, setNote] = useState(task.note || "");
+  const [touched, setTouched] = useState(false);
+  const titleEmpty = !title.trim();
+  const showTitleError = touched && titleEmpty;
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim()) return;
+    setTouched(true);
+    if (titleEmpty) return;
     editTask(task.id, { time, endTime: endTime || undefined, title, note });
     onClose();
   };
