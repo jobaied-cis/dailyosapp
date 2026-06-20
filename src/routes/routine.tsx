@@ -5,6 +5,7 @@ import { useStreak } from "@/lib/streak-store";
 import { Check, ClipboardList, Play, Pause, Plus, Sparkles, Trash2, X } from "lucide-react";
 import { AIRoutineSheet } from "@/components/AIRoutineSheet";
 import { suggestNextTask } from "@/lib/ai-routine.functions";
+import { haptic } from "@/lib/haptic";
 import { toast } from "sonner";
 
 function toMinutes(hhmm: string): number {
