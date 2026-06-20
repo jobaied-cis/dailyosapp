@@ -185,7 +185,7 @@ function RoutinePage() {
       </div>
 
       {/* Progress */}
-      <div className="bg-card border border-border/60 border-t-0 rounded-b-[1.25rem] rounded-t-none -mt-3 px-4 pt-3 pb-3.5 shadow-[0_8px_32px_-12px_rgba(15,23,42,0.08)]">
+      <div className="bg-card border border-border/60 border-t-0 rounded-b-[1.25rem] rounded-t-none mt-0 px-4 pt-3 pb-3 shadow-[0_8px_32px_-12px_rgba(15,23,42,0.08)]">
         <div className="flex items-center justify-between mb-2">
           <span className="text-[13px] font-semibold text-foreground">Today&apos;s progress</span>
           <span className="text-[13px] font-semibold tabular-nums text-foreground">
