@@ -108,6 +108,35 @@ function MissionDetailPage() {
     }
   }, [mission, todayDay]);
 
+  useEffect(() => {
+    if (!mission || total === 0 || pct >= 100) return;
+    const key = "dailyos.missionMilestones";
+    let store: Record<string, number[]> = {};
+    try {
+      store = JSON.parse(localStorage.getItem(key) || "{}");
+    } catch {}
+    const seen = new Set<number>(store[mission.id] || []);
+    const milestones: { v: number; msg: string }[] = [
+      { v: 25, msg: "Good start 💪" },
+      { v: 50, msg: "Halfway there 🔥" },
+      { v: 75, msg: "Almost done 🚀" },
+    ];
+    let changed = false;
+    for (const m of milestones) {
+      if (pct >= m.v && !seen.has(m.v)) {
+        seen.add(m.v);
+        changed = true;
+        toast(m.msg);
+      }
+    }
+    if (changed) {
+      store[mission.id] = Array.from(seen);
+      try {
+        localStorage.setItem(key, JSON.stringify(store));
+      } catch {}
+    }
+  }, [mission, pct, total]);
+
   if (!mission) {
     return (
       <div className="space-y-4 pb-12 animate-pulse">
