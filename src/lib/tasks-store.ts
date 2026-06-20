@@ -1,5 +1,18 @@
 import { useSyncExternalStore } from "react";
 
+/**
+ * Repeat rule for a task.
+ * - undefined / "none": one-off task (always visible).
+ * - "daily": shows every day.
+ * - "weekdays": shows Mon–Fri.
+ * - { days: number[] }: custom — 0=Sun … 6=Sat.
+ */
+export type Repeat =
+  | "none"
+  | "daily"
+  | "weekdays"
+  | { days: number[] };
+
 export interface Task {
   id: string;
   time: string; // "HH:MM"
@@ -7,6 +20,7 @@ export interface Task {
   title: string;
   note?: string;
   completed: boolean;
+  repeat?: Repeat;
 }
 
 const STORAGE_KEY = "dailyos.tasks.v1";
@@ -17,7 +31,6 @@ function isValidTitle(s: string | undefined): boolean {
   if (!s) return false;
   const t = s.trim();
   if (t.length < MIN_TITLE_LEN) return false;
-  // require at least one letter or number (block pure punctuation / random keymashes are OK but must have some structure — keep permissive)
   return /[\p{L}\p{N}]/u.test(t);
 }
 
@@ -69,9 +82,24 @@ function getServerSnapshot(): Task[] {
   return EMPTY_TASKS;
 }
 
+/** Does this task's repeat rule include the given weekday? */
+export function taskShowsOnWeekday(t: Task, weekday: number): boolean {
+  const r = t.repeat;
+  if (!r || r === "none") return true;
+  if (r === "daily") return true;
+  if (r === "weekdays") return weekday >= 1 && weekday <= 5;
+  if (typeof r === "object" && Array.isArray(r.days)) {
+    return r.days.includes(weekday);
+  }
+  return true;
+}
+
 export function useTasks(): Task[] {
   const tasks = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
-  return [...tasks].sort((a, b) => a.time.localeCompare(b.time));
+  const today = new Date().getDay();
+  return [...tasks]
+    .filter((t) => taskShowsOnWeekday(t, today))
+    .sort((a, b) => a.time.localeCompare(b.time));
 }
 
 export function toggleTask(id: string) {
@@ -79,7 +107,7 @@ export function toggleTask(id: string) {
   persist(cache.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t)));
 }
 
-export function addTask(input: { time: string; endTime?: string; title: string; note?: string }) {
+export function addTask(input: { time: string; endTime?: string; title: string; note?: string; repeat?: Repeat }) {
   ensureInit();
   if (!isValidTitle(input.title)) return;
   const task: Task = {
@@ -89,6 +117,7 @@ export function addTask(input: { time: string; endTime?: string; title: string; 
     title: input.title.trim(),
     note: input.note?.trim() || undefined,
     completed: false,
+    repeat: input.repeat && input.repeat !== "none" ? input.repeat : undefined,
   };
   persist([...cache, task]);
 }
@@ -115,6 +144,9 @@ export function editTask(id: string, updates: Partial<Omit<Task, "id" | "complet
         endTime: updates.endTime !== undefined ? (updates.endTime || undefined) : t.endTime,
         title: updates.title !== undefined ? updates.title.trim() : t.title,
         note: updates.note !== undefined ? (updates.note?.trim() || undefined) : t.note,
+        repeat: updates.repeat !== undefined
+          ? (updates.repeat && updates.repeat !== "none" ? updates.repeat : undefined)
+          : t.repeat,
       };
     }),
   );
