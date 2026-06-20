@@ -246,15 +246,15 @@ function RoutinePage() {
           <div className="space-y-2">
             <div className="bg-card/60 border border-border/40 rounded-[1.25rem] p-4 text-center">
               {nextUp ? (
-                <p className="text-sm text-muted-foreground">
-                  <span className="text-foreground/70 font-medium">Free time</span>
+                <p className="text-sm text-muted-foreground animate-breathe">
+                  <span className="text-foreground/70 font-medium">🌿 Free time</span>
                   {" · next up: "}
                   <span className="text-foreground font-semibold">{nextUp.title}</span>
                   {" "}
                   <span className="font-mono text-xs">({nextUp.time}{minsUntil > 0 ? ` · ${formatDuration(minsUntil)}` : ""})</span>
                 </p>
               ) : (
-                <p className="text-sm text-muted-foreground">You&apos;re done for today ✨</p>
+                <p className="text-sm text-muted-foreground animate-task-bounce">You&apos;re done for today ✨</p>
               )}
               {!nextSuggestion && (
                 <button
