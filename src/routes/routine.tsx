@@ -182,6 +182,42 @@ function RoutinePage() {
         </div>
       )}
 
+      {/* Daily summary card */}
+      {showSummary && (() => {
+        const pctRound = todaySummary.pct;
+        const yPct = yesterdaySummary?.pct ?? null;
+        const diff = yPct !== null ? pctRound - yPct : null;
+        const emoji = allDone ? "🎉" : pctRound >= 80 ? "🔥" : pctRound >= 50 ? "💪" : "🌱";
+        return (
+          <div className="relative overflow-hidden rounded-[1.25rem] border border-primary/25 bg-gradient-to-br from-primary/10 via-card to-card p-4 shadow-[0_8px_32px_-12px_rgba(37,99,235,0.25)] animate-ai-panel-in">
+            <button
+              onClick={() => setSummaryDismissed(true)}
+              aria-label="Dismiss"
+              className="press absolute top-2.5 right-2.5 text-muted-foreground/60 hover:text-foreground p-1 rounded-full hover:bg-secondary"
+            >
+              <X className="size-4" />
+            </button>
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
+              {allDone ? "Day complete" : "Daily summary"}
+            </p>
+            <p className="text-[15px] font-semibold text-foreground mt-1.5 leading-snug">
+              You completed {todaySummary.done}/{todaySummary.total} tasks ({pctRound}%) {emoji}
+            </p>
+            {diff !== null && (
+              <p className="text-[12px] text-muted-foreground mt-1">
+                {diff > 0
+                  ? `▲ ${diff}% vs yesterday — keep it up!`
+                  : diff < 0
+                  ? `▼ ${Math.abs(diff)}% vs yesterday`
+                  : `Same as yesterday (${yPct}%)`}
+              </p>
+            )}
+          </div>
+        );
+      })()}
+
+
+
       {/* Summary + progress (merged) */}
       <div>
         <div className="grid grid-cols-3 gap-3">
