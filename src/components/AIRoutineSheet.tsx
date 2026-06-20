@@ -28,6 +28,10 @@ export function AIRoutineSheet({ onClose }: { onClose: () => void }) {
   const [selected, setSelected] = useState<Set<number>>(new Set());
 
   const handleGenerate = async () => {
+    if (!online) {
+      toast.error("Connect to internet to use AI Assist");
+      return;
+    }
     const text = prompt.trim();
     if (!text) {
       toast.error("Describe your day first");
