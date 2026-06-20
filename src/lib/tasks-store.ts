@@ -1,4 +1,20 @@
-import { useSyncExternalStore } from "react";
+import { useEffect, useReducer, useSyncExternalStore } from "react";
+import {
+  isCompletedOn,
+  setCompletedOn,
+  clearCompletionsForTask,
+  subscribeCompletions,
+} from "@/lib/task-completions-store";
+import {
+  applyException,
+  clearException,
+  clearExceptionsForTask,
+  getException,
+  setException,
+  skipToday,
+  subscribeExceptions,
+  type TaskException,
+} from "@/lib/task-exceptions-store";
 
 /**
  * Repeat rule for a task.
@@ -96,17 +112,64 @@ export function taskShowsOnWeekday(t: Task, weekday: number): boolean {
   return true;
 }
 
+
+function isRecurring(t: Task | undefined): boolean {
+  if (!t) return false;
+  const r = t.repeat;
+  if (!r || r === "none") return false;
+  if (r === "daily" || r === "weekdays" || r === "weekends") return true;
+  if (typeof r === "object" && Array.isArray(r.days) && r.days.length > 0) return true;
+  return false;
+}
+
+function todayDateKey(d = new Date()): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+/**
+ * Returns today's visible tasks with:
+ *  - per-day completion overlay (recurring tasks)
+ *  - per-day exception overlay (edit-only-today + skip-today)
+ *  - one-off tasks keep their existing `completed` boolean.
+ */
 export function useTasks(): Task[] {
   const tasks = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
-  const today = new Date().getDay();
-  return [...tasks]
-    .filter((t) => taskShowsOnWeekday(t, today))
-    .sort((a, b) => a.time.localeCompare(b.time));
+  const [, force] = useReducer((x: number) => x + 1, 0);
+  useEffect(() => {
+    const u1 = subscribeCompletions(force);
+    const u2 = subscribeExceptions(force);
+    return () => {
+      u1();
+      u2();
+    };
+  }, []);
+
+  const today = new Date();
+  const weekday = today.getDay();
+  const dateKey = todayDateKey(today);
+
+  const out: Task[] = [];
+  for (const raw of tasks) {
+    if (!taskShowsOnWeekday(raw, weekday)) continue;
+    const recurring = isRecurring(raw);
+    const ex = recurring ? getException(raw.id, dateKey) : undefined;
+    if (ex?.skipped) continue;
+    const withException = ex ? applyException(raw, ex) : raw;
+    const completed = recurring ? isCompletedOn(raw.id, dateKey) : raw.completed;
+    out.push({ ...withException, completed });
+  }
+  return out.sort((a, b) => a.time.localeCompare(b.time));
 }
 
 export function toggleTask(id: string) {
   ensureInit();
-  persist(cache.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t)));
+  const t = cache.find((x) => x.id === id);
+  if (t && isRecurring(t)) {
+    const dateKey = todayDateKey();
+    setCompletedOn(id, !isCompletedOn(id, dateKey), dateKey);
+    return;
+  }
+  persist(cache.map((x) => (x.id === id ? { ...x, completed: !x.completed } : x)));
 }
 
 export function addTask(input: { time: string; endTime?: string; title: string; note?: string; repeat?: Repeat }) {
@@ -127,6 +190,9 @@ export function addTask(input: { time: string; endTime?: string; title: string; 
 export function deleteTask(id: string) {
   ensureInit();
   persist(cache.filter((t) => t.id !== id));
+  // Sweep per-day data tied to this id.
+  clearCompletionsForTask(id);
+  clearExceptionsForTask(id);
 }
 
 export function resetDay() {
@@ -152,4 +218,65 @@ export function editTask(id: string, updates: Partial<Omit<Task, "id" | "complet
       };
     }),
   );
+}
+
+/**
+ * Edit a recurring task for today only — writes a per-day exception
+ * instead of mutating the template. For one-off tasks, falls back to editTask.
+ */
+export function editTaskToday(
+  id: string,
+  updates: Pick<TaskException, "time" | "endTime" | "title" | "note">,
+) {
+  ensureInit();
+  const t = cache.find((x) => x.id === id);
+  if (!t) return;
+  if (!isRecurring(t)) {
+    editTask(id, updates);
+    return;
+  }
+  if (updates.title !== undefined && !isValidTitle(updates.title)) return;
+  const patch: TaskException = {};
+  if (updates.time !== undefined) patch.time = updates.time;
+  if (updates.endTime !== undefined) patch.endTime = updates.endTime || undefined;
+  if (updates.title !== undefined) patch.title = updates.title.trim();
+  if (updates.note !== undefined) patch.note = updates.note?.trim() || undefined;
+  setException(id, patch, todayDateKey());
+}
+
+/** "Edit all future occurrences" — mutates the template. Alias of editTask. */
+export function editTaskFuture(
+  id: string,
+  updates: Partial<Omit<Task, "id" | "completed">>,
+) {
+  editTask(id, updates);
+}
+
+/** Skip a recurring task for today only. No-op for one-off tasks. */
+export function skipTaskToday(id: string) {
+  ensureInit();
+  const t = cache.find((x) => x.id === id);
+  if (!t || !isRecurring(t)) return;
+  skipToday(id, todayDateKey());
+}
+
+/** Undo a previous "skip today" or "edit only today" change. */
+export function clearTaskTodayOverride(id: string) {
+  clearException(id, todayDateKey());
+}
+
+/**
+ * Pure helper: derive today's completion stats from the rendered list
+ * (i.e. the result of useTasks()). Counts both recurring and one-off
+ * tasks because useTasks() has already overlaid per-day completion.
+ */
+export function getTodayCompletion(visibleTasks: Task[]): {
+  total: number;
+  done: number;
+  pct: number;
+} {
+  const total = visibleTasks.length;
+  const done = visibleTasks.filter((t) => t.completed).length;
+  const pct = total > 0 ? done / total : 0;
+  return { total, done, pct };
 }

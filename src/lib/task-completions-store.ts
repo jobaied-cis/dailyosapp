@@ -29,6 +29,15 @@ function read(): CompletionMap {
 
 function write(m: CompletionMap) {
   if (typeof window !== "undefined") localStorage.setItem(KEY, JSON.stringify(m));
+  listeners.forEach((l) => l());
+}
+
+const listeners = new Set<() => void>();
+export function subscribeCompletions(cb: () => void): () => void {
+  listeners.add(cb);
+  return () => {
+    listeners.delete(cb);
+  };
 }
 
 export function isCompletedOn(taskId: string, date: Date | string = new Date()): boolean {
