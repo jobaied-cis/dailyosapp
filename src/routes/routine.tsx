@@ -528,7 +528,7 @@ function RoutinePage() {
       </ul>
 
       <button
-        onClick={() => setAiOpen(true)}
+        onClick={() => { haptic(6); setAiOpen(true); }}
         aria-label="AI Assist"
         title="AI Assist"
         style={{ ["--tx" as never]: "0px" }}
