@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, Fragment } from "react";
 import { addTask, deleteTask, editTask, toggleTask, useTasks, type Task } from "@/lib/tasks-store";
 import { useStreak } from "@/lib/streak-store";
-import { Check, ClipboardList, Pencil, Play, Pause, Plus, Sparkles, Trash2, X } from "lucide-react";
+import { Check, ClipboardList, Play, Pause, Plus, Sparkles, Trash2, X } from "lucide-react";
 import { AIRoutineSheet } from "@/components/AIRoutineSheet";
 import { suggestNextTask } from "@/lib/ai-routine.functions";
 import { toast } from "sonner";
