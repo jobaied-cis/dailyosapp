@@ -482,10 +482,11 @@ function DaySection({
             <button
               type="submit"
               disabled={!value.trim()}
-              className="bg-primary text-primary-foreground font-semibold text-sm px-4 rounded-lg disabled:opacity-50"
+              className="bg-primary text-primary-foreground font-semibold text-sm px-4 rounded-lg disabled:opacity-50 press-spring"
             >
               Add
             </button>
+
           </form>
 
           {tasks.length === 0 ? (
