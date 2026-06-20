@@ -285,6 +285,7 @@ function MissionDetailPage() {
             const s = pendingStreakRef.current;
             setCelebrationDay(null);
             pendingStreakRef.current = null;
+            toast.success("Day complete! 🎉");
             if (s && s > 0) {
               toast(`🔥 Streak increased to ${s} day${s === 1 ? "" : "s"}!`);
             }
@@ -297,6 +298,7 @@ function MissionDetailPage() {
           title={mission.title}
           totalDays={dayCount}
           totalTasks={total}
+          completedTasks={done}
           finalStreak={streakInfo.streak}
           finishedInDays={Math.min(
             Math.max(
@@ -306,6 +308,10 @@ function MissionDetailPage() {
             dayCount,
           )}
           onClose={() => setMissionComplete(false)}
+          onViewMissions={() => {
+            setMissionComplete(false);
+            navigate({ to: "/missions" });
+          }}
           onStartNew={() => {
             setMissionComplete(false);
             navigate({ to: "/missions" });
