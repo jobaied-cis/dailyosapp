@@ -7,6 +7,7 @@ interface StreakState {
   lastCompletedDate: string | null; // YYYY-MM-DD of last day that hit threshold
   lastResetDate: string | null;     // YYYY-MM-DD we already reset for
   lastBrokenAt: number | null;      // timestamp of last reset (for one-time notification)
+  lastEvaluatedDate?: string | null; // YYYY-MM-DD up to which catch-up has run (reserved)
 }
 
 const STREAK_THRESHOLD = 0.8; // 80%
