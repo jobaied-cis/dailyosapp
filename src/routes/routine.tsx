@@ -502,15 +502,16 @@ function RoutinePage() {
         onClick={() => setAiOpen(true)}
         aria-label="AI Assist"
         title="AI Assist"
-        className="press fixed bottom-24 right-1/2 translate-x-[calc(50%+3.75rem)] size-12 rounded-full bg-card border border-primary/30 text-primary shadow-[0_8px_24px_-8px_rgba(37,99,235,0.35)] flex items-center justify-center hover:shadow-[0_12px_32px_-8px_rgba(37,99,235,0.45)] hover:border-primary/50 transition-all"
+        style={{ ["--tx" as never]: "0px" }}
+        className="press ai-float fixed bottom-24 right-1/2 translate-x-[calc(50%+3.75rem)] size-12 rounded-full bg-gradient-to-br from-card to-primary/10 border border-primary/30 text-primary flex items-center justify-center hover:border-primary/50 transition-all ai-glow"
       >
-        <Sparkles className="size-5" strokeWidth={2.5} />
+        <Sparkles className="size-5 animate-ai-spark" strokeWidth={2.5} />
       </button>
 
       <button
         onClick={() => setOpen(true)}
         aria-label="Add task"
-        className="press fixed bottom-24 right-1/2 translate-x-[calc(50%+7.5rem)] size-14 rounded-full bg-primary text-primary-foreground shadow-[0_8px_28px_-6px_rgba(37,99,235,0.45)] flex items-center justify-center hover:shadow-[0_12px_36px_-6px_rgba(37,99,235,0.55)]"
+        className="press fab-glow fixed bottom-24 right-1/2 translate-x-[calc(50%+7.5rem)] size-14 rounded-full bg-primary text-primary-foreground flex items-center justify-center"
       >
         <Plus className="size-6" strokeWidth={2.5} />
       </button>
