@@ -422,7 +422,7 @@ function DaySection({
                       background: s.c,
                       ["--dx" as never]: `${s.dx}px`,
                       ["--dy" as never]: `${s.dy}px`,
-                    } as React.CSSProperties
+                    } as CSSProperties
                   }
                 />
               ))}
