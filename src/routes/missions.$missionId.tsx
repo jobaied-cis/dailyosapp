@@ -522,7 +522,7 @@ function DaySection({
             <input
               value={value}
               onChange={(e) => setValue(e.target.value)}
-              placeholder={isToday ? "What's next?" : "Add a task…"}
+              placeholder="Write task (no need to add numbers)"
               maxLength={200}
               className={
                 "flex-1 bg-secondary rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-primary/30 text-sm " +
@@ -548,11 +548,13 @@ function DaySection({
 
           ) : (
             <ul className="space-y-2">
-              {tasks.map((t) => (
+              {tasks.map((t, i) => (
                 <TaskRow
                   key={t.id}
                   missionId={mission.id}
                   task={t}
+                  index={i + 1}
+                  locked={isFuture}
                   onStreakIncrease={onStreakIncrease}
                 />
               ))}
