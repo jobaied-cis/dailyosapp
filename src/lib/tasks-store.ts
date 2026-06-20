@@ -1,4 +1,20 @@
-import { useSyncExternalStore } from "react";
+import { useEffect, useReducer, useSyncExternalStore } from "react";
+import {
+  isCompletedOn,
+  setCompletedOn,
+  clearCompletionsForTask,
+  subscribeCompletions,
+} from "@/lib/task-completions-store";
+import {
+  applyException,
+  clearException,
+  clearExceptionsForTask,
+  getException,
+  setException,
+  skipToday,
+  subscribeExceptions,
+  type TaskException,
+} from "@/lib/task-exceptions-store";
 
 /**
  * Repeat rule for a task.
