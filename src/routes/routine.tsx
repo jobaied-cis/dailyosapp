@@ -2,7 +2,10 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, Fragment } from "react";
 import { addTask, deleteTask, editTask, toggleTask, useTasks, type Task, type Repeat } from "@/lib/tasks-store";
 import { useStreak } from "@/lib/streak-store";
-import { useDailySummary } from "@/lib/daily-summary-store";
+import { useDailySummary, getSummaryFor, type DaySummary } from "@/lib/daily-summary-store";
+import { getLastSeenSummaryDate, markSummarySeen } from "@/lib/summary-seen-store";
+import { pruneOldCompletions } from "@/lib/task-completions-store";
+import { pruneOldExceptions } from "@/lib/task-exceptions-store";
 import { Check, ClipboardList, Play, Pause, Plus, Repeat as RepeatIcon, Sparkles, Trash2, X, BookOpen, Footprints, Coffee, Brain, Droplet, Wind } from "lucide-react";
 import { AIRoutineSheet } from "@/components/AIRoutineSheet";
 import { suggestNextTask } from "@/lib/ai-routine.functions";
@@ -105,7 +108,7 @@ function RoutinePage() {
   const endOfDay = now !== null && tasks.length > 0 && nowMin >= lastEnd;
   const allDone = total > 0 && done === total;
   const reachedThreshold = total > 0 && done / total >= 0.8;
-  const { streak, justBroke } = useStreak(reachedThreshold, endOfDay && !reachedThreshold);
+  const { streak, justBroke, status: streakStatus } = useStreak(reachedThreshold, endOfDay && !reachedThreshold);
   const { today: todaySummary, yesterday: yesterdaySummary } = useDailySummary(done, total);
 
   // One-shot toast when streak breaks
@@ -116,6 +119,24 @@ function RoutinePage() {
   const [summaryDismissed, setSummaryDismissed] = useState(false);
   useEffect(() => { setSummaryDismissed(false); }, [allDone, endOfDay]);
   const showSummary = total > 0 && !summaryDismissed && (allDone || endOfDay);
+
+  // Yesterday-recap card: shown once on first open of a new day.
+  const [yesterdayRecap, setYesterdayRecap] = useState<DaySummary | null>(null);
+  useEffect(() => {
+    pruneOldCompletions();
+    pruneOldExceptions();
+    const y = new Date();
+    y.setDate(y.getDate() - 1);
+    const yKey = `${y.getFullYear()}-${String(y.getMonth() + 1).padStart(2, "0")}-${String(y.getDate()).padStart(2, "0")}`;
+    const ySum = getSummaryFor(yKey);
+    if (ySum && ySum.total > 0 && getLastSeenSummaryDate() !== yKey) {
+      setYesterdayRecap(ySum);
+    }
+  }, []);
+  const dismissYesterdayRecap = () => {
+    if (yesterdayRecap) markSummarySeen(yesterdayRecap.date);
+    setYesterdayRecap(null);
+  };
 
   // Index where "You are here" divider should appear (only after clock is set)
   let hereIndex = now === null ? -2 : tasks.findIndex((t) => toMinutes(t.time) > nowMin);
@@ -181,6 +202,54 @@ function RoutinePage() {
           </span>
         </div>
       )}
+
+      {/* Yesterday recap card — shown once on first open of a new day */}
+      {yesterdayRecap && (() => {
+        const r = yesterdayRecap;
+        const dayBefore = (() => {
+          const d = new Date(r.date + "T00:00:00");
+          d.setDate(d.getDate() - 1);
+          const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+          return getSummaryFor(k);
+        })();
+        const diff = dayBefore ? r.pct - dayBefore.pct : null;
+        const emoji = r.pct >= 100 ? "🎉" : r.pct >= 80 ? "🔥" : r.pct >= 50 ? "💪" : "🌱";
+        const streakLine =
+          streakStatus === "brokenToday"
+            ? "💪 Streak reset — fresh start today"
+            : r.pct >= 80
+            ? `🔥 Streak +1 (${streak} day${streak === 1 ? "" : "s"})`
+            : null;
+        return (
+          <div className="relative overflow-hidden rounded-[1.25rem] border border-primary/25 bg-gradient-to-br from-primary/10 via-card to-card p-4 shadow-[0_8px_32px_-12px_rgba(37,99,235,0.25)] animate-ai-panel-in">
+            <button
+              onClick={dismissYesterdayRecap}
+              aria-label="Dismiss"
+              className="press absolute top-2.5 right-2.5 text-muted-foreground/60 hover:text-foreground p-1 rounded-full hover:bg-secondary"
+            >
+              <X className="size-4" />
+            </button>
+            <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
+              Yesterday recap
+            </p>
+            <p className="text-[15px] font-semibold text-foreground mt-1.5 leading-snug">
+              You completed {r.done}/{r.total} tasks ({r.pct}%) {emoji}
+            </p>
+            {diff !== null && (
+              <p className="text-[12px] text-muted-foreground mt-1">
+                {diff > 0
+                  ? `▲ ${diff}% — better than the day before`
+                  : diff < 0
+                  ? `▼ ${Math.abs(diff)}% — slight drop from the day before`
+                  : `Same as the day before (${dayBefore!.pct}%)`}
+              </p>
+            )}
+            {streakLine && (
+              <p className="text-[12px] font-semibold text-primary mt-1">{streakLine}</p>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Daily summary card */}
       {showSummary && (() => {
