@@ -546,10 +546,12 @@ function TaskRow({
     setEditing(false);
   };
 
+  const [pop, setPop] = useState(false);
+
   return (
     <li
       className={
-        "flex items-center gap-3 bg-card border border-border/40 rounded-lg px-3 py-2.5 transition-all duration-200 hover:border-border active:scale-[0.99] " +
+        "flex items-center gap-3 bg-card border border-border/40 rounded-lg px-3 py-2.5 transition-all duration-200 hover:border-border active:scale-[0.99] animate-task-slide-in " +
         (task.completed ? "animate-fade-in" : "")
       }
     >
@@ -557,14 +559,21 @@ function TaskRow({
         type="checkbox"
         checked={task.completed}
         onChange={() => {
+          const wasCompleted = task.completed;
           const increased = toggleTask(missionId, task.id);
           if (increased) onStreakIncrease?.();
+          if (!wasCompleted) {
+            setPop(true);
+            setTimeout(() => setPop(false), 350);
+          }
         }}
         className={
           "size-4 accent-primary cursor-pointer transition-transform duration-150 ease-out hover:scale-110 active:scale-125 " +
+          (pop ? "animate-check-pop " : "") +
           (task.completed ? "scale-110" : "")
         }
       />
+
 
       {editing ? (
         <input
