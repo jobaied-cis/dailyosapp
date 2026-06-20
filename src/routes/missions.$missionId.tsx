@@ -156,22 +156,27 @@ function MissionDetailPage() {
             year: "numeric",
           });
           const diff = Math.ceil((endDate.getTime() - Date.now()) / DAY_MS);
-          const overdue = diff < 0;
-          const near = !overdue && diff <= 3;
-          const colorClass = overdue
-            ? "text-destructive"
-            : near
-              ? "text-orange-500"
-              : "text-blue-500";
-          const countdown = overdue
-            ? `Overdue ${Math.abs(diff)}d`
-            : diff === 0
-              ? "Due today"
-              : `${diff} day${diff === 1 ? "" : "s"} left`;
+          const completed = pct >= 100;
+          const overdue = !completed && diff < 0;
+          const near = !overdue && !completed && diff <= 3;
+          const colorClass = completed
+            ? "text-emerald-500"
+            : overdue
+              ? "text-amber-500"
+              : near
+                ? "text-orange-500"
+                : "text-blue-500";
+          const countdown = completed
+            ? "Completed ✓"
+            : overdue
+              ? `Overdue ${Math.abs(diff)}d`
+              : diff === 0
+                ? "Due today"
+                : `${diff} day${diff === 1 ? "" : "s"} left`;
           return (
             <p className={`text-xs font-semibold mt-1 ${colorClass}`}>
-              Ends {endLabel} · {countdown}
-              {(diff === 1 || diff === 0) && !overdue && " · ⚠️ Last day"}
+              {completed ? countdown : `Ends ${endLabel} · ${countdown}`}
+              {(diff === 1 || diff === 0) && !overdue && !completed && " · ⚠️ Last day"}
             </p>
           );
         })()}
@@ -184,8 +189,8 @@ function MissionDetailPage() {
               <Flame className="size-3" /> {streakInfo.streak} day{streakInfo.streak === 1 ? "" : "s"}
             </span>
           )}
-          {streakInfo.atRisk && (
-            <span className="inline-flex items-center gap-1 text-xs font-semibold text-destructive">
+          {streakInfo.atRisk && pct < 100 && (
+            <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-500">
               ⚠️ Streak at risk
             </span>
           )}
@@ -195,13 +200,41 @@ function MissionDetailPage() {
             </span>
           )}
         </div>
+        {(() => {
+          const msg =
+            pct >= 100
+              ? "Completed 🎉"
+              : pct >= 75
+                ? "Almost done"
+                : pct >= 50
+                  ? "Halfway there 💪"
+                  : pct >= 25
+                    ? "Good momentum"
+                    : pct > 0
+                      ? "Just getting started"
+                      : null;
+          return msg ? (
+            <p
+              className={
+                "text-xs font-semibold mt-2 " +
+                (pct >= 100 ? "text-emerald-500" : "text-primary")
+              }
+            >
+              {msg}
+            </p>
+          ) : null;
+        })()}
         <div className="mt-3 h-2 bg-secondary rounded-full overflow-hidden">
           <div
-            className="h-full bg-primary transition-all"
+            className={
+              "h-full transition-all duration-500 ease-out " +
+              (pct >= 100 ? "bg-emerald-500" : "bg-primary")
+            }
             style={{ width: `${pct}%` }}
           />
         </div>
       </section>
+
 
 
       <div className="space-y-5">
@@ -263,6 +296,13 @@ function MissionDetailPage() {
           totalDays={dayCount}
           totalTasks={total}
           finalStreak={streakInfo.streak}
+          finishedInDays={Math.min(
+            Math.max(
+              1,
+              Math.floor((todayMidnight.getTime() - startMidnight.getTime()) / DAY_MS) + 1,
+            ),
+            dayCount,
+          )}
           onClose={() => setMissionComplete(false)}
           onStartNew={() => {
             setMissionComplete(false);
@@ -341,7 +381,7 @@ function DaySection({
     <section
       id={`mission-day-${day}`}
       className={
-        "space-y-3 rounded-xl transition-all scroll-mt-4 " +
+        "space-y-3 rounded-xl transition-all scroll-mt-4 animate-fade-in " +
         (isToday
           ? "border border-primary/40 bg-primary/5 p-3 shadow-sm"
           : isFuture
@@ -354,10 +394,7 @@ function DaySection({
         onClick={isPast ? () => setExpanded((v) => !v) : undefined}
       >
         <div className="flex items-center gap-2 flex-wrap">
-          <h2 className="font-bold text-foreground text-base">
-            Day {day}
-            {isToday && <span className="text-primary"> (Today 🔥)</span>}
-          </h2>
+          <h2 className="font-bold text-foreground text-base">Day {day}</h2>
           <span className="text-xs text-muted-foreground">({dateLabel})</span>
           {isToday && (
             <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider bg-primary text-primary-foreground px-2 py-0.5 rounded-full">
@@ -369,9 +406,14 @@ function DaySection({
               <Lock className="size-3" /> Locked
             </span>
           )}
-          {allDone && !isToday && (
-            <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider bg-primary/15 text-primary px-2 py-0.5 rounded-full">
+          {isPast && allDone && (
+            <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider bg-emerald-500/15 text-emerald-500 px-2 py-0.5 rounded-full">
               <Check className="size-3" /> Done
+            </span>
+          )}
+          {isPast && !allDone && (
+            <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider bg-amber-500/15 text-amber-500 px-2 py-0.5 rounded-full">
+              Skipped
             </span>
           )}
           {isPast && (
@@ -388,13 +430,14 @@ function DaySection({
         </p>
       </div>
 
+
       {expanded && (
         <>
           <form onSubmit={handleAdd} className="flex gap-2">
             <input
               value={value}
               onChange={(e) => setValue(e.target.value)}
-              placeholder={`Add a task to Day ${day}…`}
+              placeholder={isToday ? "What's next?" : "Add a task…"}
               maxLength={200}
               className="flex-1 bg-secondary rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-primary/30 text-sm"
             />
@@ -465,7 +508,12 @@ function TaskRow({
   };
 
   return (
-    <li className="flex items-center gap-3 bg-card border border-border/40 rounded-lg px-3 py-2.5 transition-all duration-200 hover:border-border active:scale-[0.99]">
+    <li
+      className={
+        "flex items-center gap-3 bg-card border border-border/40 rounded-lg px-3 py-2.5 transition-all duration-200 hover:border-border active:scale-[0.99] " +
+        (task.completed ? "animate-fade-in" : "")
+      }
+    >
       <input
         type="checkbox"
         checked={task.completed}
@@ -497,7 +545,7 @@ function TaskRow({
         />
       ) : (
         <button
-          onClick={() => setEditing(true)}
+          onClick={() => !task.completed && setEditing(true)}
           className={
             "flex-1 text-left text-sm " +
             (task.completed ? "line-through text-muted-foreground" : "text-foreground")
@@ -506,7 +554,7 @@ function TaskRow({
           {task.title}
         </button>
       )}
-      {!editing && (
+      {!editing && !task.completed && (
         <button
           onClick={() => setEditing(true)}
           aria-label="Edit task"
@@ -515,13 +563,15 @@ function TaskRow({
           <Pencil className="size-4" />
         </button>
       )}
-      <button
-        onClick={() => deleteTask(missionId, task.id)}
-        aria-label="Delete task"
-        className="text-muted-foreground hover:text-destructive p-1 rounded"
-      >
-        <Trash2 className="size-4" />
-      </button>
+      {!task.completed && (
+        <button
+          onClick={() => deleteTask(missionId, task.id)}
+          aria-label="Delete task"
+          className="text-muted-foreground hover:text-destructive p-1 rounded"
+        >
+          <Trash2 className="size-4" />
+        </button>
+      )}
     </li>
   );
 }
