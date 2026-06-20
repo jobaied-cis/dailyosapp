@@ -6,6 +6,7 @@ import { Check, ClipboardList, Play, Pause, Plus, Sparkles, Trash2, X, BookOpen,
 import { AIRoutineSheet } from "@/components/AIRoutineSheet";
 import { suggestNextTask } from "@/lib/ai-routine.functions";
 import { haptic } from "@/lib/haptic";
+import { useOnline } from "@/lib/use-online";
 import { toast } from "sonner";
 
 function toMinutes(hhmm: string): number {
