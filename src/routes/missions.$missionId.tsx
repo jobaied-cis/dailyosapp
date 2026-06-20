@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState, useRef, useEffect, type FormEvent } from "react";
+import { useState, useRef, useEffect, type CSSProperties, type FormEvent } from "react";
 import { toast } from "sonner";
 import { ArrowLeft, Check, ChevronDown, Flame, Lock, Pencil, Plus, Trash2 } from "lucide-react";
 import {
@@ -270,11 +270,13 @@ function MissionDetailPage() {
 
       <button
         onClick={() => addDay(mission.id)}
-        className="w-full flex items-center justify-center gap-2 border border-dashed border-border rounded-xl py-3 text-sm font-semibold text-muted-foreground hover:text-foreground hover:border-foreground/40"
+        className="w-full flex items-center justify-center gap-2 rounded-xl py-3 text-sm font-bold text-white press-spring animate-add-day-glow"
+        style={{ background: "linear-gradient(135deg, #378ADD 0%, #5B9EE8 100%)" }}
       >
         <Plus className="size-4" />
         Add Day
       </button>
+
 
       {celebrationDay != null && (
         <DayCompleteCelebration
@@ -331,6 +333,7 @@ function DaySection({
 }) {
   const [value, setValue] = useState("");
   const [expanded, setExpanded] = useState(status !== "past");
+  const [burst, setBurst] = useState(false);
 
   useEffect(() => {
     setExpanded(status !== "past");
@@ -354,9 +357,14 @@ function DaySection({
         const streak = getMissionStreak(mission.id).streak;
         onDayComplete?.(day, streak);
       }
+      setBurst(true);
+      const t = setTimeout(() => setBurst(false), 1000);
+      prevAllDoneRef.current = allDone;
+      return () => clearTimeout(t);
     }
     prevAllDoneRef.current = allDone;
   }, [allDone, mission.id, day, onDayComplete]);
+
 
   const handleAdd = (e: FormEvent) => {
     e.preventDefault();
@@ -393,14 +401,39 @@ function DaySection({
         className={isPast ? "cursor-pointer select-none" : ""}
         onClick={isPast ? () => setExpanded((v) => !v) : undefined}
       >
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="relative flex items-center gap-2 flex-wrap">
           <h2 className="font-bold text-foreground text-base">Day {day}</h2>
           <span className="text-xs text-muted-foreground">({dateLabel})</span>
+          {burst && (
+            <span className="pointer-events-none absolute -top-1 left-12 h-0 w-0">
+              {[
+                { dx: -14, dy: -16, c: "#f59e0b" },
+                { dx: 16, dy: -14, c: "#10b981" },
+                { dx: -18, dy: 6, c: "#3b82f6" },
+                { dx: 18, dy: 8, c: "#ec4899" },
+                { dx: 0, dy: -20, c: "#a855f7" },
+                { dx: 4, dy: 14, c: "#f43f5e" },
+              ].map((s, i) => (
+                <span
+                  key={i}
+                  className="spark-burst absolute block h-1.5 w-1.5 rounded-full"
+                  style={
+                    {
+                      background: s.c,
+                      ["--dx" as never]: `${s.dx}px`,
+                      ["--dy" as never]: `${s.dy}px`,
+                    } as CSSProperties
+                  }
+                />
+              ))}
+            </span>
+          )}
           {isToday && (
             <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider bg-primary text-primary-foreground px-2 py-0.5 rounded-full">
               Today 🔥
             </span>
           )}
+
           {isFuture && (
             <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider bg-secondary text-muted-foreground px-2 py-0.5 rounded-full">
               <Lock className="size-3" /> Locked
@@ -449,10 +482,11 @@ function DaySection({
             <button
               type="submit"
               disabled={!value.trim()}
-              className="bg-primary text-primary-foreground font-semibold text-sm px-4 rounded-lg disabled:opacity-50"
+              className="bg-primary text-primary-foreground font-semibold text-sm px-4 rounded-lg disabled:opacity-50 press-spring"
             >
               Add
             </button>
+
           </form>
 
           {tasks.length === 0 ? (
@@ -512,10 +546,12 @@ function TaskRow({
     setEditing(false);
   };
 
+  const [pop, setPop] = useState(false);
+
   return (
     <li
       className={
-        "flex items-center gap-3 bg-card border border-border/40 rounded-lg px-3 py-2.5 transition-all duration-200 hover:border-border active:scale-[0.99] " +
+        "flex items-center gap-3 bg-card border border-border/40 rounded-lg px-3 py-2.5 transition-all duration-200 hover:border-border active:scale-[0.99] animate-task-slide-in " +
         (task.completed ? "animate-fade-in" : "")
       }
     >
@@ -523,14 +559,21 @@ function TaskRow({
         type="checkbox"
         checked={task.completed}
         onChange={() => {
+          const wasCompleted = task.completed;
           const increased = toggleTask(missionId, task.id);
           if (increased) onStreakIncrease?.();
+          if (!wasCompleted) {
+            setPop(true);
+            setTimeout(() => setPop(false), 350);
+          }
         }}
         className={
           "size-4 accent-primary cursor-pointer transition-transform duration-150 ease-out hover:scale-110 active:scale-125 " +
+          (pop ? "animate-check-pop " : "") +
           (task.completed ? "scale-110" : "")
         }
       />
+
 
       {editing ? (
         <input

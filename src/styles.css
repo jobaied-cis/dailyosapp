@@ -421,6 +421,26 @@ html { scroll-behavior: smooth; }
 }
 .animate-success-flash { animation: success-flash 520ms ease-out; }
 
+/* Add Day CTA: soft continuous glow */
+@keyframes add-day-glow {
+  0%, 100% { box-shadow: 0 6px 18px -6px rgba(55, 138, 221, 0.45), 0 0 0 0 rgba(91, 158, 232, 0.35); }
+  50% { box-shadow: 0 10px 26px -6px rgba(55, 138, 221, 0.65), 0 0 0 8px rgba(91, 158, 232, 0); }
+}
+.animate-add-day-glow { animation: add-day-glow 2.5s ease-in-out infinite; }
+
+/* New task slide-down + fade-in */
+@keyframes task-slide-in {
+  0% { opacity: 0; transform: translateY(-6px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.animate-task-slide-in { animation: task-slide-in 220ms cubic-bezier(0.22, 1, 0.36, 1) backwards; }
+
+/* Spring press feedback */
+.press-spring { transition: transform 150ms cubic-bezier(0.34, 1.56, 0.64, 1); }
+.press-spring:active { transform: scale(0.95); }
+
+
+
 
 /* Micro polish: smooth card layout transitions */
 .card-anim {
