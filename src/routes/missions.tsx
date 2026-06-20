@@ -76,12 +76,18 @@ function MissionsListPage() {
     e.preventDefault();
     const t = title.trim();
     if (!t) return;
-    addMission(t, priority, Math.max(1, Number(duration) || 1));
+    const finalTitle = uniqueMissionTitle(t);
+    addMission(finalTitle, priority, Math.max(1, Number(duration) || 1));
     setTitle("");
     setPriority(2);
     setDuration(7);
-    toast.success("Mission added");
+    if (finalTitle !== t) {
+      toast.success(`Mission added as "${finalTitle}"`);
+    } else {
+      toast.success("Mission added");
+    }
   };
+
 
   const startEdit = (m: { id: string; title: string }) => {
     setEditingId(m.id);
