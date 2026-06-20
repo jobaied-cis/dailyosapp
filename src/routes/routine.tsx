@@ -1,8 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, Fragment } from "react";
-import { addTask, deleteTask, editTask, toggleTask, useTasks, type Task } from "@/lib/tasks-store";
+import { addTask, deleteTask, editTask, toggleTask, useTasks, type Task, type Repeat } from "@/lib/tasks-store";
 import { useStreak } from "@/lib/streak-store";
-import { Check, ClipboardList, Play, Pause, Plus, Sparkles, Trash2, X, BookOpen, Footprints, Coffee, Brain, Droplet, Wind } from "lucide-react";
+import { useDailySummary } from "@/lib/daily-summary-store";
+import { Check, ClipboardList, Play, Pause, Plus, Repeat as RepeatIcon, Sparkles, Trash2, X, BookOpen, Footprints, Coffee, Brain, Droplet, Wind } from "lucide-react";
 import { AIRoutineSheet } from "@/components/AIRoutineSheet";
 import { suggestNextTask } from "@/lib/ai-routine.functions";
 import { haptic } from "@/lib/haptic";
@@ -103,7 +104,18 @@ function RoutinePage() {
   const lastEnd = tasks.length ? Math.max(...tasks.map((t) => getTaskEndMinutes(t))) : 0;
   const endOfDay = now !== null && tasks.length > 0 && nowMin >= lastEnd;
   const allDone = total > 0 && done === total;
-  const streak = useStreak(allDone, endOfDay && !allDone);
+  const reachedThreshold = total > 0 && done / total >= 0.8;
+  const { streak, justBroke } = useStreak(reachedThreshold, endOfDay && !reachedThreshold);
+  const { today: todaySummary, yesterday: yesterdaySummary } = useDailySummary(done, total);
+
+  // One-shot toast when streak breaks
+  useEffect(() => {
+    if (justBroke) toast("Streak broken — start again 💪", { icon: "💔" });
+  }, [justBroke]);
+
+  const [summaryDismissed, setSummaryDismissed] = useState(false);
+  useEffect(() => { setSummaryDismissed(false); }, [allDone, endOfDay]);
+  const showSummary = total > 0 && !summaryDismissed && (allDone || endOfDay);
 
   // Index where "You are here" divider should appear (only after clock is set)
   let hereIndex = now === null ? -2 : tasks.findIndex((t) => toMinutes(t.time) > nowMin);
