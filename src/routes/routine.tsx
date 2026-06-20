@@ -336,11 +336,12 @@ function RoutinePage() {
                     <div className="flex gap-2 mt-3">
                       <button
                         onClick={() => {
+                          haptic(10);
                           addTask({
                             time: nextSuggestion.time,
                             title: nextSuggestion.title,
                           });
-                          toast.success("Added to your routine");
+                          toast.success("Added to your routine ✨");
                           setNextSuggestion(null);
                         }}
                         className="press text-[12px] font-semibold px-3 py-1.5 rounded-full bg-primary text-primary-foreground shadow-sm"
