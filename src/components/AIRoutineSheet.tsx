@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Sparkles, X, Check, ArrowLeft } from "lucide-react";
+import { Sparkles, X, Check, ArrowLeft, WifiOff } from "lucide-react";
 import { toast } from "sonner";
 import { addTask, useTasks } from "@/lib/tasks-store";
 import { generateRoutine } from "@/lib/ai-routine.functions";
+import { useOnline } from "@/lib/use-online";
 
 const QUICK_CHIPS = [
   "Plan my study day",
@@ -20,12 +21,17 @@ type Suggestion = {
 
 export function AIRoutineSheet({ onClose }: { onClose: () => void }) {
   const existing = useTasks();
+  const online = useOnline();
   const [prompt, setPrompt] = useState("");
   const [phase, setPhase] = useState<"input" | "loading" | "result">("input");
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [selected, setSelected] = useState<Set<number>>(new Set());
 
   const handleGenerate = async () => {
+    if (!online) {
+      toast.error("Connect to internet to use AI Assist");
+      return;
+    }
     const text = prompt.trim();
     if (!text) {
       toast.error("Describe your day first");
@@ -168,10 +174,18 @@ export function AIRoutineSheet({ onClose }: { onClose: () => void }) {
               className="w-full bg-secondary rounded-2xl px-4 py-3.5 text-foreground text-[15px] outline-none focus:ring-2 focus:ring-primary/40 focus:bg-card focus:shadow-[0_0_0_4px_rgba(37,99,235,0.08)] transition-all resize-none placeholder:text-muted-foreground/70 leading-relaxed"
             />
 
+            {!online && (
+              <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/25 text-[12px] font-medium text-amber-700 dark:text-amber-400">
+                <WifiOff className="size-3.5 shrink-0" strokeWidth={2.5} />
+                Connect to internet to use AI Assist
+              </div>
+            )}
+
             {/* Generate button */}
             <button
               onClick={handleGenerate}
-              className="press btn-shimmer w-full inline-flex items-center justify-center gap-2 bg-gradient-to-r from-primary to-primary/85 text-primary-foreground font-semibold py-3.5 rounded-2xl text-[15px] shadow-[0_8px_24px_-8px_rgba(37,99,235,0.5)] hover:shadow-[0_12px_28px_-8px_rgba(37,99,235,0.6)] transition-all"
+              disabled={!online}
+              className="press btn-shimmer w-full inline-flex items-center justify-center gap-2 bg-gradient-to-r from-primary to-primary/85 text-primary-foreground font-semibold py-3.5 rounded-2xl text-[15px] shadow-[0_8px_24px_-8px_rgba(37,99,235,0.5)] hover:shadow-[0_12px_28px_-8px_rgba(37,99,235,0.6)] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Sparkles className="size-4" strokeWidth={2.5} />
               Generate routine
