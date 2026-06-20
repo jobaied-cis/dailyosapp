@@ -70,6 +70,7 @@ function MissionsListPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [draftTitle, setDraftTitle] = useState("");
   const [confirmId, setConfirmId] = useState<string | null>(null);
+  const [aiOpen, setAiOpen] = useState(false);
 
   const handleAdd = (e: FormEvent) => {
     e.preventDefault();
