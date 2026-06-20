@@ -289,7 +289,7 @@ function EventsPage() {
     toggleEventCompletion(evt.id);
   };
 
-  const snoozeToTomorrowEvt = (evt: EventItem) => snoozeToTomorrow(evt);
+  
 
   const triggerShake = (field: string) => {
     setShakeField(field);
