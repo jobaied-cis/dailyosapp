@@ -50,6 +50,7 @@ export const Route = createFileRoute("/routine")({
 
 function RoutinePage() {
   const tasks = useTasks();
+  const online = useOnline();
   const [open, setOpen] = useState(false);
   const [aiOpen, setAiOpen] = useState(false);
   type Suggestion = { icon: "study" | "walk" | "break" | "focus" | "hydrate" | "breathe" | "ai"; title: string; time: string; duration: string; reason: string };
