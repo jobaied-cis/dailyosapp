@@ -94,15 +94,8 @@ function catchUp(state: StreakState): { state: StreakState; brokeNow: boolean } 
     const day = getSummaryFor(cursor);
     if (day && day.total > 0) {
       if (day.pct >= STREAK_THRESHOLD_PCT) {
-        next.streak = (next.lastCompletedDate === addDays(cursor, -1) || next.lastCompletedDate === null)
-          ? (next.lastCompletedDate === addDays(cursor, -1) ? next.streak + 1 : 1)
-          : next.streak + 1;
-        // Simplification: an evaluated qualifying day always extends or starts a streak.
-        // If the previous qualifying day wasn't yesterday-of-cursor, we restart at 1.
-        if (next.lastCompletedDate !== addDays(cursor, -1)) next.streak = 1;
-        else next.streak = next.streak; // already incremented above; normalize below
-        // Recompute cleanly to avoid the double-bump from the ternary above:
-        next.streak = next.lastCompletedDate === addDays(cursor, -1) ? next.streak : 1;
+        const continues = next.lastCompletedDate === addDays(cursor, -1);
+        next.streak = continues ? next.streak + 1 : 1;
         next.lastCompletedDate = cursor;
       } else if (next.streak > 0) {
         next.streak = 0;
