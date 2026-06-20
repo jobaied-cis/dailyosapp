@@ -498,9 +498,16 @@ function DaySection({
             />
           )}
         </div>
-        <p className="text-xs text-muted-foreground mt-0.5">
-          {dayDone}/{dayTotal} ({dayPct}%)
-        </p>
+        {isFuture && (
+          <p className="text-[11px] text-muted-foreground mt-0.5 italic">
+            You can plan ahead — tasks unlock on this day
+          </p>
+        )}
+        {dayTotal > 0 && (
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {dayDone}/{dayTotal} ({dayPct}%)
+          </p>
+        )}
       </div>
 
 
@@ -515,7 +522,7 @@ function DaySection({
             <input
               value={value}
               onChange={(e) => setValue(e.target.value)}
-              placeholder={isToday ? "What's next?" : "Add a task…"}
+              placeholder="Write task (no need to add numbers)"
               maxLength={200}
               className={
                 "flex-1 bg-secondary rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-primary/30 text-sm " +
@@ -541,11 +548,13 @@ function DaySection({
 
           ) : (
             <ul className="space-y-2">
-              {tasks.map((t) => (
+              {tasks.map((t, i) => (
                 <TaskRow
                   key={t.id}
                   missionId={mission.id}
                   task={t}
+                  index={i + 1}
+                  locked={isFuture}
                   onStreakIncrease={onStreakIncrease}
                 />
               ))}
@@ -560,10 +569,14 @@ function DaySection({
 function TaskRow({
   missionId,
   task,
+  index,
+  locked,
   onStreakIncrease,
 }: {
   missionId: string;
   task: MissionTask;
+  index?: number;
+  locked?: boolean;
   onStreakIncrease?: () => void;
 }) {
   const [editing, setEditing] = useState(false);
@@ -603,7 +616,9 @@ function TaskRow({
       <input
         type="checkbox"
         checked={task.completed}
+        disabled={locked}
         onChange={() => {
+          if (locked) return;
           const wasCompleted = task.completed;
           const increased = toggleTask(missionId, task.id);
           if (increased) onStreakIncrease?.();
@@ -612,12 +627,21 @@ function TaskRow({
             setTimeout(() => setPop(false), 350);
           }
         }}
+        title={locked ? "Unlocks on this day" : undefined}
         className={
-          "size-4 accent-primary cursor-pointer transition-transform duration-150 ease-out hover:scale-110 active:scale-125 " +
+          "size-4 accent-primary transition-transform duration-150 ease-out " +
+          (locked
+            ? "cursor-not-allowed opacity-40"
+            : "cursor-pointer hover:scale-110 active:scale-125 ") +
           (pop ? "animate-check-pop " : "") +
           (task.completed ? "scale-110" : "")
         }
       />
+      {index != null && (
+        <span className="text-[11px] font-bold text-muted-foreground tabular-nums w-5 text-center shrink-0">
+          {index}.
+        </span>
+      )}
 
 
       {editing ? (
