@@ -201,6 +201,10 @@ function EventsPage() {
   const [quickShake, setQuickShake] = useState(false);
   const [pendingConfirm, setPendingConfirm] = useState<QuickAddParsed | null>(null);
   const [lastAddedId, setLastAddedId] = useState<string | null>(null);
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  const [justCompletedId, setJustCompletedId] = useState<string | null>(null);
+  const [actionSheetEvt, setActionSheetEvt] = useState<EventItem | null>(null);
+  const [fabBounce, setFabBounce] = useState(false);
 
   const titleRef = useRef<HTMLInputElement>(null);
   const dateRef = useRef<HTMLInputElement>(null);
