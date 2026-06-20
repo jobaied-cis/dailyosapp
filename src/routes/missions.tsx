@@ -138,13 +138,20 @@ function MissionsListPage() {
     const atRisk = streakInfo.atRisk;
     const deadline = deadlineLabel(m.startDate, m.days, pct);
     const hasStarted = done > 0;
+    const isEmpty = total === 0;
     return (
       <li key={m.id} className={"relative group " + (completed ? "opacity-70" : "")}>
         <Link
           to="/missions/$missionId"
           params={{ missionId: m.id }}
-          className="card-pop block relative overflow-hidden bg-card border border-border/60 rounded-xl p-4 pl-5 hover:border-primary/40 hover:shadow-md transition-all"
+          className={
+            "card-pop block relative overflow-hidden rounded-xl p-4 pl-5 hover:border-primary/40 hover:shadow-md transition-all " +
+            (isEmpty
+              ? "bg-card/60 border border-dashed border-border/70"
+              : "bg-card border border-border/60")
+          }
         >
+
           <span className={`absolute left-0 top-0 bottom-0 w-1 ${pri.bar}`} />
           <div className="flex items-center justify-between gap-3">
             {isEditing ? (
