@@ -586,9 +586,18 @@ function AddTaskSheet({ onClose }: { onClose: () => void }) {
               autoFocus
               value={title}
               onChange={(e) => setTitle(e.target.value)}
+              onBlur={() => setTouched(true)}
+              aria-invalid={showTitleError}
               placeholder="e.g. Morning run"
-              className="w-full bg-secondary rounded-xl px-4 py-3.5 text-foreground outline-none focus:ring-2 focus:ring-primary/40 focus:bg-card focus:shadow-[0_0_0_4px_rgba(37,99,235,0.08)] transition-all placeholder:text-muted-foreground/60 font-medium"
+              className={`w-full bg-secondary rounded-xl px-4 py-3.5 text-foreground outline-none focus:ring-2 focus:bg-card focus:shadow-[0_0_0_4px_rgba(37,99,235,0.08)] transition-all placeholder:text-muted-foreground/60 font-medium ${
+                showTitleError
+                  ? "ring-2 ring-destructive/60 focus:ring-destructive/60"
+                  : "focus:ring-primary/40"
+              }`}
             />
+            {showTitleError && (
+              <p className="mt-1.5 text-[11px] font-medium text-destructive">Title is required</p>
+            )}
           </Field>
           <Field label="Note (optional)">
             <textarea
