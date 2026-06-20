@@ -306,6 +306,18 @@ function MissionsListPage() {
         </div>
       </form>
 
+      <button
+        type="button"
+        onClick={() => setAiOpen(true)}
+        className="press-spring w-full inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white shadow-[0_8px_20px_-8px_rgba(55,138,221,0.6)]"
+        style={{ background: "linear-gradient(135deg, #378ADD 0%, #5B9EE8 100%)" }}
+      >
+        <Sparkles className="w-4 h-4" />
+        ✨ Plan with AI
+      </button>
+
+      <AIMissionPlannerSheet open={aiOpen} onOpenChange={setAiOpen} />
+
       {sortedMissions.length === 0 ? (
         <div className="text-center py-12 border border-dashed border-border/60 rounded-xl">
           <div className="inline-flex items-center justify-center size-12 rounded-full bg-secondary mb-3">
