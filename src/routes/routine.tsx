@@ -168,41 +168,41 @@ function RoutinePage() {
         </div>
       )}
 
-      {/* Summary cards */}
-      <div className="grid grid-cols-3 gap-3">
-        <button type="button" className="press bg-card border border-border/60 border-b-0 rounded-t-2xl rounded-b-none p-3 pb-2.5 text-center transition-all active:scale-[0.98]">
-          <p className="text-[22px] font-bold text-foreground leading-none">{done}</p>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground mt-1">Done</p>
-        </button>
-        <button type="button" className="press bg-card border border-border/60 border-b-0 rounded-t-2xl rounded-b-none p-3 pb-2.5 text-center transition-all active:scale-[0.98]">
-          <p className={`text-[22px] font-bold leading-none ${total - done > 0 ? "text-foreground" : "text-muted-foreground/60"}`}>{total - done}</p>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground mt-1">Left</p>
-        </button>
-        <button type="button" className="press bg-card border border-border/60 border-b-0 rounded-t-2xl rounded-b-none p-3 pb-2.5 text-center transition-all active:scale-[0.98]">
-          <p className="text-[18px] font-bold text-foreground leading-none">{formatDuration(plannedMin) || "0m"}</p>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground mt-1">Planned</p>
-        </button>
-      </div>
-
-      {/* Progress */}
-      <div className="bg-card border border-border/60 border-t-0 rounded-b-[1.25rem] rounded-t-none mt-0 px-4 pt-3 pb-3 shadow-[0_8px_32px_-12px_rgba(15,23,42,0.08)]">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-[13px] font-semibold text-foreground">Today&apos;s progress</span>
-          <span className="text-[13px] font-semibold tabular-nums text-foreground">
-            {Math.round(pct)}%
-            <span className={`ml-1.5 font-medium ${
-              allDone ? "text-primary" : missedCount > 0 ? "text-destructive" : "text-muted-foreground"
-            }`}>
-              • {progressLabel}
-            </span>
-          </span>
+      {/* Summary + progress (merged) */}
+      <div>
+        <div className="grid grid-cols-3 gap-3">
+          <button type="button" className="press bg-card border border-border/60 border-b-0 rounded-t-2xl rounded-b-none p-3 pb-2.5 text-center transition-all active:scale-[0.98]">
+            <p className="text-[22px] font-bold text-foreground leading-none">{done}</p>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground mt-1">Done</p>
+          </button>
+          <button type="button" className="press bg-card border border-border/60 border-b-0 rounded-t-2xl rounded-b-none p-3 pb-2.5 text-center transition-all active:scale-[0.98]">
+            <p className={`text-[22px] font-bold leading-none ${total - done > 0 ? "text-foreground" : "text-muted-foreground/60"}`}>{total - done}</p>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground mt-1">Left</p>
+          </button>
+          <button type="button" className="press bg-card border border-border/60 border-b-0 rounded-t-2xl rounded-b-none p-3 pb-2.5 text-center transition-all active:scale-[0.98]">
+            <p className="text-[18px] font-bold text-foreground leading-none">{formatDuration(plannedMin) || "0m"}</p>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground mt-1">Planned</p>
+          </button>
         </div>
-        <div className="h-[5px] rounded-full bg-secondary overflow-hidden">
-          <div
-            key={Math.round(pct)}
-            className="h-full bg-primary rounded-full transition-all duration-[400ms] ease-in-out animate-progress-pulse"
-            style={{ width: `${pct}%` }}
-          />
+        <div className="bg-card border border-border/60 rounded-b-2xl rounded-t-none px-4 pt-3 pb-3 shadow-[0_8px_32px_-12px_rgba(15,23,42,0.08)]">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[13px] font-semibold text-foreground">Today&apos;s progress</span>
+            <span className="text-[13px] font-semibold tabular-nums text-foreground">
+              {Math.round(pct)}%
+              <span className={`ml-1.5 font-medium ${
+                allDone ? "text-primary" : missedCount > 0 ? "text-destructive" : "text-muted-foreground"
+              }`}>
+                • {progressLabel}
+              </span>
+            </span>
+          </div>
+          <div className="h-[5px] rounded-full bg-secondary overflow-hidden">
+            <div
+              key={Math.round(pct)}
+              className="h-full bg-primary rounded-full transition-all duration-[400ms] ease-in-out animate-progress-pulse"
+              style={{ width: `${pct}%` }}
+            />
+          </div>
         </div>
       </div>
 
