@@ -506,13 +506,23 @@ function DaySection({
 
       {expanded && (
         <>
+          {mission.tasks.length === 0 && isToday && (
+            <p className="text-xs font-semibold text-primary animate-pulse">
+              Add your first task 🚀
+            </p>
+          )}
           <form onSubmit={handleAdd} className="flex gap-2">
             <input
               value={value}
               onChange={(e) => setValue(e.target.value)}
               placeholder={isToday ? "What's next?" : "Add a task…"}
               maxLength={200}
-              className="flex-1 bg-secondary rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-primary/30 text-sm"
+              className={
+                "flex-1 bg-secondary rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-primary/30 text-sm " +
+                (mission.tasks.length === 0 && isToday
+                  ? "ring-2 ring-primary/40 animate-pulse"
+                  : "")
+              }
             />
             <button
               type="submit"
