@@ -43,8 +43,11 @@ interface Curriculum {
 type TopicKey =
   | "python"
   | "javascript"
-  | "react"
   | "typescript"
+  | "react"
+  | "java"
+  | "cpp"
+  | "ai"
   | "html_css"
   | "sql"
   | "language"
@@ -56,11 +59,15 @@ type TopicKey =
   | "build"
   | "generic";
 
+// Order matters: more specific patterns first so "javascript" doesn't match "java" etc.
 const TOPIC_RULES: Array<{ key: TopicKey; patterns: RegExp[] }> = [
-  { key: "python", patterns: [/\bpython\b/i, /\bdjango\b/i, /\bflask\b/i] },
-  { key: "javascript", patterns: [/\bjavascript\b/i, /\bjs\b/i, /\bnode(\.js)?\b/i] },
-  { key: "typescript", patterns: [/\btypescript\b/i, /\bts\b/i] },
+  { key: "javascript", patterns: [/javascript/i, /\bjs\b/i, /\bnode(\.js)?\b/i] },
+  { key: "typescript", patterns: [/typescript/i, /\bts\b/i] },
   { key: "react", patterns: [/\breact\b/i, /\bnext\.?js\b/i] },
+  { key: "python", patterns: [/python/i, /\bdjango\b/i, /\bflask\b/i] },
+  { key: "java", patterns: [/\bjava\b/i, /\bspring\b/i, /\bjvm\b/i] },
+  { key: "cpp", patterns: [/\bc\+\+/i, /\bcpp\b/i] },
+  { key: "ai", patterns: [/\b(ai|ml|machine learning|deep learning|llm|neural)\b/i] },
   { key: "html_css", patterns: [/\bhtml\b/i, /\bcss\b/i, /\btailwind\b/i] },
   { key: "sql", patterns: [/\bsql\b/i, /\bpostgres\b/i, /\bmysql\b/i, /\bdatabase\b/i] },
   {
@@ -79,11 +86,13 @@ const TOPIC_RULES: Array<{ key: TopicKey; patterns: RegExp[] }> = [
 ];
 
 function detectTopic(goal: string): TopicKey {
+  const g = goal.toLowerCase();
   for (const r of TOPIC_RULES) {
-    if (r.patterns.some((p) => p.test(goal))) return r.key;
+    if (r.patterns.some((p) => p.test(g))) return r.key;
   }
   return "generic";
 }
+
 
 // ---------- RNG / helpers ----------
 
