@@ -185,23 +185,25 @@ function RoutinePage() {
       </div>
 
       {/* Progress */}
-      <div className="bg-card border border-border/60 rounded-[1.25rem] p-5 shadow-[0_8px_32px_-12px_rgba(15,23,42,0.08)]">
-        <div className="flex items-center justify-between mb-4">
-          <span className="text-sm font-semibold text-foreground">Today&apos;s progress</span>
-          <span className="text-sm font-bold text-foreground">{Math.round(pct)}%</span>
+      <div className="bg-card border border-border/60 border-t-0 rounded-b-[1.25rem] rounded-t-none -mt-3 px-4 pt-3 pb-3.5 shadow-[0_8px_32px_-12px_rgba(15,23,42,0.08)]">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-[13px] font-semibold text-foreground">Today&apos;s progress</span>
+          <span className="text-[13px] font-semibold tabular-nums text-foreground">
+            {Math.round(pct)}%
+            <span className={`ml-1.5 font-medium ${
+              allDone ? "text-primary" : missedCount > 0 ? "text-destructive" : "text-muted-foreground"
+            }`}>
+              • {progressLabel}
+            </span>
+          </span>
         </div>
-        <div className="h-2.5 rounded-full bg-secondary overflow-hidden">
+        <div className="h-[5px] rounded-full bg-secondary overflow-hidden">
           <div
             key={Math.round(pct)}
             className="h-full bg-primary rounded-full transition-all duration-[400ms] ease-in-out animate-progress-pulse"
             style={{ width: `${pct}%` }}
           />
         </div>
-        <p className={`text-xs font-medium text-center mt-3.5 ${
-          allDone ? "text-primary" : missedCount > 0 ? "text-destructive" : "text-muted-foreground"
-        }`}>
-          {progressLabel}
-        </p>
       </div>
 
       {/* Current Task */}
