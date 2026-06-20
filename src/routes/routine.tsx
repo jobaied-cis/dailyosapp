@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, Fragment } from "react";
 import { addTask, deleteTask, editTask, toggleTask, useTasks, type Task } from "@/lib/tasks-store";
 import { useStreak } from "@/lib/streak-store";
-import { Check, ClipboardList, Pencil, Play, Pause, Plus, Sparkles, Trash2, X } from "lucide-react";
+import { Check, ClipboardList, Play, Pause, Plus, Sparkles, Trash2, X } from "lucide-react";
 import { AIRoutineSheet } from "@/components/AIRoutineSheet";
 import { suggestNextTask } from "@/lib/ai-routine.functions";
 import { toast } from "sonner";
@@ -179,14 +179,14 @@ function RoutinePage() {
           const end = getTaskEndMinutes(activeTask);
           const remaining = Math.max(0, end - nowMin);
           return (
-            <div className="bg-card border border-primary/40 rounded-[1.25rem] p-5 shadow-[0_0_0_3px_rgba(37,99,235,0.08),0_8px_32px_-8px_rgba(37,99,235,0.2)] relative">
-              <button
-                onClick={() => { setEditingTask(activeTask); setEditOpen(true); }}
-                className="press absolute top-4 right-4 text-muted-foreground/50 hover:text-primary p-1.5 rounded-full hover:bg-primary/5 transition-colors"
-                aria-label="Edit task"
-              >
-                <Pencil className="size-4" />
-              </button>
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={() => { setEditingTask(activeTask); setEditOpen(true); }}
+              onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setEditingTask(activeTask); setEditOpen(true); } }}
+              className="press bg-card border border-primary/40 rounded-[1.25rem] p-5 shadow-[0_0_0_3px_rgba(37,99,235,0.08),0_8px_32px_-8px_rgba(37,99,235,0.2)] relative cursor-pointer text-left w-full"
+              aria-label={`Edit ${activeTask.title}`}
+            >
               <div className="text-center">
                 <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-primary px-2 py-1 rounded-full bg-primary/10">
                   Now 🔥
@@ -199,10 +199,10 @@ function RoutinePage() {
                   ⏳ {formatDuration(remaining)} left
                 </p>
                 <button
-                  onClick={() => setFocusTask(activeTask)}
+                  onClick={(e) => { e.stopPropagation(); setFocusTask(activeTask); }}
                   className="press mt-4 inline-flex items-center gap-2 bg-primary text-primary-foreground font-semibold px-5 py-2.5 rounded-full text-sm shadow-[0_4px_16px_-4px_rgba(37,99,235,0.4)] hover:shadow-[0_6px_20px_-4px_rgba(37,99,235,0.5)]"
                 >
-                  <Play className="size-4" strokeWidth={2.5} /> Start Focus
+                  <Play className="size-4" strokeWidth={2.5} /> Start Focus Session ({formatDuration(Math.min(remaining, 25)) || "25m"})
                 </button>
               </div>
             </div>
@@ -355,13 +355,13 @@ function RoutinePage() {
               return (
                 <Fragment key={t.id}>
                   {hereIndex === i && (
-                    <li className="flex items-center gap-2 px-1 py-1 select-none animate-fade-in-soft">
-                      <span className="relative flex size-2.5 shrink-0">
-                        <span className="absolute inset-0 rounded-full bg-primary/30 animate-ping" />
-                        <span className="relative size-2.5 rounded-full bg-primary animate-dot-glow" />
+                    <li className="flex items-center gap-2.5 px-1 py-1.5 select-none animate-fade-in-soft sticky top-0 z-10">
+                      <span className="relative flex size-3 shrink-0">
+                        <span className="absolute inset-0 rounded-full bg-primary/40 animate-ping" />
+                        <span className="relative size-3 rounded-full bg-primary shadow-[0_0_12px_2px_rgba(55,138,221,0.7)] animate-dot-glow" />
                       </span>
                       <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">You are here</span>
-                      <span className="flex-1 h-px bg-gradient-to-r from-primary/40 to-transparent" />
+                      <span className="flex-1 h-[2px] rounded-full bg-gradient-to-r from-primary via-primary/70 to-transparent" />
                     </li>
                   )}
                   <li
@@ -474,13 +474,13 @@ function RoutinePage() {
           </Fragment>
         ))}
         {hereIndex === -1 && tasks.length > 0 && (
-          <li className="flex items-center gap-2 px-1 py-1 select-none animate-fade-in-soft">
-            <span className="relative flex size-2.5 shrink-0">
-              <span className="absolute inset-0 rounded-full bg-primary/30 animate-ping" />
-              <span className="relative size-2.5 rounded-full bg-primary animate-dot-glow" />
+          <li className="flex items-center gap-2.5 px-1 py-1.5 select-none animate-fade-in-soft">
+            <span className="relative flex size-3 shrink-0">
+              <span className="absolute inset-0 rounded-full bg-primary/40 animate-ping" />
+              <span className="relative size-3 rounded-full bg-primary shadow-[0_0_12px_2px_rgba(55,138,221,0.7)] animate-dot-glow" />
             </span>
             <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary">You are here</span>
-            <span className="flex-1 h-px bg-gradient-to-r from-primary/40 to-transparent" />
+            <span className="flex-1 h-[2px] rounded-full bg-gradient-to-r from-primary via-primary/70 to-transparent" />
           </li>
         )}
 
@@ -539,10 +539,14 @@ function AddTaskSheet({ onClose }: { onClose: () => void }) {
   const [endTime, setEndTime] = useState("08:30");
   const [title, setTitle] = useState("");
   const [note, setNote] = useState("");
+  const [touched, setTouched] = useState(false);
+  const titleEmpty = !title.trim();
+  const showTitleError = touched && titleEmpty;
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim()) return;
+    setTouched(true);
+    if (titleEmpty) return;
     addTask({ time, endTime: endTime || undefined, title, note });
     onClose();
   };
@@ -582,9 +586,18 @@ function AddTaskSheet({ onClose }: { onClose: () => void }) {
               autoFocus
               value={title}
               onChange={(e) => setTitle(e.target.value)}
+              onBlur={() => setTouched(true)}
+              aria-invalid={showTitleError}
               placeholder="e.g. Morning run"
-              className="w-full bg-secondary rounded-xl px-4 py-3.5 text-foreground outline-none focus:ring-2 focus:ring-primary/40 focus:bg-card focus:shadow-[0_0_0_4px_rgba(37,99,235,0.08)] transition-all placeholder:text-muted-foreground/60 font-medium"
+              className={`w-full bg-secondary rounded-xl px-4 py-3.5 text-foreground outline-none focus:ring-2 focus:bg-card focus:shadow-[0_0_0_4px_rgba(37,99,235,0.08)] transition-all placeholder:text-muted-foreground/60 font-medium ${
+                showTitleError
+                  ? "ring-2 ring-destructive/60 focus:ring-destructive/60"
+                  : "focus:ring-primary/40"
+              }`}
             />
+            {showTitleError && (
+              <p className="mt-1.5 text-[11px] font-medium text-destructive">Title is required</p>
+            )}
           </Field>
           <Field label="Note (optional)">
             <textarea
@@ -622,10 +635,14 @@ function EditTaskSheet({ task, onClose }: { task: Task; onClose: () => void }) {
   const [endTime, setEndTime] = useState(task.endTime || "");
   const [title, setTitle] = useState(task.title);
   const [note, setNote] = useState(task.note || "");
+  const [touched, setTouched] = useState(false);
+  const titleEmpty = !title.trim();
+  const showTitleError = touched && titleEmpty;
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim()) return;
+    setTouched(true);
+    if (titleEmpty) return;
     editTask(task.id, { time, endTime: endTime || undefined, title, note });
     onClose();
   };
@@ -663,9 +680,18 @@ function EditTaskSheet({ task, onClose }: { task: Task; onClose: () => void }) {
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
+              onBlur={() => setTouched(true)}
+              aria-invalid={showTitleError}
               placeholder="e.g. Morning run"
-              className="w-full bg-secondary rounded-xl px-4 py-3.5 text-foreground outline-none focus:ring-2 focus:ring-primary/40 focus:bg-card focus:shadow-[0_0_0_4px_rgba(37,99,235,0.08)] transition-all placeholder:text-muted-foreground/60 font-medium"
+              className={`w-full bg-secondary rounded-xl px-4 py-3.5 text-foreground outline-none focus:ring-2 focus:bg-card focus:shadow-[0_0_0_4px_rgba(37,99,235,0.08)] transition-all placeholder:text-muted-foreground/60 font-medium ${
+                showTitleError
+                  ? "ring-2 ring-destructive/60 focus:ring-destructive/60"
+                  : "focus:ring-primary/40"
+              }`}
             />
+            {showTitleError && (
+              <p className="mt-1.5 text-[11px] font-medium text-destructive">Title is required</p>
+            )}
           </Field>
           <Field label="Note (optional)">
             <textarea

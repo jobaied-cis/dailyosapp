@@ -218,12 +218,9 @@ export function AIRoutineSheet({ onClose }: { onClose: () => void }) {
                       >
                         {isSel && <Check className="size-3.5" strokeWidth={3} />}
                       </div>
-                      <div className="w-16 shrink-0 flex flex-col">
-                        <span className="text-[12px] font-mono font-semibold text-foreground/80 leading-tight">
-                          {s.time}
-                        </span>
-                        <span className="text-[10px] font-mono text-muted-foreground/70 leading-tight">
-                          {s.endTime}
+                      <div className="w-[88px] shrink-0 flex flex-col pt-0.5">
+                        <span className="text-[12px] font-mono font-semibold text-foreground/85 leading-tight">
+                          {s.time}–{s.endTime}
                         </span>
                       </div>
                       <div className="flex-1 min-w-0">
@@ -256,7 +253,7 @@ export function AIRoutineSheet({ onClose }: { onClose: () => void }) {
                 className="press flex-[1.5] inline-flex items-center justify-center gap-2 bg-gradient-to-r from-primary to-primary/85 text-primary-foreground font-semibold py-3 rounded-2xl text-[14px] shadow-[0_8px_24px_-8px_rgba(37,99,235,0.5)] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
                 <Sparkles className="size-4" strokeWidth={2.5} />
-                Add to routine
+                Add selected to routine
               </button>
             </div>
           </div>
