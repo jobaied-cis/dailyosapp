@@ -5,6 +5,7 @@ interface Props {
   totalDays: number;
   totalTasks: number;
   finalStreak: number;
+  finishedInDays?: number;
   onStartNew: () => void;
   onClose: () => void;
 }
@@ -16,6 +17,7 @@ export function MissionCompleteCelebration({
   totalDays,
   totalTasks,
   finalStreak,
+  finishedInDays,
   onStartNew,
   onClose,
 }: Props) {
@@ -64,7 +66,9 @@ export function MissionCompleteCelebration({
         </div>
 
         <p className="text-sm text-foreground/80 mt-5">
-          You completed your goal — great discipline 👏
+          {finishedInDays != null
+            ? `Finished in ${finishedInDays} day${finishedInDays === 1 ? "" : "s"} — great discipline 👏`
+            : "You completed your goal — great discipline 👏"}
         </p>
 
         <div className="mt-5 flex flex-col gap-2">
