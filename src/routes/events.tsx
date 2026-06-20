@@ -1,149 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { toast } from "sonner";
 import { useEvents, addEvent, deleteEvent, toggleEventCompletion, updateEvent, getEventStatus } from "@/lib/events-store";
 import type { EventType, EventPriority, EventItem } from "@/lib/events-store";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
-import { CalendarDays, Clock, Plus, Trash2, Calendar, Pencil, Flame, Zap, AlertTriangle } from "lucide-react";
+import { CalendarDays, Clock, Plus, Trash2, Calendar, Pencil, Flame, Zap, AlertTriangle, Check, X, MoveRight } from "lucide-react";
 import { SwipeableRow } from "@/components/SwipeableRow";
+import { parseQuickAdd, validateEvent, prettyDate, prettyTime, type QuickAddParsed, type ValidationErrors } from "@/lib/event-validation";
 
 function pad(n: number) { return String(n).padStart(2, "0"); }
 function toDateStr(d: Date) { return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; }
 
-const WEEKDAYS = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
-
-const MONTHS = ["january","february","march","april","may","june","july","august","september","october","november","december"];
-const MONTHS_SHORT = ["jan","feb","mar","apr","may","jun","jul","aug","sept","sep","oct","nov","dec"];
-
-function monthIndex(name: string): number {
-  const n = name.toLowerCase();
-  let i = MONTHS.indexOf(n);
-  if (i >= 0) return i;
-  i = MONTHS_SHORT.indexOf(n);
-  if (i < 0) return -1;
-  // map short index -> month index
-  const map: Record<string, number> = { jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sept:8,sep:8,oct:9,nov:10,dec:11 };
-  return map[n] ?? -1;
-}
-
-function parseQuickAdd(input: string): { title: string; date: string; time: string } {
-  let text = " " + input.trim() + " ";
-  const today = new Date();
-  let date = toDateStr(today);
-  let time = "";
-  let dateFound = false;
-  let timeFound = false;
-
-  // time: 2pm, 10am, 5:30pm, 14:30 (optionally prefixed by "at")
-  const timeRe = /\b(at\s+)?(\d{1,2})(?::(\d{2}))?\s*(am|pm)\b|\b(\d{1,2}):(\d{2})\b/i;
-  const tm = text.match(timeRe);
-  if (tm) {
-    let h: number, m: number;
-    if (tm[4]) {
-      h = parseInt(tm[2], 10) % 12;
-      if (tm[4].toLowerCase() === "pm") h += 12;
-      m = tm[3] ? parseInt(tm[3], 10) : 0;
-    } else {
-      h = parseInt(tm[5], 10);
-      m = parseInt(tm[6], 10);
-    }
-    if (h >= 0 && h < 24 && m >= 0 && m < 60) {
-      time = `${pad(h)}:${pad(m)}`;
-      timeFound = true;
-      text = text.replace(tm[0], " ");
-    }
-  }
-
-  // ISO date 2025-12-05
-  const isoM = text.match(/\b(\d{4})-(\d{2})-(\d{2})\b/);
-  if (isoM) {
-    date = `${isoM[1]}-${isoM[2]}-${isoM[3]}`;
-    dateFound = true;
-    text = text.replace(isoM[0], " ");
-  }
-
-  // numeric date: 12/5, 12/5/2025
-  if (!dateFound) {
-    const nm = text.match(/\b(\d{1,2})[\/\-](\d{1,2})(?:[\/\-](\d{2,4}))?\b/);
-    if (nm) {
-      const mo = parseInt(nm[1], 10), da = parseInt(nm[2], 10);
-      let y = nm[3] ? parseInt(nm[3], 10) : today.getFullYear();
-      if (y < 100) y += 2000;
-      if (mo >= 1 && mo <= 12 && da >= 1 && da <= 31) {
-        date = `${y}-${pad(mo)}-${pad(da)}`;
-        dateFound = true;
-        text = text.replace(nm[0], " ");
-      }
-    }
-  }
-
-  // month name dates: "Dec 5", "December 5, 2025", "5 Dec"
-  if (!dateFound) {
-    const mp = MONTHS.concat(MONTHS_SHORT).join("|");
-    const md1 = text.match(new RegExp(`\\b(${mp})\\s+(\\d{1,2})(?:,?\\s+(\\d{4}))?\\b`, "i"));
-    const md2 = !md1 ? text.match(new RegExp(`\\b(\\d{1,2})\\s+(${mp})(?:,?\\s+(\\d{4}))?\\b`, "i")) : null;
-    const md = md1 || md2;
-    if (md) {
-      const monName = md1 ? md[1] : md[2];
-      const dayStr = md1 ? md[2] : md[1];
-      const mo = monthIndex(monName);
-      const da = parseInt(dayStr, 10);
-      if (mo >= 0 && da >= 1 && da <= 31) {
-        const y = md[3] ? parseInt(md[3], 10) : today.getFullYear();
-        date = `${y}-${pad(mo + 1)}-${pad(da)}`;
-        dateFound = true;
-        text = text.replace(md[0], " ");
-      }
-    }
-  }
-
-  // tonight (sets default evening time if no time given)
-  if (!dateFound && /\btonight\b/i.test(text)) {
-    date = toDateStr(today); dateFound = true;
-    if (!timeFound) { time = "20:00"; timeFound = true; }
-    text = text.replace(/\btonight\b/i, " ");
-  } else if (!dateFound && /\btoday\b/i.test(text)) {
-    date = toDateStr(today); dateFound = true;
-    text = text.replace(/\btoday\b/i, " ");
-  } else if (!dateFound && /\btomorrow\b/i.test(text)) {
-    const d = new Date(today); d.setDate(d.getDate() + 1);
-    date = toDateStr(d); dateFound = true;
-    text = text.replace(/\btomorrow\b/i, " ");
-  } else if (!dateFound) {
-    for (let i = 0; i < WEEKDAYS.length; i++) {
-      const re = new RegExp(`\\b(next\\s+)?${WEEKDAYS[i]}\\b`, "i");
-      const mm = text.match(re);
-      if (mm) {
-        const cur = today.getDay();
-        let diff = (i - cur + 7) % 7;
-        if (diff === 0 || mm[1]) diff = diff === 0 ? 7 : (mm[1] ? diff + 7 : diff);
-        if (diff === 0) diff = 7;
-        const d = new Date(today); d.setDate(d.getDate() + diff);
-        date = toDateStr(d); dateFound = true;
-        text = text.replace(re, " ");
-        break;
-      }
-    }
-  }
-
-  // clean filler words
-  let title = text.replace(/\b(on|at|the)\b/gi, " ").replace(/\s+/g, " ").trim();
-  if (!title) title = input.trim();
-
-  if (!timeFound) {
-    const n = new Date();
-    n.setHours(n.getHours() + 1, 0, 0, 0);
-    time = `${pad(n.getHours())}:${pad(n.getMinutes())}`;
-  }
-
-  return { title, date: dateFound ? date : toDateStr(today), time };
-}
-
-function getTodayStr(): string {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
+function getTodayStr(): string { return toDateStr(new Date()); }
 
 function typeEmoji(type: EventType): string {
   switch (type) {
@@ -182,6 +51,7 @@ function TodayFocusCard({ events, now }: { events: EventItem[]; now: number }) {
 
   const nextEvent = upcomingAll[0];
   const todayUpcoming = upcomingAll.filter((e) => e.date === today);
+  const within60 = nextEvent ? nextEvent.timeMs - now < 60 * 60_000 : false;
 
   return (
     <div className="bg-card border border-primary/30 rounded-[1.25rem] p-4 shadow-[0_2px_16px_-4px_rgba(37,99,235,0.18)] space-y-2">
@@ -196,7 +66,9 @@ function TodayFocusCard({ events, now }: { events: EventItem[]; now: number }) {
             <span className="text-lg">{typeEmoji(nextEvent.type)}</span>
             <p className="font-semibold text-foreground text-sm truncate">{nextEvent.title}</p>
           </div>
-          <p className="text-xs text-primary font-medium">⏳ {formatStartsIn(nextEvent.timeMs - now)}</p>
+          <p className={`text-xs text-primary font-medium ${within60 ? "animate-countdown-pulse" : ""}`}>
+            ⏳ {formatStartsIn(nextEvent.timeMs - now)}
+          </p>
           {todayUpcoming.length > 1 ? (
             <p className="text-[11px] text-muted-foreground">{todayUpcoming.length} events remaining today</p>
           ) : nextEvent.date !== today ? (
@@ -255,6 +127,8 @@ function formatCountdown(diffMs: number): string {
   return `Starts in ${minutes}m`;
 }
 
+const QUICK_SUGGESTIONS = ["Tomorrow 2pm", "Next Monday", "In 3 days"];
+
 function EventsPage() {
   const events = useEvents();
   const [title, setTitle] = useState("");
@@ -268,70 +142,212 @@ function EventsPage() {
   const [quick, setQuick] = useState("");
   const [, setTick] = useState(0);
   const [conflict, setConflict] = useState<EventItem | null>(null);
+  const [errors, setErrors] = useState<ValidationErrors>({});
+  const [shakeField, setShakeField] = useState<string | null>(null);
+  const [quickShake, setQuickShake] = useState(false);
+  const [pendingConfirm, setPendingConfirm] = useState<QuickAddParsed | null>(null);
+  const [lastAddedId, setLastAddedId] = useState<string | null>(null);
 
-  const handleQuickAdd = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key !== "Enter") return;
-    e.preventDefault();
-    const raw = quick.trim();
-    if (!raw) return;
-    const { title: t, date: d, time: tm } = parseQuickAdd(raw);
-    const c = findConflict(events, d, tm);
-    if (c) {
-      toast.warning(`⚠️ Conflict with: ${c.title} (${c.time})`);
-    }
-    addEvent({ title: t, date: d, time: tm, type: "Other", priority: "Medium", notes: "" });
-    setQuick("");
-    toast.success("Event added ⚡");
+  const titleRef = useRef<HTMLInputElement>(null);
+  const dateRef = useRef<HTMLInputElement>(null);
+  const timeRef = useRef<HTMLInputElement>(null);
+  const sectionRefs = {
+    today: useRef<HTMLDivElement>(null),
+    tomorrow: useRef<HTMLDivElement>(null),
+    week: useRef<HTMLDivElement>(null),
   };
 
+  // Live parse preview
+  const livePreview = useMemo(() => parseQuickAdd(quick), [quick]);
+
+  // Recent titles autocomplete
+  const recentTitles = useMemo(() => {
+    const seen = new Set<string>();
+    const out: string[] = [];
+    for (const e of events) {
+      const t = e.title.trim();
+      if (!t || seen.has(t.toLowerCase())) continue;
+      seen.add(t.toLowerCase());
+      out.push(t);
+      if (out.length >= 5) break;
+    }
+    return out;
+  }, [events]);
 
   useEffect(() => {
     const id = setInterval(() => setTick((t) => t + 1), 60000);
     return () => clearInterval(id);
   }, []);
 
+  // Clear last-added highlight after animation
+  useEffect(() => {
+    if (!lastAddedId) return;
+    const id = setTimeout(() => setLastAddedId(null), 800);
+    return () => clearTimeout(id);
+  }, [lastAddedId]);
+
+  const triggerShake = (field: string) => {
+    setShakeField(field);
+    setTimeout(() => setShakeField(null), 200);
+  };
+
+  const sectionForDate = (d: string): "today" | "tomorrow" | "week" | "upcoming" => {
+    const todayStr = getTodayStr();
+    const t = new Date(); t.setDate(t.getDate() + 1);
+    const tomorrowStr = toDateStr(t);
+    if (d === todayStr) return "today";
+    if (d === tomorrowStr) return "tomorrow";
+    const target = new Date(`${d}T00:00`).getTime();
+    const weekEnd = new Date(); weekEnd.setDate(weekEnd.getDate() + 7); weekEnd.setHours(23, 59, 59, 999);
+    if (target <= weekEnd.getTime()) return "week";
+    return "upcoming";
+  };
+
+  const sectionLabel = (s: "today" | "tomorrow" | "week" | "upcoming") =>
+    s === "today" ? "Today" : s === "tomorrow" ? "Tomorrow" : s === "week" ? "This Week" : "Upcoming";
+
+  const afterSave = (id: string | undefined, savedDate: string) => {
+    if (id) setLastAddedId(id);
+    const sec = sectionForDate(savedDate);
+    toast.success(`Added to ${sectionLabel(sec)} ✓`);
+    requestAnimationFrame(() => {
+      const ref =
+        sec === "today" ? sectionRefs.today.current :
+        sec === "tomorrow" ? sectionRefs.tomorrow.current :
+        sectionRefs.week.current;
+      ref?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  };
+
+  // Quick Add: Enter triggers confirmation chip (no auto-save)
+  const handleQuickKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key !== "Enter") return;
+    e.preventDefault();
+    const parsed = parseQuickAdd(quick);
+    if (parsed.confidence !== "high") {
+      setQuickShake(true);
+      setTimeout(() => setQuickShake(false), 200);
+      return;
+    }
+    setPendingConfirm(parsed);
+  };
+
+  const confirmQuickAdd = () => {
+    if (!pendingConfirm || pendingConfirm.confidence !== "high") return;
+    const result = validateEvent({
+      title: pendingConfirm.title,
+      date: pendingConfirm.date,
+      time: pendingConfirm.time,
+      type: "Other",
+      priority: "Medium",
+      notes: "",
+    });
+    if (!result.ok) {
+      setQuickShake(true);
+      setTimeout(() => setQuickShake(false), 200);
+      return;
+    }
+    const c = findConflict(events, result.data.date, result.data.time);
+    if (c) toast.warning(`⚠️ Conflict with: ${c.title} (${c.time})`);
+    const beforeIds = new Set(events.map((e) => e.id));
+    addEvent(result.data);
+    setQuick("");
+    setPendingConfirm(null);
+    // Find newly added id on next tick
+    requestAnimationFrame(() => {
+      const fresh = (typeof window !== "undefined") ? JSON.parse(localStorage.getItem("dailyos.events.v4") || "[]") : [];
+      const newOne = fresh.find((e: EventItem) => !beforeIds.has(e.id));
+      afterSave(newOne?.id, result.data.date);
+    });
+  };
+
+  const editFromQuick = () => {
+    if (!pendingConfirm) return;
+    setTitle(pendingConfirm.title);
+    setDate(pendingConfirm.date);
+    setTime(pendingConfirm.time);
+    setType("Other");
+    setPriority("Medium");
+    setNotes("");
+    setEditingId(null);
+    setErrors({});
+    setConflict(null);
+    setPendingConfirm(null);
+    setQuick("");
+    setSheetOpen(true);
+  };
+
+  const applySuggestion = (s: string) => {
+    setQuick((prev) => (prev.trim() ? `${prev.trim()} ${s}` : s));
+  };
+
   const resetForm = () => {
     setTitle(""); setDate(""); setTime("");
     setType("Other"); setPriority("Medium");
     setNotes(""); setEditingId(null);
     setConflict(null);
+    setErrors({});
   };
 
   const openAdd = () => { resetForm(); setSheetOpen(true); };
 
-  const handleAdd = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !date || !time) return;
+    const result = validateEvent({ title, date, time, type, priority, notes });
+    if (!result.ok) {
+      setErrors(result.errors);
+      const firstBad = result.errors.title ? "title" : result.errors.date ? "date" : "time";
+      triggerShake(firstBad);
+      (firstBad === "title" ? titleRef : firstBad === "date" ? dateRef : timeRef).current?.focus();
+      return;
+    }
+    setErrors({});
     if (!conflict) {
-      const c = findConflict(events, date, time);
+      const c = findConflict(events, result.data.date, result.data.time, editingId ?? undefined);
       if (c) { setConflict(c); return; }
     }
-    addEvent({ title: title.trim(), date, time, type, priority, notes });
-    setConflict(null);
-    resetForm();
-    setSheetOpen(false);
-    toast.success("Event added successfully");
+    if (editingId) {
+      updateEvent(editingId, result.data);
+      toast.success("Event updated");
+      setConflict(null);
+      resetForm();
+      setSheetOpen(false);
+    } else {
+      const beforeIds = new Set(events.map((ev) => ev.id));
+      addEvent(result.data);
+      setConflict(null);
+      resetForm();
+      setSheetOpen(false);
+      requestAnimationFrame(() => {
+        const fresh = (typeof window !== "undefined") ? JSON.parse(localStorage.getItem("dailyos.events.v4") || "[]") : [];
+        const newOne = fresh.find((ev: EventItem) => !beforeIds.has(ev.id));
+        afterSave(newOne?.id, result.data.date);
+      });
+    }
   };
 
   const handleEdit = (evt: EventItem) => {
     setTitle(evt.title); setDate(evt.date); setTime(evt.time);
     setType(evt.type); setPriority(evt.priority);
     setNotes(evt.notes); setEditingId(evt.id);
+    setErrors({});
     setSheetOpen(true);
   };
 
-  const handleUpdate = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingId || !title.trim() || !date || !time) return;
-    if (!conflict) {
-      const c = findConflict(events, date, time, editingId);
-      if (c) { setConflict(c); return; }
+  const snoozeToTomorrow = (evt: EventItem) => {
+    const d = new Date(`${evt.date}T00:00`);
+    d.setDate(d.getDate() + 1);
+    // If event is in the past, snooze to actual tomorrow
+    const today = new Date(); today.setHours(0,0,0,0);
+    if (d.getTime() <= today.getTime()) {
+      d.setTime(today.getTime());
+      d.setDate(d.getDate() + 1);
     }
-    updateEvent(editingId, { title: title.trim(), date, time, type, priority, notes });
-    setConflict(null);
-    resetForm();
-    setSheetOpen(false);
-    toast.success("Event updated");
+    updateEvent(evt.id, {
+      title: evt.title, date: toDateStr(d), time: evt.time,
+      type: evt.type, priority: evt.priority, notes: evt.notes,
+    });
+    toast.success("Moved to tomorrow");
   };
 
   const now = Date.now();
@@ -371,10 +387,10 @@ function EventsPage() {
     { label: "Today", count: todayCount, accent: "text-primary", bg: "bg-primary/5 border-primary/15" },
     { label: "Tomorrow", count: sectionTomorrow.length, accent: "text-foreground", bg: "bg-secondary/60 border-border/40" },
     { label: "Week", count: sectionWeek.length, accent: "text-foreground", bg: "bg-secondary/60 border-border/40" },
-    { label: "Missed", count: sectionMissed.length, accent: "text-destructive", bg: "bg-destructive/5 border-destructive/15" },
+    { label: "Catch up", count: sectionMissed.length, accent: "text-amber-600", bg: "bg-amber-500/5 border-amber-500/20" },
   ];
 
-  const renderEventCard = (evt: EventItem, i: number) => {
+  const renderEventCard = (evt: EventItem, i: number, opts?: { missed?: boolean }) => {
     const status = getEventStatus(evt, now);
     const evtDate = new Date(`${evt.date}T${evt.time}`);
     const isPast = evtDate.getTime() < now;
@@ -382,6 +398,7 @@ function EventsPage() {
     const formattedTime = evtDate.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
     const isCompleted = status === "completed";
     const isMissed = status === "missed";
+    const isJustAdded = lastAddedId === evt.id;
 
     return (
       <SwipeableRow
@@ -399,20 +416,16 @@ function EventsPage() {
             action: {
               label: "Undo",
               onClick: () => addEvent({
-                title: snapshot.title,
-                date: snapshot.date,
-                time: snapshot.time,
-                type: snapshot.type,
-                priority: snapshot.priority,
-                notes: snapshot.notes,
+                title: snapshot.title, date: snapshot.date, time: snapshot.time,
+                type: snapshot.type, priority: snapshot.priority, notes: snapshot.notes,
               }),
             },
           });
         }}
       >
         <div
-          style={{ animationDelay: `${Math.min(i * 50, 240)}ms` }}
-          className={`bg-card border border-border/60 rounded-[1.25rem] shadow-[0_2px_12px_-4px_rgba(15,23,42,0.06)] p-4 flex items-center justify-between animate-list-item-in ${isCompleted || isMissed ? "opacity-60" : ""}`}
+          style={isJustAdded ? undefined : { animationDelay: `${Math.min(i * 50, 240)}ms` }}
+          className={`bg-card border rounded-[1.25rem] shadow-[0_2px_12px_-4px_rgba(15,23,42,0.06)] p-4 flex items-center justify-between ${isJustAdded ? "animate-fly-down border-primary/40" : "animate-list-item-in border-border/60"} ${isCompleted ? "opacity-60" : ""} ${isMissed ? "opacity-80" : ""}`}
         >
           <div className="flex items-center gap-3 min-w-0">
             <Checkbox
@@ -421,8 +434,8 @@ function EventsPage() {
               aria-label={isCompleted ? "Mark as incomplete" : "Mark as completed"}
               className="shrink-0"
             />
-            <div className={`size-10 rounded-2xl flex items-center justify-center shrink-0 ${isPast ? "bg-muted" : "bg-primary/10"}`}>
-              <CalendarDays className={`size-5 ${isPast ? "text-muted-foreground" : "text-primary"}`} />
+            <div className={`size-10 rounded-2xl flex items-center justify-center shrink-0 ${isMissed ? "bg-amber-500/10" : isPast ? "bg-muted" : "bg-primary/10"}`}>
+              <CalendarDays className={`size-5 ${isMissed ? "text-amber-600" : isPast ? "text-muted-foreground" : "text-primary"}`} />
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-1.5 flex-wrap">
@@ -436,19 +449,28 @@ function EventsPage() {
                   {evt.priority}
                 </span>
                 {isMissed && (
-                  <span className="inline-flex items-center rounded-md border px-1.5 py-0.5 text-[10px] font-semibold bg-destructive/15 text-destructive border-destructive/20">
-                    Missed
+                  <span className="inline-flex items-center rounded-md border px-1 py-0.5 text-[9px] font-semibold bg-amber-500/10 text-amber-600 border-amber-500/20">
+                    Catch up
                   </span>
                 )}
               </div>
               <p className="text-xs text-muted-foreground mt-0.5">{formattedDate} · {formattedTime}</p>
               {!isCompleted && !isMissed && (
-                <p className="text-[11px] text-primary/80 mt-0.5 font-medium">
+                <p className={`text-[11px] text-primary/80 mt-0.5 font-medium ${evtDate.getTime() - now < 60 * 60_000 && evtDate.getTime() > now ? "animate-countdown-pulse" : ""}`}>
                   {formatCountdown(evtDate.getTime() - now)}
                 </p>
               )}
               {evt.notes && (
                 <p className="text-[11px] text-muted-foreground/80 mt-1 line-clamp-2">{evt.notes}</p>
+              )}
+              {opts?.missed && (
+                <button
+                  onClick={() => snoozeToTomorrow(evt)}
+                  className="press mt-1.5 inline-flex items-center gap-1 text-[11px] font-semibold text-amber-700 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 rounded-lg px-2 py-1"
+                >
+                  <MoveRight className="size-3" />
+                  Move to tomorrow
+                </button>
               )}
             </div>
           </div>
@@ -477,33 +499,8 @@ function EventsPage() {
     );
   };
 
-  const renderSection = (
-    title: string,
-    list: EventItem[],
-    opts?: { emptyMessage?: string; subtitle?: string; alwaysShow?: boolean },
-  ) => {
-    if (list.length === 0 && !opts?.alwaysShow) return null;
-    return (
-      <div className="space-y-2.5">
-        <div className="flex items-center gap-3 px-1">
-          <p className="text-[12px] font-extrabold uppercase tracking-[0.14em] text-foreground/80">
-            {title} ({list.length})
-          </p>
-          <div className="flex-1 h-px bg-border/60" />
-        </div>
-        {opts?.subtitle && list.length > 0 && (
-          <p className="text-[11px] text-muted-foreground px-1 -mt-1">{opts.subtitle}</p>
-        )}
-        {list.length === 0 ? (
-          <p className="text-sm text-muted-foreground px-1 py-2">{opts?.emptyMessage}</p>
-        ) : (
-          <div className="space-y-3">
-            {list.map((evt, i) => renderEventCard(evt, i))}
-          </div>
-        )}
-      </div>
-    );
-  };
+  const fieldErrCls = (field: "title" | "date" | "time") =>
+    `${errors[field] ? "ring-2 ring-destructive/60 border-destructive/60" : ""} ${shakeField === field ? "animate-shake" : ""}`;
 
   return (
     <div className="space-y-6 pb-24">
@@ -518,13 +515,10 @@ function EventsPage() {
         </div>
       </div>
 
-      {/* Dashboard (compact, lighter than Next Event) */}
+      {/* Dashboard */}
       <div className="grid grid-cols-4 gap-2">
         {dashboard.map((d) => (
-          <div
-            key={d.label}
-            className={`${d.bg} border rounded-xl px-2 py-1.5 text-center`}
-          >
+          <div key={d.label} className={`${d.bg} border rounded-xl px-2 py-1.5 text-center`}>
             <p className={`text-base font-bold leading-none ${d.accent}`}>{d.count}</p>
             <p className="text-[9px] font-semibold uppercase tracking-wide text-muted-foreground mt-1">
               {d.label}
@@ -533,40 +527,170 @@ function EventsPage() {
         ))}
       </div>
 
-      {/* Today Focus (visually stronger) */}
+      {/* Today Focus */}
       <div className="rounded-[1.35rem] p-[1.5px] bg-gradient-to-br from-primary/60 via-primary/25 to-transparent shadow-[0_10px_30px_-12px_rgba(37,99,235,0.5)]">
         <TodayFocusCard events={events} now={now} />
       </div>
 
       {/* Quick Add */}
-      <div className="relative">
-        <Zap className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-primary pointer-events-none" />
-        <input
-          type="text"
-          value={quick}
-          onChange={(e) => setQuick(e.target.value)}
-          onKeyDown={handleQuickAdd}
-          placeholder="⚡ Quick add: exam tomorrow 2pm"
-          className="w-full bg-card border border-border/60 rounded-2xl pl-9 pr-3 py-3 text-sm font-medium text-foreground outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40 placeholder:text-muted-foreground/70 shadow-[0_2px_12px_-4px_rgba(15,23,42,0.06)]"
-        />
+      <div className="space-y-2">
+        <div className={`relative ${quickShake ? "animate-shake" : ""}`}>
+          <Zap className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-primary pointer-events-none" />
+          <input
+            type="text"
+            value={quick}
+            onChange={(e) => { setQuick(e.target.value); setPendingConfirm(null); }}
+            onKeyDown={handleQuickKey}
+            placeholder="⚡ Quick add: exam tomorrow 2pm"
+            list="recent-event-titles"
+            className="w-full bg-card border border-border/60 rounded-2xl pl-9 pr-3 py-3 text-sm font-medium text-foreground outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/40 placeholder:text-muted-foreground/70 shadow-[0_2px_12px_-4px_rgba(15,23,42,0.06)]"
+          />
+          {recentTitles.length > 0 && (
+            <datalist id="recent-event-titles">
+              {recentTitles.map((t) => <option key={t} value={t} />)}
+            </datalist>
+          )}
+        </div>
+
+        {/* Suggestion chips */}
+        <div className="flex flex-wrap gap-1.5">
+          {QUICK_SUGGESTIONS.map((s) => (
+            <button
+              key={s}
+              type="button"
+              onClick={() => applySuggestion(s)}
+              className="press text-[11px] font-medium px-2.5 py-1 rounded-full bg-secondary text-foreground/80 border border-border/60 hover:bg-primary/10 hover:text-primary hover:border-primary/30"
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+
+        {/* Live preview / confirm chip */}
+        {quick.trim() && !pendingConfirm && (
+          <p className={`text-[12px] px-1 ${livePreview.confidence === "high" ? "text-primary" : livePreview.confidence === "low" ? "text-amber-600" : "text-muted-foreground"}`}>
+            {livePreview.confidence === "high" ? "✨ " : livePreview.confidence === "low" ? "⚠️ " : "💡 "}
+            {livePreview.hint}
+            {livePreview.confidence === "high" && <span className="text-muted-foreground"> · Press Enter to confirm</span>}
+          </p>
+        )}
+
+        {pendingConfirm && (
+          <div className="animate-fly-down bg-primary/5 border border-primary/30 rounded-2xl p-3 flex items-center gap-2">
+            <div className="flex-1 min-w-0">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-primary mb-0.5">Confirm</p>
+              <p className="text-sm font-semibold text-foreground truncate">
+                📅 {prettyDate(pendingConfirm.date)} • {prettyTime(pendingConfirm.time)} — {pendingConfirm.title}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={editFromQuick}
+              aria-label="Edit before saving"
+              className="press p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary"
+            >
+              <Pencil className="size-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setPendingConfirm(null)}
+              aria-label="Cancel"
+              className="press p-2 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+            >
+              <X className="size-4" />
+            </button>
+            <button
+              type="button"
+              onClick={confirmQuickAdd}
+              aria-label="Confirm and save"
+              className="press p-2 rounded-xl bg-primary text-primary-foreground"
+            >
+              <Check className="size-4" />
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* Event List (grouped) */}
+      {/* Event List */}
       <div className="space-y-6">
         {events.length === 0 ? (
-          <div className="text-center text-muted-foreground py-16">
-            <div className="inline-flex items-center justify-center size-16 rounded-full bg-secondary mb-5">
-              <CalendarDays className="size-7 text-muted-foreground" />
+          <div className="text-center py-14">
+            <div className="inline-flex items-center justify-center size-16 rounded-full bg-primary/10 mb-4">
+              <span className="text-3xl">🎉</span>
             </div>
-            <p className="text-base font-semibold text-foreground">No events yet</p>
-            <p className="text-sm text-muted-foreground mt-1.5">Tap + to add your first event.</p>
+            <p className="text-base font-semibold text-foreground">Free day 🎉</p>
+            <p className="text-sm text-muted-foreground mt-1">Plan something new</p>
+            <button
+              onClick={openAdd}
+              className="press mt-4 inline-flex items-center gap-1.5 bg-primary text-primary-foreground rounded-2xl px-4 py-2 text-sm font-semibold shadow-[0_4px_16px_-4px_rgba(37,99,235,0.35)]"
+            >
+              <Plus className="size-4" />
+              Add event
+            </button>
           </div>
         ) : (
           <>
-            {renderSection("📌 Today", sectionToday, { alwaysShow: true, emptyMessage: "No events today 🎉" })}
-            {renderSection("📅 Tomorrow", sectionTomorrow)}
-            {renderSection("📆 This Week", sectionWeek)}
-            {renderSection("❌ Missed", sectionMissed, { subtitle: "You missed these events" })}
+            <div ref={sectionRefs.today} className="space-y-2.5 scroll-mt-4">
+              <div className="flex items-center gap-3 px-1">
+                <p className="text-[12px] font-extrabold uppercase tracking-[0.14em] text-foreground/80">
+                  📌 Today ({sectionToday.length})
+                </p>
+                <div className="flex-1 h-px bg-border/60" />
+              </div>
+              {sectionToday.length === 0 ? (
+                <div className="bg-secondary/40 border border-border/40 border-dashed rounded-2xl p-5 text-center">
+                  <p className="text-2xl mb-1">🎉</p>
+                  <p className="text-sm font-semibold text-foreground">Free day</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Plan something new</p>
+                  <button
+                    onClick={openAdd}
+                    className="press mt-3 inline-flex items-center gap-1.5 bg-primary text-primary-foreground rounded-xl px-3 py-1.5 text-xs font-semibold"
+                  >
+                    <Plus className="size-3.5" />
+                    Add event
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-3">{sectionToday.map((evt, i) => renderEventCard(evt, i))}</div>
+              )}
+            </div>
+
+            {sectionTomorrow.length > 0 && (
+              <div ref={sectionRefs.tomorrow} className="space-y-2.5 scroll-mt-4">
+                <div className="flex items-center gap-3 px-1">
+                  <p className="text-[12px] font-extrabold uppercase tracking-[0.14em] text-foreground/80">
+                    📅 Tomorrow ({sectionTomorrow.length})
+                  </p>
+                  <div className="flex-1 h-px bg-border/60" />
+                </div>
+                <div className="space-y-3">{sectionTomorrow.map((evt, i) => renderEventCard(evt, i))}</div>
+              </div>
+            )}
+
+            {sectionWeek.length > 0 && (
+              <div ref={sectionRefs.week} className="space-y-2.5 scroll-mt-4">
+                <div className="flex items-center gap-3 px-1">
+                  <p className="text-[12px] font-extrabold uppercase tracking-[0.14em] text-foreground/80">
+                    📆 This Week ({sectionWeek.length})
+                  </p>
+                  <div className="flex-1 h-px bg-border/60" />
+                </div>
+                <div className="space-y-3">{sectionWeek.map((evt, i) => renderEventCard(evt, i))}</div>
+              </div>
+            )}
+
+            {sectionMissed.length > 0 && (
+              <div className="space-y-2.5">
+                <div className="flex items-center gap-3 px-1">
+                  <p className="text-[12px] font-extrabold uppercase tracking-[0.14em] text-amber-700">
+                    Catch up ({sectionMissed.length})
+                  </p>
+                  <div className="flex-1 h-px bg-amber-500/30" />
+                </div>
+                <p className="text-[11px] text-muted-foreground px-1 -mt-1">Tap “Move to tomorrow” to reschedule.</p>
+                <div className="space-y-3">{sectionMissed.map((evt, i) => renderEventCard(evt, i, { missed: true }))}</div>
+              </div>
+            )}
           </>
         )}
       </div>
@@ -586,22 +710,44 @@ function EventsPage() {
           <SheetTitle className="text-base font-bold text-foreground mb-3">
             {editingId ? "Edit Event" : "Add Event"}
           </SheetTitle>
-          <form onSubmit={editingId ? handleUpdate : handleAdd} className="space-y-3">
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Event title (e.g. Java Exam)"
-              className="w-full bg-secondary rounded-xl px-3 py-2.5 text-foreground outline-none focus:ring-2 focus:ring-primary/30 placeholder:text-muted-foreground/60 font-semibold text-sm"
-            />
+          <form onSubmit={handleSubmit} className="space-y-3" noValidate>
+            <div>
+              <input
+                ref={titleRef}
+                type="text"
+                value={title}
+                onChange={(e) => { setTitle(e.target.value); if (errors.title) setErrors((p) => ({ ...p, title: undefined })); }}
+                placeholder="Event title (e.g. Java Exam)"
+                className={`w-full bg-secondary rounded-xl px-3 py-2.5 text-foreground outline-none focus:ring-2 focus:ring-primary/30 placeholder:text-muted-foreground/60 font-semibold text-sm border border-transparent ${fieldErrCls("title")}`}
+              />
+              {errors.title && <p className="text-[11px] text-destructive mt-1 px-1">{errors.title}</p>}
+            </div>
             <div className="grid grid-cols-2 gap-3">
-              <div className="relative">
-                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
-                <input type="date" value={date} onChange={(e) => { setDate(e.target.value); setConflict(null); }} className="w-full bg-secondary rounded-xl pl-9 pr-3 py-2.5 text-foreground outline-none focus:ring-2 focus:ring-primary/30 font-semibold text-sm appearance-none" />
+              <div>
+                <div className="relative">
+                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
+                  <input
+                    ref={dateRef}
+                    type="date"
+                    value={date}
+                    onChange={(e) => { setDate(e.target.value); setConflict(null); if (errors.date) setErrors((p) => ({ ...p, date: undefined })); }}
+                    className={`w-full bg-secondary rounded-xl pl-9 pr-3 py-2.5 text-foreground outline-none focus:ring-2 focus:ring-primary/30 font-semibold text-sm appearance-none border border-transparent ${fieldErrCls("date")}`}
+                  />
+                </div>
+                {errors.date && <p className="text-[11px] text-destructive mt-1 px-1">{errors.date}</p>}
               </div>
-              <div className="relative">
-                <Clock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
-                <input type="time" value={time} onChange={(e) => { setTime(e.target.value); setConflict(null); }} className="w-full bg-secondary rounded-xl pl-9 pr-3 py-2.5 text-foreground outline-none focus:ring-2 focus:ring-primary/30 font-semibold text-sm appearance-none" />
+              <div>
+                <div className="relative">
+                  <Clock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground pointer-events-none" />
+                  <input
+                    ref={timeRef}
+                    type="time"
+                    value={time}
+                    onChange={(e) => { setTime(e.target.value); setConflict(null); if (errors.time) setErrors((p) => ({ ...p, time: undefined })); }}
+                    className={`w-full bg-secondary rounded-xl pl-9 pr-3 py-2.5 text-foreground outline-none focus:ring-2 focus:ring-primary/30 font-semibold text-sm appearance-none border border-transparent ${fieldErrCls("time")}`}
+                  />
+                </div>
+                {errors.time && <p className="text-[11px] text-destructive mt-1 px-1">{errors.time}</p>}
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
@@ -631,8 +777,7 @@ function EventsPage() {
             <div className="flex items-center gap-3 pt-1">
               <button
                 type="submit"
-                disabled={!title.trim() || !date || !time}
-                className={`press flex-1 rounded-2xl py-3 font-semibold shadow-[0_4px_16px_-4px_rgba(37,99,235,0.35)] disabled:opacity-40 disabled:shadow-none ${conflict ? "bg-destructive text-destructive-foreground shadow-[0_4px_16px_-4px_rgba(220,38,38,0.35)]" : "bg-primary text-primary-foreground"}`}
+                className={`press flex-1 rounded-2xl py-3 font-semibold shadow-[0_4px_16px_-4px_rgba(37,99,235,0.35)] ${conflict ? "bg-destructive text-destructive-foreground shadow-[0_4px_16px_-4px_rgba(220,38,38,0.35)]" : "bg-primary text-primary-foreground"}`}
               >
                 {conflict ? "Add anyway" : (editingId ? "Update Event" : "Add Event")}
               </button>

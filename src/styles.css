@@ -467,3 +467,26 @@ html { scroll-behavior: smooth; }
     scroll-behavior: auto !important;
   }
 }
+
+/* Events — micro interactions */
+@keyframes shake-x {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+}
+.animate-shake { animation: shake-x 180ms cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
+
+@keyframes fly-down {
+  0% { opacity: 0; transform: translateY(-14px) scale(0.97); }
+  60% { opacity: 1; transform: translateY(4px) scale(1.01); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+.animate-fly-down { animation: fly-down 420ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+@keyframes countdown-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+.animate-countdown-pulse { animation: countdown-pulse 1.6s ease-in-out infinite; }
