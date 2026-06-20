@@ -253,7 +253,7 @@ export function AIRoutineSheet({ onClose }: { onClose: () => void }) {
                 className="press flex-[1.5] inline-flex items-center justify-center gap-2 bg-gradient-to-r from-primary to-primary/85 text-primary-foreground font-semibold py-3 rounded-2xl text-[14px] shadow-[0_8px_24px_-8px_rgba(37,99,235,0.5)] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
                 <Sparkles className="size-4" strokeWidth={2.5} />
-                Add to routine
+                Add selected to routine
               </button>
             </div>
           </div>
