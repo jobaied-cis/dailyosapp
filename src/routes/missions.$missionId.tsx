@@ -401,14 +401,39 @@ function DaySection({
         className={isPast ? "cursor-pointer select-none" : ""}
         onClick={isPast ? () => setExpanded((v) => !v) : undefined}
       >
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="relative flex items-center gap-2 flex-wrap">
           <h2 className="font-bold text-foreground text-base">Day {day}</h2>
           <span className="text-xs text-muted-foreground">({dateLabel})</span>
+          {burst && (
+            <span className="pointer-events-none absolute -top-1 left-12 h-0 w-0">
+              {[
+                { dx: -14, dy: -16, c: "#f59e0b" },
+                { dx: 16, dy: -14, c: "#10b981" },
+                { dx: -18, dy: 6, c: "#3b82f6" },
+                { dx: 18, dy: 8, c: "#ec4899" },
+                { dx: 0, dy: -20, c: "#a855f7" },
+                { dx: 4, dy: 14, c: "#f43f5e" },
+              ].map((s, i) => (
+                <span
+                  key={i}
+                  className="spark-burst absolute block h-1.5 w-1.5 rounded-full"
+                  style={
+                    {
+                      background: s.c,
+                      ["--dx" as never]: `${s.dx}px`,
+                      ["--dy" as never]: `${s.dy}px`,
+                    } as React.CSSProperties
+                  }
+                />
+              ))}
+            </span>
+          )}
           {isToday && (
             <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider bg-primary text-primary-foreground px-2 py-0.5 rounded-full">
               Today 🔥
             </span>
           )}
+
           {isFuture && (
             <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider bg-secondary text-muted-foreground px-2 py-0.5 rounded-full">
               <Lock className="size-3" /> Locked
