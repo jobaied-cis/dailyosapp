@@ -490,3 +490,51 @@ html { scroll-behavior: smooth; }
   50% { opacity: 0.55; }
 }
 .animate-countdown-pulse { animation: countdown-pulse 1.6s ease-in-out infinite; }
+
+/* Events — entrance + glow + fab bounce */
+@keyframes events-entrance {
+  0% { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+.animate-events-entrance {
+  animation: events-entrance 280ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: 200ms;
+}
+
+@keyframes events-glow-pulse {
+  0%, 100% { box-shadow: 0 10px 30px -12px rgba(37, 99, 235, 0.5), 0 0 0 0 rgba(37, 99, 235, 0.35); }
+  50%      { box-shadow: 0 14px 36px -10px rgba(37, 99, 235, 0.65), 0 0 0 8px rgba(37, 99, 235, 0); }
+}
+.animate-glow-pulse { animation: events-glow-pulse 2s cubic-bezier(0.22, 1, 0.36, 1) infinite; }
+
+@keyframes fab-bounce {
+  0%, 100% { transform: translateY(0); }
+  30%      { transform: translateY(-6px); }
+  60%      { transform: translateY(0); }
+}
+.animate-fab-bounce { animation: fab-bounce 700ms cubic-bezier(0.22, 1, 0.36, 1); }
+
+.event-card-press { transition: transform 200ms cubic-bezier(0.22, 1, 0.36, 1); }
+.event-card-press:active { transform: scale(0.98); }
+
+.event-expand {
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transition: max-height 240ms cubic-bezier(0.22, 1, 0.36, 1),
+              opacity 200ms ease,
+              margin-top 240ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.event-expand.is-open {
+  max-height: 500px;
+  opacity: 1;
+  margin-top: 0.5rem;
+}
+
+.fab-press:active { transform: scale(0.92); }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-glow-pulse,
+  .animate-fab-bounce,
+  .animate-countdown-pulse { animation: none !important; }
+}

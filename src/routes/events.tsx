@@ -54,7 +54,7 @@ function TodayFocusCard({ events, now }: { events: EventItem[]; now: number }) {
   const within60 = nextEvent ? nextEvent.timeMs - now < 60 * 60_000 : false;
 
   return (
-    <div className="bg-card border border-primary/30 rounded-[1.25rem] p-4 shadow-[0_2px_16px_-4px_rgba(37,99,235,0.18)] space-y-2">
+    <div className={`bg-card border border-primary/30 rounded-[1.25rem] p-4 shadow-[0_2px_16px_-4px_rgba(37,99,235,0.18)] space-y-2 animate-events-entrance ${within60 ? "animate-glow-pulse" : ""}`}>
       <div className="flex items-center gap-2">
         <Flame className="size-4 text-primary" />
         <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-primary">Next Event</p>
@@ -86,6 +86,60 @@ function TodayFocusCard({ events, now }: { events: EventItem[]; now: number }) {
       )}
     </div>
   );
+}
+
+function WeekStrip({
+  events,
+  onDayTap,
+}: {
+  events: EventItem[];
+  onDayTap: (dateStr: string, hasEvent: boolean, cellEl: HTMLButtonElement) => void;
+}) {
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const counts = new Map<string, number>();
+  for (const e of events) counts.set(e.date, (counts.get(e.date) ?? 0) + 1);
+  const days = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(today); d.setDate(d.getDate() + i);
+    return d;
+  });
+  return (
+    <div className="flex gap-1.5 overflow-x-auto -mx-1 px-1 pb-1 scrollbar-none">
+      {days.map((d, i) => {
+        const dateStr = toDateStr(d);
+        const has = (counts.get(dateStr) ?? 0) > 0;
+        const isToday = i === 0;
+        return (
+          <button
+            key={dateStr}
+            onClick={(e) => onDayTap(dateStr, has, e.currentTarget)}
+            className={`press shrink-0 w-[44px] py-2 rounded-2xl border flex flex-col items-center gap-1 ${
+              isToday
+                ? "bg-primary text-primary-foreground border-primary shadow-[0_4px_14px_-4px_rgba(37,99,235,0.5)]"
+                : "bg-card text-foreground border-border/60"
+            }`}
+            aria-label={d.toDateString()}
+          >
+            <span className={`text-[10px] font-semibold uppercase tracking-wide ${isToday ? "text-primary-foreground/80" : "text-muted-foreground"}`}>
+              {d.toLocaleDateString(undefined, { weekday: "short" }).slice(0, 3)}
+            </span>
+            <span className="text-sm font-bold leading-none tabular-nums">{d.getDate()}</span>
+            <span
+              className={`size-1.5 rounded-full ${
+                has ? (isToday ? "bg-primary-foreground" : "bg-primary") : "bg-transparent"
+              }`}
+            />
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function focusLineText(n: number): string {
+  if (n === 0) return "Light day today, plan ahead? ✨";
+  if (n === 1) return "You have 1 event today — you've got this 💪";
+  if (n >= 4) return "Busy day ahead — stay focused 🔥";
+  return `You have ${n} events today — stay sharp`;
 }
 
 export const Route = createFileRoute("/events")({
@@ -147,6 +201,10 @@ function EventsPage() {
   const [quickShake, setQuickShake] = useState(false);
   const [pendingConfirm, setPendingConfirm] = useState<QuickAddParsed | null>(null);
   const [lastAddedId, setLastAddedId] = useState<string | null>(null);
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  const [justCompletedId, setJustCompletedId] = useState<string | null>(null);
+  const [actionSheetEvt, setActionSheetEvt] = useState<EventItem | null>(null);
+  const [fabBounce, setFabBounce] = useState(false);
 
   const titleRef = useRef<HTMLInputElement>(null);
   const dateRef = useRef<HTMLInputElement>(null);
@@ -185,6 +243,53 @@ function EventsPage() {
     const id = setTimeout(() => setLastAddedId(null), 800);
     return () => clearTimeout(id);
   }, [lastAddedId]);
+
+  // FAB bounce: when no events, or after ~8s of user inactivity
+  useEffect(() => {
+    let idleTimer: number | undefined;
+    let loopTimer: number | undefined;
+    const trigger = () => { setFabBounce(true); window.setTimeout(() => setFabBounce(false), 750); };
+    const scheduleIdle = () => {
+      window.clearTimeout(idleTimer);
+      idleTimer = window.setTimeout(trigger, 8000);
+    };
+    const onActivity = () => scheduleIdle();
+    if (events.length === 0) {
+      trigger();
+      loopTimer = window.setInterval(trigger, 3200) as unknown as number;
+    } else {
+      scheduleIdle();
+      window.addEventListener("pointerdown", onActivity, { passive: true });
+      window.addEventListener("keydown", onActivity);
+      window.addEventListener("scroll", onActivity, { passive: true });
+    }
+    return () => {
+      window.clearTimeout(idleTimer);
+      if (loopTimer) window.clearInterval(loopTimer);
+      window.removeEventListener("pointerdown", onActivity);
+      window.removeEventListener("keydown", onActivity);
+      window.removeEventListener("scroll", onActivity);
+    };
+  }, [events.length]);
+
+  const toggleExpanded = (id: string) => {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const handleComplete = (evt: EventItem) => {
+    if (!evt.completed) {
+      setJustCompletedId(evt.id);
+      window.setTimeout(() => setJustCompletedId((c) => (c === evt.id ? null : c)), 700);
+      toast.success("Done ✓");
+    }
+    toggleEventCompletion(evt.id);
+  };
+
+  
 
   const triggerShake = (field: string) => {
     setShakeField(field);
@@ -396,103 +501,114 @@ function EventsPage() {
     const isPast = evtDate.getTime() < now;
     const formattedDate = evtDate.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
     const formattedTime = evtDate.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+    const fullDate = evtDate.toLocaleDateString(undefined, { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+    const fullTime = evtDate.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
     const isCompleted = status === "completed";
     const isMissed = status === "missed";
     const isJustAdded = lastAddedId === evt.id;
+    const isJustCompleted = justCompletedId === evt.id;
+    const isExpanded = expandedIds.has(evt.id);
 
     return (
       <SwipeableRow
         key={evt.id}
-        onSwipeRight={() => {
-          if (!evt.completed) {
-            toggleEventCompletion(evt.id);
-            toast.success("✅ Event completed");
-          }
-        }}
-        onSwipeLeft={() => {
-          const snapshot = evt;
-          deleteEvent(evt.id);
-          toast("Event deleted", {
-            action: {
-              label: "Undo",
-              onClick: () => addEvent({
-                title: snapshot.title, date: snapshot.date, time: snapshot.time,
-                type: snapshot.type, priority: snapshot.priority, notes: snapshot.notes,
-              }),
-            },
-          });
-        }}
+        onSwipeRight={() => handleComplete(evt)}
+        onSwipeLeft={() => setActionSheetEvt(evt)}
       >
         <div
           style={isJustAdded ? undefined : { animationDelay: `${Math.min(i * 50, 240)}ms` }}
-          className={`bg-card border rounded-[1.25rem] shadow-[0_2px_12px_-4px_rgba(15,23,42,0.06)] p-4 flex items-center justify-between ${isJustAdded ? "animate-fly-down border-primary/40" : "animate-list-item-in border-border/60"} ${isCompleted ? "opacity-60" : ""} ${isMissed ? "opacity-80" : ""}`}
+          onClick={(e) => {
+            const t = e.target as HTMLElement;
+            if (t.closest("button,input,[role=checkbox],a")) return;
+            toggleExpanded(evt.id);
+          }}
+          className={`event-card-press bg-card border rounded-[1.25rem] shadow-[0_2px_12px_-4px_rgba(15,23,42,0.06)] p-4 cursor-pointer ${isJustAdded ? "animate-fly-down border-primary/40" : "animate-list-item-in border-border/60"} ${isCompleted ? "opacity-60" : ""} ${isMissed ? "opacity-80" : ""}`}
         >
-          <div className="flex items-center gap-3 min-w-0">
-            <Checkbox
-              checked={evt.completed}
-              onCheckedChange={() => toggleEventCompletion(evt.id)}
-              aria-label={isCompleted ? "Mark as incomplete" : "Mark as completed"}
-              className="shrink-0"
-            />
-            <div className={`size-10 rounded-2xl flex items-center justify-center shrink-0 ${isMissed ? "bg-amber-500/10" : isPast ? "bg-muted" : "bg-primary/10"}`}>
-              <CalendarDays className={`size-5 ${isMissed ? "text-amber-600" : isPast ? "text-muted-foreground" : "text-primary"}`} />
-            </div>
-            <div className="min-w-0">
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <h4 className={`font-semibold text-foreground text-[0.95rem] truncate ${isCompleted ? "line-through" : ""}`}>
-                  {evt.title}
-                </h4>
-                <span className="inline-flex items-center rounded-md border px-1.5 py-0.5 text-[10px] font-semibold bg-secondary text-muted-foreground border-border/60">
-                  {evt.type}
-                </span>
-                <span className={`inline-flex items-center rounded-md border px-1.5 py-0.5 text-[10px] font-semibold ${priorityColor(evt.priority)}`}>
-                  {evt.priority}
-                </span>
-                {isMissed && (
-                  <span className="inline-flex items-center rounded-md border px-1 py-0.5 text-[9px] font-semibold bg-amber-500/10 text-amber-600 border-amber-500/20">
-                    Catch up
+
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3 min-w-0">
+              <span className={isJustCompleted ? "animate-check-pop inline-block" : "inline-block"}>
+                <Checkbox
+                  checked={evt.completed}
+                  onCheckedChange={() => handleComplete(evt)}
+                  onClick={(e) => e.stopPropagation()}
+                  aria-label={isCompleted ? "Mark as incomplete" : "Mark as completed"}
+                  className="shrink-0"
+                />
+              </span>
+              <div className={`size-10 rounded-2xl flex items-center justify-center shrink-0 ${isMissed ? "bg-amber-500/10" : isPast ? "bg-muted" : "bg-primary/10"}`}>
+                <CalendarDays className={`size-5 ${isMissed ? "text-amber-600" : isPast ? "text-muted-foreground" : "text-primary"}`} />
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <h4 className={`font-semibold text-foreground text-[0.95rem] truncate ${isCompleted ? "line-through" : ""} ${isJustCompleted ? "strike-anim" : ""}`}>
+                    {evt.title}
+                  </h4>
+                  <span className="inline-flex items-center rounded-md border px-1.5 py-0.5 text-[10px] font-semibold bg-secondary text-muted-foreground border-border/60">
+                    {evt.type}
                   </span>
+                  <span className={`inline-flex items-center rounded-md border px-1.5 py-0.5 text-[10px] font-semibold ${priorityColor(evt.priority)}`}>
+                    {evt.priority}
+                  </span>
+                  {isMissed && (
+                    <span className="inline-flex items-center rounded-md border px-1 py-0.5 text-[9px] font-semibold bg-amber-500/10 text-amber-600 border-amber-500/20">
+                      Catch up
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground mt-0.5">{formattedDate} · {formattedTime}</p>
+                {!isCompleted && !isMissed && (
+                  <p className={`text-[11px] text-primary/80 mt-0.5 font-medium ${evtDate.getTime() - now < 60 * 60_000 && evtDate.getTime() > now ? "animate-countdown-pulse" : ""}`}>
+                    {formatCountdown(evtDate.getTime() - now)}
+                  </p>
+                )}
+                {!isExpanded && evt.notes && (
+                  <p className="text-[11px] text-muted-foreground/80 mt-1 line-clamp-2">{evt.notes}</p>
+                )}
+                {opts?.missed && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); snoozeToTomorrow(evt); }}
+                    className="press mt-1.5 inline-flex items-center gap-1 text-[11px] font-semibold text-amber-700 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 rounded-lg px-2 py-1"
+                  >
+                    <MoveRight className="size-3" />
+                    Move to tomorrow
+                  </button>
                 )}
               </div>
-              <p className="text-xs text-muted-foreground mt-0.5">{formattedDate} · {formattedTime}</p>
-              {!isCompleted && !isMissed && (
-                <p className={`text-[11px] text-primary/80 mt-0.5 font-medium ${evtDate.getTime() - now < 60 * 60_000 && evtDate.getTime() > now ? "animate-countdown-pulse" : ""}`}>
-                  {formatCountdown(evtDate.getTime() - now)}
-                </p>
-              )}
-              {evt.notes && (
-                <p className="text-[11px] text-muted-foreground/80 mt-1 line-clamp-2">{evt.notes}</p>
-              )}
-              {opts?.missed && (
-                <button
-                  onClick={() => snoozeToTomorrow(evt)}
-                  className="press mt-1.5 inline-flex items-center gap-1 text-[11px] font-semibold text-amber-700 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 rounded-lg px-2 py-1"
-                >
-                  <MoveRight className="size-3" />
-                  Move to tomorrow
-                </button>
-              )}
+            </div>
+            <div className="flex items-center gap-1 shrink-0">
+              <button onClick={(e) => { e.stopPropagation(); handleEdit(evt); }} aria-label="Edit event" className="press p-2 rounded-xl text-muted-foreground hover:text-primary hover:bg-primary/10">
+                <Pencil className="size-4" />
+              </button>
+              <button onClick={(e) => {
+                e.stopPropagation();
+                const snapshot = evt;
+                deleteEvent(evt.id);
+                toast("Event deleted", {
+                  action: {
+                    label: "Undo",
+                    onClick: () => addEvent({
+                      title: snapshot.title, date: snapshot.date, time: snapshot.time,
+                      type: snapshot.type, priority: snapshot.priority, notes: snapshot.notes,
+                    }),
+                  },
+                });
+              }} aria-label="Delete event" className="press p-2 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10">
+                <Trash2 className="size-4" />
+              </button>
             </div>
           </div>
-          <div className="flex items-center gap-1 shrink-0">
-            <button onClick={() => handleEdit(evt)} aria-label="Edit event" className="press p-2 rounded-xl text-muted-foreground hover:text-primary hover:bg-primary/10">
-              <Pencil className="size-4" />
-            </button>
-            <button onClick={() => {
-              const snapshot = evt;
-              deleteEvent(evt.id);
-              toast("Event deleted", {
-                action: {
-                  label: "Undo",
-                  onClick: () => addEvent({
-                    title: snapshot.title, date: snapshot.date, time: snapshot.time,
-                    type: snapshot.type, priority: snapshot.priority, notes: snapshot.notes,
-                  }),
-                },
-              });
-            }} aria-label="Delete event" className="press p-2 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10">
-              <Trash2 className="size-4" />
-            </button>
+
+          <div className={`event-expand ${isExpanded ? "is-open" : ""}`}>
+            <div className="pt-3 border-t border-border/50 space-y-1.5">
+              <p className="text-sm font-semibold text-foreground break-words">{evt.title}</p>
+              <p className="text-xs text-muted-foreground">{fullDate} · {fullTime}</p>
+              {evt.notes ? (
+                <p className="text-xs text-foreground/80 whitespace-pre-wrap break-words">{evt.notes}</p>
+              ) : (
+                <p className="text-xs text-muted-foreground/70 italic">No notes</p>
+              )}
+            </div>
           </div>
         </div>
       </SwipeableRow>
@@ -505,15 +621,37 @@ function EventsPage() {
   return (
     <div className="space-y-6 pb-24">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="size-10 rounded-2xl bg-primary/10 flex items-center justify-center">
-          <CalendarDays className="size-5 text-primary" />
-        </div>
-        <div>
-          <h2 className="text-lg font-bold text-foreground tracking-tight">Events</h2>
-          <p className="text-xs text-muted-foreground">Upcoming schedule</p>
+      <div className="space-y-1.5">
+        <div className="flex items-center gap-3">
+          <div className="size-10 rounded-2xl bg-primary/10 flex items-center justify-center">
+            <CalendarDays className="size-5 text-primary" />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold text-foreground tracking-tight">Events</h2>
+            <p className="text-xs text-muted-foreground">{focusLineText(todayCount)}</p>
+          </div>
         </div>
       </div>
+
+      {/* Week strip */}
+      <WeekStrip
+        events={events}
+        onDayTap={(dateStr, has, cell) => {
+          const sec = sectionForDate(dateStr);
+          const ref =
+            sec === "today" ? sectionRefs.today.current :
+            sec === "tomorrow" ? sectionRefs.tomorrow.current :
+            sec === "week" ? sectionRefs.week.current : null;
+          if (has && ref) {
+            ref.scrollIntoView({ behavior: "smooth", block: "start" });
+          } else {
+            cell.classList.remove("animate-shake");
+            void cell.offsetWidth;
+            cell.classList.add("animate-shake");
+            window.setTimeout(() => cell.classList.remove("animate-shake"), 220);
+          }
+        }}
+      />
 
       {/* Dashboard */}
       <div className="grid grid-cols-4 gap-2">
@@ -699,10 +837,61 @@ function EventsPage() {
       <button
         onClick={openAdd}
         aria-label="Add event"
-        className="press fixed bottom-24 right-5 z-40 size-14 rounded-full bg-primary text-primary-foreground shadow-[0_8px_24px_-6px_rgba(37,99,235,0.55)] flex items-center justify-center active:scale-95 transition-transform"
+        className={`fab-press fixed bottom-24 right-5 z-40 size-14 rounded-full bg-primary text-primary-foreground shadow-[0_8px_24px_-6px_rgba(37,99,235,0.55)] flex items-center justify-center transition-transform fab-glow ${fabBounce ? "animate-fab-bounce" : ""}`}
       >
         <Plus className="size-6" />
       </button>
+
+      {/* Swipe-left action sheet */}
+      <Sheet open={!!actionSheetEvt} onOpenChange={(o) => { if (!o) setActionSheetEvt(null); }}>
+        <SheetContent side="bottom" className="rounded-t-3xl p-5">
+          <SheetTitle className="text-base font-bold text-foreground mb-1">
+            {actionSheetEvt?.title || "Event"}
+          </SheetTitle>
+          <p className="text-xs text-muted-foreground mb-4">Choose an action</p>
+          <div className="space-y-2">
+            <button
+              onClick={() => {
+                if (!actionSheetEvt) return;
+                snoozeToTomorrow(actionSheetEvt);
+                setActionSheetEvt(null);
+              }}
+              className="press w-full flex items-center gap-3 p-3 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-700 font-semibold text-sm"
+            >
+              <MoveRight className="size-4" />
+              Snooze to tomorrow
+            </button>
+            <button
+              onClick={() => {
+                if (!actionSheetEvt) return;
+                const snapshot = actionSheetEvt;
+                deleteEvent(snapshot.id);
+                setActionSheetEvt(null);
+                toast("Event deleted", {
+                  action: {
+                    label: "Undo",
+                    onClick: () => addEvent({
+                      title: snapshot.title, date: snapshot.date, time: snapshot.time,
+                      type: snapshot.type, priority: snapshot.priority, notes: snapshot.notes,
+                    }),
+                  },
+                });
+              }}
+              className="press w-full flex items-center gap-3 p-3 rounded-2xl bg-destructive/10 border border-destructive/20 text-destructive font-semibold text-sm"
+            >
+              <Trash2 className="size-4" />
+              Delete event
+            </button>
+            <button
+              onClick={() => setActionSheetEvt(null)}
+              className="press w-full p-3 rounded-2xl bg-secondary text-foreground font-semibold text-sm"
+            >
+              Cancel
+            </button>
+          </div>
+        </SheetContent>
+      </Sheet>
+
 
       {/* Add/Edit Sheet */}
       <Sheet open={sheetOpen} onOpenChange={(o) => { setSheetOpen(o); if (!o) resetForm(); }}>
