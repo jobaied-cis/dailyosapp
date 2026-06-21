@@ -494,11 +494,6 @@ function SignupScreen({ go }: GoProp) {
     </Stage>
   );
 }
-        </button>
-      </div>
-    </Stage>
-  );
-}
 
 function ProfileSetupScreen() {
   const { setUserProfile, login, completeOnboarding } = useAuth();
