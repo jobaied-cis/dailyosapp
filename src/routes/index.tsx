@@ -22,7 +22,6 @@ import {
   BookOpen,
   MapPin,
   User,
-  Check,
   Plus,
   ListChecks,
   CalendarPlus,
