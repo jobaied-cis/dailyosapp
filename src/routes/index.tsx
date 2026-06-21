@@ -907,13 +907,22 @@ function Dashboard() {
             ))}
           </ul>
         )}
-        <button
-          type="button"
-          onClick={() => setAiOpen(true)}
-          className="mt-3 w-full h-10 rounded-xl border border-primary/30 bg-primary/10 hover:bg-primary/15 text-primary text-[12px] font-semibold active:scale-[0.97] transition-all"
-        >
-          View full report →
-        </button>
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={() => setAiOpen(true)}
+            className="h-10 rounded-xl border border-primary/30 bg-primary/10 hover:bg-primary/15 text-primary text-[12px] font-semibold active:scale-[0.97] transition-all"
+          >
+            View full report →
+          </button>
+          <button
+            type="button"
+            onClick={handleShareReport}
+            className="h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-500 text-white text-[12px] font-semibold inline-flex items-center justify-center gap-1.5 shadow-sm active:scale-[0.97] transition-all"
+          >
+            <Share2 className="size-3.5" /> Share Report 📤
+          </button>
+        </div>
       </section>
 
       <DevResetButton />
