@@ -52,6 +52,15 @@ export function buildAIPrompt(ctx: AIContext, userPrompt: string): string {
     ? ctx.memoryInsights.slice(0, 3).map((m) => `  - ${m}`).join("\n")
     : "  - (none yet)";
 
+  const nextTask = ctx.nextTaskTitle
+    ? `${ctx.nextTaskTitle}${ctx.nextTaskTime ? ` at ${ctx.nextTaskTime}` : ""}`
+    : "none";
+  const nextEvent = ctx.nextEventTitle
+    ? `${ctx.nextEventTitle}${
+        typeof ctx.nextEventInMinutes === "number" ? ` (in ${ctx.nextEventInMinutes}m)` : ""
+      }`
+    : "none";
+
   return [
     "You are a smart productivity assistant.",
     "",
@@ -60,7 +69,9 @@ export function buildAIPrompt(ctx: AIContext, userPrompt: string): string {
     `- Priorities: ${priorities}`,
     `- Pending tasks: ${ctx.pendingTasks ?? 0}`,
     `- Completed tasks: ${ctx.completedTasks ?? 0}`,
+    `- Next task: ${nextTask}`,
     `- Today's events: ${events}`,
+    `- Next event: ${nextEvent}`,
     `- Active mission: ${mission}`,
     `- Today's spending: ${spend}`,
     "",

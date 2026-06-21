@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Bot, Send, X, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-context";
@@ -28,13 +28,40 @@ export function AIAssistantSheet({ onClose }: { onClose: () => void }) {
   const [loading, setLoading] = useState(false);
   const [reply, setReply] = useState<string | null>(null);
 
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
   const context: AIContext = useMemo(() => {
     const now = new Date();
     const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
     const todaysEvents = events
       .filter((e) => e.date === todayStr)
-      .slice(0, 4)
-      .map((e) => `${e.title} ${e.time}`);
+      .sort((a, b) => a.time.localeCompare(b.time));
+    const todaysEventLabels = todaysEvents.slice(0, 4).map((e) => `${e.title} ${e.time}`);
+
+    const nowMs = Date.now();
+    const upcomingEvent = todaysEvents.find((e) => {
+      if (e.completed) return false;
+      return new Date(`${e.date}T${e.time}`).getTime() > nowMs;
+    });
+    const nextEventInMinutes = upcomingEvent
+      ? Math.max(
+          0,
+          Math.round(
+            (new Date(`${upcomingEvent.date}T${upcomingEvent.time}`).getTime() - nowMs) / 60000,
+          ),
+        )
+      : undefined;
+
+    const pendingSorted = [...tasks]
+      .filter((t) => !t.completed)
+      .sort((a, b) => a.time.localeCompare(b.time));
+    const nextTask = pendingSorted[0];
 
     const activeMission = [...missions]
       .sort((a, b) => a.priority - b.priority)
@@ -51,13 +78,17 @@ export function AIAssistantSheet({ onClose }: { onClose: () => void }) {
       priorities: userProfile?.priorities,
       pendingTasks: tasks.filter((t) => !t.completed).length,
       completedTasks: tasks.filter((t) => t.completed).length,
-      todaysEvents,
+      todaysEvents: todaysEventLabels,
       missionTitle: activeMission?.title,
       missionProgressPct: activeMission ? missionProgress(activeMission).pct : undefined,
       todayExpense,
       dailyLimit: getDailyLimit(),
       currencySymbol: sym,
       memoryInsights: getMemoryInsights().map((m) => m.message),
+      nextTaskTitle: nextTask?.title,
+      nextTaskTime: nextTask?.time,
+      nextEventTitle: upcomingEvent?.title,
+      nextEventInMinutes,
     };
   }, [userProfile, tasks, events, missions, expenses, sym]);
 
@@ -82,12 +113,14 @@ export function AIAssistantSheet({ onClose }: { onClose: () => void }) {
       });
       if (!res.ok) throw new Error("AI request failed");
       const data = (await res.json()) as { reply?: string };
+      if (!mountedRef.current) return;
       setReply(data.reply?.trim() || "AI is not available right now");
     } catch (err) {
       console.error(err);
+      if (!mountedRef.current) return;
       setReply("AI is not available right now");
     } finally {
-      setLoading(false);
+      if (mountedRef.current) setLoading(false);
     }
   };
 
