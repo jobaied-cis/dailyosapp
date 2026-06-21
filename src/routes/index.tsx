@@ -102,6 +102,7 @@ function Dashboard() {
   const tasks = useTasks();
   const missions = useMissions();
   const events = useEvents();
+  const takaSym = useTakaSymbol();
   const total = tasks.length;
   const done = tasks.filter((t) => t.completed).length;
   const pct = total ? (done / total) * 100 : 0;
