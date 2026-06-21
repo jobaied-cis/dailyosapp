@@ -588,30 +588,39 @@ function Dashboard() {
                 )}
               </span>
             </div>
-            {dailyLimit > 0 && (
-              <div className="space-y-1">
-                <div className="h-2 bg-muted rounded-full overflow-hidden">
-                  <div
-                    className={`h-full rounded-full transition-all ${overLimit ? "bg-red-500" : "bg-primary"}`}
-                    style={{ width: `${Math.min(limitPct * 100, 100)}%` }}
-                  />
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className={`text-[11px] font-semibold leading-[1.3] ${overLimit ? "text-red-500" : "text-muted-foreground"}`}>
-                    {Math.round(limitPct * 100)}%
-                  </span>
-                  {overLimit ? (
-                    <span className="text-[11px] font-semibold text-red-500 leading-[1.3] flex items-center gap-1">
-                      <AlertTriangle className="size-3" /> You're over today — adjust tomorrow 💡
+            {dailyLimit > 0 && (() => {
+              const pctNum = limitPct * 100;
+              const barClass =
+                pctNum >= 100
+                  ? "bg-gradient-to-r from-amber-400 via-orange-400 to-red-400"
+                  : pctNum >= 80
+                    ? "bg-amber-400"
+                    : "bg-blue-500";
+              return (
+                <div className="space-y-1">
+                  <div className="h-2 bg-muted rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all ${barClass}`}
+                      style={{ width: `${Math.min(pctNum, 100)}%` }}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className={`text-[11px] font-semibold leading-[1.3] ${overLimit ? "text-amber-700" : "text-muted-foreground"}`}>
+                      {Math.round(pctNum)}%
                     </span>
-                  ) : (
-                    <span className="text-[11px] font-semibold text-emerald-600 leading-[1.3]">
-                      Safe to spend: {formatTaka(safeToSpend, takaSym)}
-                    </span>
-                  )}
+                    {overLimit ? (
+                      <span className="text-[11px] font-semibold text-amber-700 leading-[1.3] flex items-center gap-1">
+                        <AlertTriangle className="size-3" /> You're over today — adjust tomorrow 💡
+                      </span>
+                    ) : (
+                      <span className="text-[11px] font-semibold text-emerald-600 leading-[1.3]">
+                        Safe to spend today: {formatTaka(safeToSpend, takaSym)}
+                      </span>
+                    )}
+                  </div>
                 </div>
-              </div>
-            )}
+              );
+            })()}
           </div>
           <div className="flex items-center justify-between">
             <span className="text-[12px] font-medium text-muted-foreground leading-[1.4] flex items-center gap-1.5">
