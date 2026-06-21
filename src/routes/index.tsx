@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { useTasks } from "@/lib/tasks-store";
+import { useTasks, useAllRawTasks } from "@/lib/tasks-store";
 import { ProgressRing } from "@/components/ProgressRing";
 import {
   useMissions,
@@ -81,18 +81,20 @@ function formatDayDate(startDate: number, day: number) {
   return d.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
 }
 
-function getGreeting(hour: number): string {
-  if (hour < 12) return "Good morning, Akash 👋";
-  if (hour < 18) return "Good afternoon, Akash 👋";
-  return "Good evening, Akash 👋";
+function getGreeting(hour: number, name: string): string {
+  if (hour < 12) return `Good morning, ${name} 👋`;
+  if (hour < 18) return `Good afternoon, ${name} 👋`;
+  return `Good evening, ${name} 👋`;
 }
 
 function formatTime12(hhmm: string) {
+  if (!hhmm || typeof hhmm !== "string" || !hhmm.includes(":")) return "";
   const [h, m] = hhmm.split(":");
   const hourNum = parseInt(h, 10);
+  if (!Number.isFinite(hourNum)) return "";
   const ampm = hourNum >= 12 ? "PM" : "AM";
   const displayHour = hourNum % 12 || 12;
-  return `${displayHour}:${m} ${ampm}`;
+  return `${displayHour}:${m ?? "00"} ${ampm}`;
 }
 
 function minutesSinceMidnight(d: Date) {
@@ -109,6 +111,7 @@ const PRESS = "press will-change-transform";
 
 function Dashboard() {
   const navigate = useNavigate();
+  const { userProfile } = useAuth();
   const tasks = useTasks();
   const missions = useMissions();
   const events = useEvents();
@@ -132,7 +135,8 @@ function Dashboard() {
     }, 60_000);
     return () => clearInterval(id);
   }, []);
-  const greeting = hour === null ? "Hello, Akash 👋" : getGreeting(hour);
+  const displayName = userProfile?.name?.trim() || "there";
+  const greeting = hour === null ? `Hello, ${displayName} 👋` : getGreeting(hour, displayName);
 
   const nowLocal = new Date(nowTick);
   const todayStr = `${nowLocal.getFullYear()}-${String(nowLocal.getMonth() + 1).padStart(2, "0")}-${String(nowLocal.getDate()).padStart(2, "0")}`;
@@ -272,7 +276,6 @@ function Dashboard() {
   const routineCtaLabel = done > 0 && !allDone ? "Continue routine" : "Open today's routine";
 
   // ---- Personalization (from onboarding priorities) ----
-  const { userProfile } = useAuth();
   const priorities = userProfile?.priorities ?? [];
   const focusMission = priorities.includes("study");
   const focusRoutine = priorities.includes("productivity") || priorities.includes("fitness");
@@ -306,13 +309,26 @@ function Dashboard() {
       ];
 
   // ---- Behavior AI: passive pattern detection over last 7 days ----
+  // Uses raw template tasks (not today's filtered view) so weekday rollups work.
+  const rawTasks = useAllRawTasks();
   const behaviorInsights = useMemo(
-    () => getBehaviorInsights({ expenses }).slice(0, 2),
-    [expenses, nowTick],
+    () => getBehaviorInsights({ tasks: rawTasks, expenses }).slice(0, 2),
+    [rawTasks, expenses],
   );
 
   // ---- Memory AI: long-term pattern memory (last 14 days) ----
-  const memoryInsights = useMemo(() => getMemoryInsights(), [nowTick]);
+  // Computed once on mount + when window regains focus (no per-minute churn).
+  const [memoryRefresh, setMemoryRefresh] = useState(0);
+  useEffect(() => {
+    const onFocus = () => setMemoryRefresh((n) => n + 1);
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onFocus);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onFocus);
+    };
+  }, []);
+  const memoryInsights = useMemo(() => getMemoryInsights(), [memoryRefresh]);
   const [memoryOffset, setMemoryOffset] = useState(0);
   useEffect(() => {
     if (memoryInsights.length <= 1) return;
@@ -422,7 +438,7 @@ function Dashboard() {
             <h1 className="text-[22px] font-bold text-white tracking-tight leading-[1.2]">
               {greeting}
             </h1>
-            <ul className="mt-1.5 space-y-1">
+            <ul className="mt-1.5 space-y-1" aria-live="polite" aria-atomic="true">
               {visibleInsights.map((ins, i) => (
                 <li
                   key={`${ins.type}-${i}-${ins.message}`}
@@ -869,25 +885,41 @@ function Dashboard() {
           </span>
           <span className="text-[10px] font-semibold text-muted-foreground/80">Last 7 days</span>
         </div>
-        <p className="text-[13px] font-semibold text-foreground leading-[1.4]">
-          {weeklyReport.summary}
-        </p>
-        {weeklyReport.stats.length > 0 && (
-          <div className="grid grid-cols-3 gap-2 mt-3">
-            {weeklyReport.stats.slice(0, 3).map((s) => (
-              <div
-                key={s.label}
-                className="rounded-xl border border-border/60 bg-background/60 px-2 py-2 text-center"
-              >
-                <div className="text-[14px] leading-none">{s.icon}</div>
-                <div className="text-[13px] font-bold text-foreground leading-[1.2] mt-1">{s.value}</div>
-                <div className="text-[10px] font-medium text-muted-foreground leading-[1.2] mt-0.5 truncate">
-                  {s.label}
+        {(() => {
+          const hasActivity = weeklyReport.stats.some(
+            (s) => s.value && s.value !== "0" && s.value !== "0/7",
+          );
+          if (!hasActivity) {
+            return (
+              <p className="text-[13px] font-medium text-muted-foreground leading-[1.5]">
+                Not enough activity yet — start tracking 🚀
+              </p>
+            );
+          }
+          return (
+            <>
+              <p className="text-[13px] font-semibold text-foreground leading-[1.4]">
+                {weeklyReport.summary}
+              </p>
+              {weeklyReport.stats.length > 0 && (
+                <div className="grid grid-cols-3 gap-2 mt-3">
+                  {weeklyReport.stats.slice(0, 3).map((s) => (
+                    <div
+                      key={s.label}
+                      className="rounded-xl border border-border/60 bg-background/60 px-2 py-2 text-center"
+                    >
+                      <div className="text-[14px] leading-none">{s.icon}</div>
+                      <div className="text-[13px] font-bold text-foreground leading-[1.2] mt-1">{s.value}</div>
+                      <div className="text-[10px] font-medium text-muted-foreground leading-[1.2] mt-0.5 truncate">
+                        {s.label}
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
+              )}
+            </>
+          );
+        })()}
         {weeklyReport.insights.length > 0 && (
           <ul className="mt-3 space-y-1.5 border-t border-border/40 pt-3">
             {weeklyReport.insights.slice(0, 3).map((ins, i) => (

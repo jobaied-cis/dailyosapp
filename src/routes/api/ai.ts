@@ -14,6 +14,19 @@ export const Route = createFileRoute("/api/ai")({
     handlers: {
       POST: async ({ request }) => {
         try {
+          // ---- Origin guard: only accept calls from the same host ----
+          const origin = request.headers.get("origin") || request.headers.get("referer") || "";
+          const host = request.headers.get("host") || "";
+          if (origin && host && !origin.includes(host)) {
+            return Response.json({ error: "Forbidden" }, { status: 403 });
+          }
+
+          // ---- Size guard: reject oversized payloads (>8KB) ----
+          const contentLength = Number(request.headers.get("content-length") || 0);
+          if (contentLength > 8192) {
+            return Response.json({ error: "Request too large" }, { status: 413 });
+          }
+
           const body = (await request.json()) as { prompt?: unknown };
           const prompt =
             typeof body?.prompt === "string" ? body.prompt.trim() : "";

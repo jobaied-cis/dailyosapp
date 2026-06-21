@@ -1,4 +1,4 @@
-import { useEffect, useReducer, useSyncExternalStore } from "react";
+import { useEffect, useMemo as useMemoReact, useReducer, useSyncExternalStore } from "react";
 import {
   isCompletedOn,
   setCompletedOn,
@@ -99,6 +99,17 @@ function getServerSnapshot(): Task[] {
   return EMPTY_TASKS;
 }
 
+/** Raw template list (no per-day overlay). Useful for multi-day analytics. */
+export function getAllRawTasks(): Task[] {
+  ensureInit();
+  return cache;
+}
+
+/** Reactive raw template list — same shape as getAllRawTasks but subscribes. */
+export function useAllRawTasks(): Task[] {
+  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+}
+
 /** Does this task's repeat rule include the given weekday? (0=Sun … 6=Sat) */
 export function taskShowsOnWeekday(t: Task, weekday: number): boolean {
   const r = t.repeat;
@@ -134,7 +145,7 @@ function todayDateKey(d = new Date()): string {
  */
 export function useTasks(): Task[] {
   const tasks = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
-  const [, force] = useReducer((x: number) => x + 1, 0);
+  const [version, force] = useReducer((x: number) => x + 1, 0);
   useEffect(() => {
     const u1 = subscribeCompletions(force);
     const u2 = subscribeExceptions(force);
@@ -144,21 +155,24 @@ export function useTasks(): Task[] {
     };
   }, []);
 
-  const today = new Date();
-  const weekday = today.getDay();
-  const dateKey = todayDateKey(today);
+  // Memoize derivation so render-pass identity is stable when nothing changed.
+  return useMemoReact(() => {
+    const today = new Date();
+    const weekday = today.getDay();
+    const dateKey = todayDateKey(today);
 
-  const out: Task[] = [];
-  for (const raw of tasks) {
-    if (!taskShowsOnWeekday(raw, weekday)) continue;
-    const recurring = isRecurring(raw);
-    const ex = recurring ? getException(raw.id, dateKey) : undefined;
-    if (ex?.skipped) continue;
-    const withException = ex ? applyException(raw, ex) : raw;
-    const completed = recurring ? isCompletedOn(raw.id, dateKey) : raw.completed;
-    out.push({ ...withException, completed });
-  }
-  return out.sort((a, b) => a.time.localeCompare(b.time));
+    const out: Task[] = [];
+    for (const raw of tasks) {
+      if (!taskShowsOnWeekday(raw, weekday)) continue;
+      const recurring = isRecurring(raw);
+      const ex = recurring ? getException(raw.id, dateKey) : undefined;
+      if (ex?.skipped) continue;
+      const withException = ex ? applyException(raw, ex) : raw;
+      const completed = recurring ? isCompletedOn(raw.id, dateKey) : raw.completed;
+      out.push({ ...withException, completed });
+    }
+    return out.sort((a, b) => a.time.localeCompare(b.time));
+  }, [tasks, version]);
 }
 
 export function toggleTask(id: string) {

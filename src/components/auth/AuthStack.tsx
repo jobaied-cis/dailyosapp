@@ -124,7 +124,7 @@ const SLIDES: Slide[] = [
 ];
 
 function IntroSlides({ go }: GoProp) {
-  const { introProgress, setIntroProgress } = useAuth();
+  const { introProgress, setIntroProgress, completeOnboarding } = useAuth();
   const [index, setIndex] = useState<number>(() =>
     Math.min(Math.max(introProgress ?? 0, 0), SLIDES.length - 1),
   );
@@ -134,8 +134,12 @@ function IntroSlides({ go }: GoProp) {
   }, [index, setIntroProgress]);
 
   const isLast = index === SLIDES.length - 1;
+  const finishIntro = () => {
+    completeOnboarding();
+    go("welcome");
+  };
   const next = () => {
-    if (isLast) go("welcome");
+    if (isLast) finishIntro();
     else setIndex((i) => i + 1);
   };
 
@@ -147,7 +151,7 @@ function IntroSlides({ go }: GoProp) {
       {/* Skip */}
       <div className="flex justify-end">
         <button
-          onClick={() => go("welcome")}
+          onClick={finishIntro}
           className="text-xs text-white/60 px-3 py-1.5 rounded-full transition-colors hover:text-white/90 active:scale-95"
         >
           Skip
@@ -341,6 +345,9 @@ function LoginScreen({ go }: GoProp) {
         <div className="pt-6 pb-8">
           <h1 className="text-2xl font-semibold tracking-tight">Welcome back 🔥</h1>
           <p className="mt-1.5 text-sm text-white/55">Continue your system</p>
+          <p className="mt-2 text-[11px] text-amber-300/80">
+            Demo / Guest mode — no real authentication
+          </p>
         </div>
 
         <div className="flex flex-col gap-3">
