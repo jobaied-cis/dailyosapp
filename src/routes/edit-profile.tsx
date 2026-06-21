@@ -29,12 +29,14 @@ function EditProfilePage() {
 
   const handleSave = () => {
     setUserProfile({
+      ...(userProfile ?? {}),
       name: name.trim() || "Your name",
       avatar,
       currency,
     });
     navigate({ to: "/settings" });
   };
+
 
   return (
     <div className="space-y-5 animate-fade-in">
