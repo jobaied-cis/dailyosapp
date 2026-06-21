@@ -717,3 +717,12 @@ function Dashboard() {
     </div>
   );
 }
+
+function FocusBadge() {
+  return (
+    <span className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-primary bg-primary/10 border border-primary/25 rounded-full px-1.5 py-0.5 normal-case">
+      <Sparkles className="size-2.5" /> Focus
+    </span>
+  );
+}
+
