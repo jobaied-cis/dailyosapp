@@ -1,8 +1,10 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { ChevronLeft, ChevronRight, LogOut, RefreshCcw, User } from "lucide-react";
+import { ChevronLeft, ChevronRight, LogOut, Moon, RefreshCcw, Sun, User } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { CurrencyTrigger } from "@/components/CurrencySheet";
 import { useCurrency, TAKA } from "@/lib/currency";
+import { useTheme } from "@/lib/theme-store";
+
 
 export const Route = createFileRoute("/settings")({
   head: () => ({
@@ -31,6 +33,8 @@ function SettingsPage() {
   const navigate = useNavigate();
   const { userProfile, logout } = useAuth();
   const currency = useCurrency();
+  const { theme, setTheme, mounted } = useTheme();
+
 
   const name = userProfile?.name || "Your name";
   const avatar = userProfile?.avatar || "🙂";
@@ -155,6 +159,42 @@ function SettingsPage() {
           </CurrencyTrigger>
         </div>
       </section>
+
+      {/* Appearance */}
+      <section className="rounded-[14px] border border-border/60 bg-card p-4 space-y-3 shadow-sm transition-all hover:border-border">
+        <div>
+          <h2 className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+            Appearance
+          </h2>
+          <p className="text-[12px] text-muted-foreground mt-1">Choose your theme</p>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          {([
+            { value: "light" as const, label: "Light", icon: Sun, emoji: "☀️" },
+            { value: "dark" as const, label: "Dark", icon: Moon, emoji: "🌙" },
+          ]).map(({ value, label, icon: Icon, emoji }) => {
+            const selected = mounted && theme === value;
+            return (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setTheme(value)}
+                aria-pressed={selected}
+                className={`h-12 rounded-[12px] border text-[13px] font-semibold flex items-center justify-center gap-2 transition-all active:scale-[0.96] ${
+                  selected
+                    ? "border-primary bg-primary/10 text-foreground shadow-[0_0_0_1px_var(--primary)]"
+                    : "border-border/60 bg-background/40 text-muted-foreground hover:bg-secondary/40 hover:text-foreground"
+                }`}
+              >
+                <Icon className={`size-4 ${selected ? "text-primary" : ""}`} />
+                <span>{emoji} {label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+
 
       {/* Actions */}
       <section className="rounded-[14px] border border-border/60 bg-card p-4 space-y-3 shadow-md">
