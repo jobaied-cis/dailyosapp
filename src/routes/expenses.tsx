@@ -891,7 +891,15 @@ function WeeklyChart({ entries, dailyLimit }: { entries: Expense[]; dailyLimit: 
                 : "#22C55E"
               : "#6B7280";
           return (
-            <div key={key} className="flex items-center gap-3">
+            <button
+              key={key}
+              type="button"
+              onClick={() => {
+                if (isFuture) return;
+                toast(`${DAY_LABELS[i]} · ${amount > 0 ? formatTaka(amount, taka) : "No spend"}`);
+              }}
+              className="press flex items-center gap-3 w-full text-left rounded-lg"
+            >
               <span
                 className={`w-9 text-[11px] font-semibold ${
                   isToday ? "text-foreground" : "text-muted-foreground"
@@ -916,7 +924,7 @@ function WeeklyChart({ entries, dailyLimit }: { entries: Expense[]; dailyLimit: 
               >
                 {isFuture ? "—" : amount > 0 ? formatTaka(amount, taka) : "0"}
               </span>
-            </div>
+            </button>
           );
         })}
       </div>
