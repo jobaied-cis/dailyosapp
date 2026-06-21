@@ -211,33 +211,34 @@ function Dashboard() {
   else if (nextEvent && minsToEvent <= 30) intel = `Next event in ${minsToEvent}m — be ready ⏳`;
   else if (routineRemaining > 0) intel = `You have ${routineRemaining} task${routineRemaining > 1 ? "s" : ""} left — stay focused 💪`;
 
-  // Priority card
+  // Priority card — strict order: overLimit → nextEvent(≤15) → currentTask → nextTask
   type Priority = { label: string; main: string; sub?: string; to: "/routine" | "/events" | "/expenses" } | null;
   let priority: Priority = null;
-  if (nextEvent && minsToEvent <= 15) {
-    priority = {
-      label: "NOW",
-      main: nextEvent.title,
-      sub: `Starts in ${minsToEvent}m`,
-      to: "/events",
-    };
-  } else if (currentTask && (() => {
+  const inCurrentWindow = currentTask && (() => {
     const start = hhmmToMin(currentTask.time);
     const end = currentTask.endTime ? hhmmToMin(currentTask.endTime) : start + 30;
     return nowMin >= start && nowMin < end;
-  })()) {
+  })();
+  if (overLimit) {
+    priority = {
+      label: "PRIORITY",
+      main: "You're over budget today ⚠️",
+      sub: `Spent ${formatTaka(todayExpense, takaSym)} of ${formatTaka(dailyLimit, takaSym)}`,
+      to: "/expenses",
+    };
+  } else if (nextEvent && minsToEvent <= 15) {
+    priority = {
+      label: "NOW",
+      main: `${nextEvent.title} (in ${minsToEvent}m)`,
+      sub: `Starts in ${minsToEvent}m`,
+      to: "/events",
+    };
+  } else if (inCurrentWindow && currentTask) {
     priority = {
       label: "NOW",
       main: currentTask.title,
       sub: `${formatTime12(currentTask.time)}${currentTask.endTime ? ` – ${formatTime12(currentTask.endTime)}` : ""}`,
       to: "/routine",
-    };
-  } else if (overLimit) {
-    priority = {
-      label: "PRIORITY",
-      main: "Heads up: over daily limit",
-      sub: `Spent ${formatTaka(todayExpense, takaSym)} of ${formatTaka(dailyLimit, takaSym)}`,
-      to: "/expenses",
     };
   } else if (nextTask) {
     priority = {
@@ -258,24 +259,24 @@ function Dashboard() {
   return (
     <div className="space-y-4 stagger-sections">
       {/* Greeting / Hero */}
-      <div className="relative overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/15 via-card to-card/80 bg-[length:200%_200%] animate-[gradient-shift_8s_ease_infinite] p-4 shadow-lg ring-1 ring-inset ring-white/5">
-        <div className="pointer-events-none absolute -top-8 -right-8 size-32 rounded-full bg-primary/15 blur-3xl" />
+      <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 bg-[length:200%_200%] animate-[gradient-shift_8s_ease_infinite] p-4 shadow-lg ring-1 ring-inset ring-white/10 text-white">
+        <div className="pointer-events-none absolute -top-8 -right-8 size-32 rounded-full bg-white/20 blur-3xl" />
         <div className="relative flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
-            <h1 className="text-[22px] font-bold text-foreground tracking-tight leading-[1.2]">
+            <h1 className="text-[22px] font-bold text-white tracking-tight leading-[1.2]">
               {greeting}
             </h1>
-            <p className="text-[13px] font-medium text-foreground/80 leading-[1.4] mt-1.5">
+            <p className="text-[13px] font-medium text-white/90 leading-[1.4] mt-1.5">
               {intel}
             </p>
-            <p className="text-[12px] font-medium text-muted-foreground leading-[1.4] mt-1">
+            <p className="text-[12px] font-medium text-white/75 leading-[1.4] mt-1">
               {done} done · {eventCount} events · {formatTaka(todayExpense, takaSym)} spent
             </p>
-            <p className="text-[11px] font-medium text-muted-foreground tracking-[0.5px] leading-[1.3] mt-1">{today}</p>
+            <p className="text-[11px] font-medium text-white/70 tracking-[0.5px] leading-[1.3] mt-1">{today}</p>
           </div>
           <div className="flex flex-col items-end gap-1.5 shrink-0">
             {streak > 0 && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 text-amber-600 px-2.5 py-1 text-[11px] font-semibold border border-amber-500/20 leading-none">
+              <span className="inline-flex items-center gap-1 rounded-full bg-white/15 text-white px-2.5 py-1 text-[11px] font-semibold border border-white/20 leading-none">
                 <Flame className="size-3.5" /> {streak}
               </span>
             )}
@@ -283,10 +284,10 @@ function Dashboard() {
               aria-label={`Status: ${statusLabel}`}
               className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-bold uppercase tracking-wider border leading-none ${
                 status === "red"
-                  ? "bg-red-500/15 text-red-600 border-red-500/30"
+                  ? "bg-amber-100 text-amber-700 border-amber-200"
                   : status === "yellow"
-                    ? "bg-amber-500/15 text-amber-700 border-amber-500/30"
-                    : "bg-emerald-500/15 text-emerald-600 border-emerald-500/30"
+                    ? "bg-amber-100 text-amber-700 border-amber-200"
+                    : "bg-emerald-100 text-emerald-700 border-emerald-200"
               }`}
             >
               <span className="text-[11px] leading-none">{statusEmoji}</span>
@@ -322,7 +323,7 @@ function Dashboard() {
       {priority && (
         <button
           onClick={() => navigate({ to: priority!.to })}
-          className="press animate-fade-in w-full text-left rounded-2xl p-4 border border-primary/30 bg-primary/10 shadow-[0_0_24px_-6px_hsl(var(--primary)/0.45)] transition-all duration-200"
+          className="press animate-fade-in w-full text-left rounded-2xl p-5 border border-primary/30 bg-primary/10 shadow-[0_0_24px_-6px_hsl(var(--primary)/0.45)] transition-all duration-200"
         >
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0 flex-1">
@@ -587,30 +588,39 @@ function Dashboard() {
                 )}
               </span>
             </div>
-            {dailyLimit > 0 && (
-              <div className="space-y-1">
-                <div className="h-2 bg-muted rounded-full overflow-hidden">
-                  <div
-                    className={`h-full rounded-full transition-all ${overLimit ? "bg-red-500" : "bg-primary"}`}
-                    style={{ width: `${Math.min(limitPct * 100, 100)}%` }}
-                  />
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className={`text-[11px] font-semibold leading-[1.3] ${overLimit ? "text-red-500" : "text-muted-foreground"}`}>
-                    {Math.round(limitPct * 100)}%
-                  </span>
-                  {overLimit ? (
-                    <span className="text-[11px] font-semibold text-red-500 leading-[1.3] flex items-center gap-1">
-                      <AlertTriangle className="size-3" /> You're over today — adjust tomorrow 💡
+            {dailyLimit > 0 && (() => {
+              const pctNum = limitPct * 100;
+              const barClass =
+                pctNum >= 100
+                  ? "bg-gradient-to-r from-amber-400 via-orange-400 to-red-400"
+                  : pctNum >= 80
+                    ? "bg-amber-400"
+                    : "bg-blue-500";
+              return (
+                <div className="space-y-1">
+                  <div className="h-2 bg-muted rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all ${barClass}`}
+                      style={{ width: `${Math.min(pctNum, 100)}%` }}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className={`text-[11px] font-semibold leading-[1.3] ${overLimit ? "text-amber-700" : "text-muted-foreground"}`}>
+                      {Math.round(pctNum)}%
                     </span>
-                  ) : (
-                    <span className="text-[11px] font-semibold text-emerald-600 leading-[1.3]">
-                      Safe to spend: {formatTaka(safeToSpend, takaSym)}
-                    </span>
-                  )}
+                    {overLimit ? (
+                      <span className="text-[11px] font-semibold text-amber-700 leading-[1.3] flex items-center gap-1">
+                        <AlertTriangle className="size-3" /> You're over today — adjust tomorrow 💡
+                      </span>
+                    ) : (
+                      <span className="text-[11px] font-semibold text-emerald-600 leading-[1.3]">
+                        Safe to spend today: {formatTaka(safeToSpend, takaSym)}
+                      </span>
+                    )}
+                  </div>
                 </div>
-              </div>
-            )}
+              );
+            })()}
           </div>
           <div className="flex items-center justify-between">
             <span className="text-[12px] font-medium text-muted-foreground leading-[1.4] flex items-center gap-1.5">
