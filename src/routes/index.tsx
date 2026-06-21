@@ -341,6 +341,34 @@ function Dashboard() {
     [expenses, dailyLimit, eventsThisWeek, takaSym, nowTick],
   );
 
+  const buildShareText = () => {
+    const lines = ["My Weekly Report 📊", ""];
+    weeklyReport.insights.slice(0, 4).forEach((ins) => lines.push(ins.message));
+    lines.push("", "Track your life with DailyOS 🚀");
+    return lines.join("\n");
+  };
+
+  const handleShareReport = async () => {
+    const text = buildShareText();
+    const nav = typeof navigator !== "undefined" ? navigator : undefined;
+    if (nav?.share) {
+      try {
+        await nav.share({ title: "My Weekly Report", text });
+        return;
+      } catch (err) {
+        // user cancelled or share failed — fall through to clipboard
+        if ((err as DOMException)?.name === "AbortError") return;
+      }
+    }
+    try {
+      await nav?.clipboard?.writeText(text);
+      toast.success("Copied to clipboard ✅");
+    } catch {
+      toast.error("Couldn't share — try again");
+    }
+  };
+
+
 
 
 
