@@ -526,6 +526,11 @@ function ProfileSetupScreen() {
 
   const finish = () => {
     setUserProfile({ name: name || "Guest", avatar, currency, priorities });
+    try {
+      sessionStorage.setItem("dailyos.welcomeBanner", "1");
+    } catch {
+      /* noop */
+    }
     login();
     completeOnboarding();
   };

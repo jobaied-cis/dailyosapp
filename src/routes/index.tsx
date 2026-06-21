@@ -30,6 +30,8 @@ import {
 import { useExpenses, getDailyLimit } from "@/lib/expenses-store";
 import { useStreak } from "@/lib/streak-store";
 import { useTakaSymbol, formatTaka } from "@/lib/currency";
+import { useAuth } from "@/lib/auth-context";
+import { X } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -264,8 +266,50 @@ function Dashboard() {
 
   const routineCtaLabel = done > 0 && !allDone ? "Continue routine" : "Open today's routine";
 
+  // ---- Personalization (from onboarding priorities) ----
+  const { userProfile } = useAuth();
+  const priorities = userProfile?.priorities ?? [];
+  const focusMission = priorities.includes("study");
+  const focusRoutine = priorities.includes("productivity") || priorities.includes("fitness");
+  const focusExpense = priorities.includes("finance");
+
+  // ---- First-app-load welcome banner (set by ProfileSetup finish) ----
+  const [showWelcome, setShowWelcome] = useState(false);
+  useEffect(() => {
+    try {
+      if (sessionStorage.getItem("dailyos.welcomeBanner") === "1") {
+        sessionStorage.removeItem("dailyos.welcomeBanner");
+        setShowWelcome(true);
+        const t = setTimeout(() => setShowWelcome(false), 6000);
+        return () => clearTimeout(t);
+      }
+    } catch {
+      /* noop */
+    }
+  }, []);
+
   return (
     <div className="space-y-4 stagger-sections">
+      {showWelcome && (
+        <div
+          className="relative overflow-hidden rounded-2xl border border-primary/30 bg-gradient-to-r from-primary/15 via-primary/10 to-emerald-500/15 p-3.5 pr-10 animate-fade-in"
+        >
+          <p className="text-[13px] font-semibold text-foreground leading-[1.3]">
+            Welcome to your system 🚀
+          </p>
+          <p className="text-[12px] text-muted-foreground leading-[1.4] mt-0.5">
+            Everything is set. Let's get started.
+          </p>
+          <button
+            onClick={() => setShowWelcome(false)}
+            aria-label="Dismiss welcome"
+            className="absolute top-2.5 right-2.5 size-6 inline-flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-foreground/5 transition-colors"
+          >
+            <X className="size-3.5" />
+          </button>
+        </div>
+      )}
+
       {/* Greeting / Hero */}
       <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 bg-[length:200%_200%] animate-[gradient-shift_8s_ease_infinite] p-4 shadow-lg ring-1 ring-inset ring-white/10 text-white">
         <div className="pointer-events-none absolute -top-8 -right-8 size-32 rounded-full bg-white/20 blur-3xl" />
@@ -362,10 +406,14 @@ function Dashboard() {
       )}
 
       {/* Today's Routine */}
-      <Link to="/routine" className={`block ${CARD} shadow-md ${PRESS}`}>
+      <Link
+        to="/routine"
+        className={`block ${CARD} shadow-md ${PRESS} ${focusRoutine ? "border-primary/40 shadow-primary/10 ring-1 ring-primary/15" : ""}`}
+      >
         <div className="flex items-center justify-between mb-3">
           <span className="text-[11px] font-medium uppercase tracking-[0.5px] leading-[1.3] text-muted-foreground flex items-center gap-1.5">
             Today's Routine
+            {focusRoutine && <FocusBadge />}
             {streak > 0 && (
               <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-600 normal-case tracking-normal">
                 · {streak}-day streak 🔥
@@ -421,11 +469,12 @@ function Dashboard() {
       </Link>
 
       {/* Today's Mission */}
-      <div className="rounded-2xl p-[1px] bg-gradient-to-r from-blue-500/40 via-indigo-400/30 to-emerald-400/40 transition-all duration-200 hover:shadow-md active:scale-[0.98]">
+      <div className={`rounded-2xl p-[1px] bg-gradient-to-r from-blue-500/40 via-indigo-400/30 to-emerald-400/40 transition-all duration-200 hover:shadow-md active:scale-[0.98] ${focusMission ? "shadow-primary/15 ring-1 ring-primary/25" : ""}`}>
       <section className="rounded-[15px] p-4 bg-card shadow-sm">
         <div className="flex items-center justify-between mb-3">
           <span className="text-[11px] font-medium uppercase tracking-[0.5px] leading-[1.3] text-muted-foreground flex items-center gap-1.5">
             <Target className="size-3.5" /> Today's Mission
+            {focusMission && <FocusBadge />}
           </span>
           <Link to="/missions" className="text-xs font-semibold text-muted-foreground hover:text-foreground">
             All
@@ -570,10 +619,11 @@ function Dashboard() {
       </Link>
 
       {/* Expense Summary */}
-      <section className={CARD}>
+      <section className={`${CARD} ${focusExpense ? "border-primary/40 shadow-primary/10 ring-1 ring-primary/15" : ""}`}>
         <div className="flex items-center justify-between mb-3">
           <span className="text-[11px] font-medium uppercase tracking-[0.5px] leading-[1.3] text-muted-foreground flex items-center gap-1.5">
             <Wallet className="size-3.5" /> Expense Summary
+            {focusExpense && <FocusBadge />}
           </span>
           <Link to="/expenses" className="text-xs font-semibold text-muted-foreground hover:text-foreground">
             Details
@@ -667,3 +717,12 @@ function Dashboard() {
     </div>
   );
 }
+
+function FocusBadge() {
+  return (
+    <span className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-primary bg-primary/10 border border-primary/25 rounded-full px-1.5 py-0.5 normal-case">
+      <Sparkles className="size-2.5" /> Focus
+    </span>
+  );
+}
+
