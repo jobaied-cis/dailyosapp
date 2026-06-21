@@ -33,6 +33,7 @@ import { useStreak } from "@/lib/streak-store";
 import { useTakaSymbol, formatTaka } from "@/lib/currency";
 import { useAuth } from "@/lib/auth-context";
 import { X } from "lucide-react";
+import { getDailySuggestion, suggestionIcon } from "@/lib/ai-helper";
 
 export const Route = createFileRoute("/")({
   head: () => ({
