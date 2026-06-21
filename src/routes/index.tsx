@@ -38,7 +38,8 @@ import { getBehaviorInsights, behaviorIcon } from "@/lib/behavior-ai";
 import { getMemoryInsights, memoryIcon } from "@/lib/memory-ai";
 import { getWeeklyReport } from "@/lib/weekly-report";
 import { AIAssistantSheet } from "@/components/AIAssistantSheet";
-import { Bot, BarChart3 } from "lucide-react";
+import { Bot, BarChart3, Share2 } from "lucide-react";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -339,6 +340,34 @@ function Dashboard() {
       }),
     [expenses, dailyLimit, eventsThisWeek, takaSym, nowTick],
   );
+
+  const buildShareText = () => {
+    const lines = ["My Weekly Report 📊", ""];
+    weeklyReport.insights.slice(0, 4).forEach((ins) => lines.push(ins.message));
+    lines.push("", "Track your life with DailyOS 🚀");
+    return lines.join("\n");
+  };
+
+  const handleShareReport = async () => {
+    const text = buildShareText();
+    const nav = typeof navigator !== "undefined" ? navigator : undefined;
+    if (nav?.share) {
+      try {
+        await nav.share({ title: "My Weekly Report", text });
+        return;
+      } catch (err) {
+        // user cancelled or share failed — fall through to clipboard
+        if ((err as DOMException)?.name === "AbortError") return;
+      }
+    }
+    try {
+      await nav?.clipboard?.writeText(text);
+      toast.success("Copied to clipboard ✅");
+    } catch {
+      toast.error("Couldn't share — try again");
+    }
+  };
+
 
 
 
@@ -878,13 +907,22 @@ function Dashboard() {
             ))}
           </ul>
         )}
-        <button
-          type="button"
-          onClick={() => setAiOpen(true)}
-          className="mt-3 w-full h-10 rounded-xl border border-primary/30 bg-primary/10 hover:bg-primary/15 text-primary text-[12px] font-semibold active:scale-[0.97] transition-all"
-        >
-          View full report →
-        </button>
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={() => setAiOpen(true)}
+            className="h-10 rounded-xl border border-primary/30 bg-primary/10 hover:bg-primary/15 text-primary text-[12px] font-semibold active:scale-[0.97] transition-all"
+          >
+            View full report →
+          </button>
+          <button
+            type="button"
+            onClick={handleShareReport}
+            className="h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-500 text-white text-[12px] font-semibold inline-flex items-center justify-center gap-1.5 shadow-sm active:scale-[0.97] transition-all"
+          >
+            <Share2 className="size-3.5" /> Share Report 📤
+          </button>
+        </div>
       </section>
 
       <DevResetButton />
