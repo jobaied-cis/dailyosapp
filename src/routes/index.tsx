@@ -309,9 +309,11 @@ function Dashboard() {
       ];
 
   // ---- Behavior AI: passive pattern detection over last 7 days ----
+  // Uses raw template tasks (not today's filtered view) so weekday rollups work.
+  const rawTasks = useAllRawTasks();
   const behaviorInsights = useMemo(
-    () => getBehaviorInsights({ tasks, expenses }).slice(0, 2),
-    [tasks, expenses],
+    () => getBehaviorInsights({ tasks: rawTasks, expenses }).slice(0, 2),
+    [rawTasks, expenses],
   );
 
   // ---- Memory AI: long-term pattern memory (last 14 days) ----
