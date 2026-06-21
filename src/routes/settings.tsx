@@ -1,8 +1,10 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { ChevronLeft, ChevronRight, LogOut, RefreshCcw, User } from "lucide-react";
+import { ChevronLeft, ChevronRight, LogOut, Moon, RefreshCcw, Sun, User } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { CurrencyTrigger } from "@/components/CurrencySheet";
 import { useCurrency, TAKA } from "@/lib/currency";
+import { useTheme } from "@/lib/theme-store";
+
 
 export const Route = createFileRoute("/settings")({
   head: () => ({
