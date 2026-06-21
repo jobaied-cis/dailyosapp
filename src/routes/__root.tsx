@@ -9,6 +9,9 @@ import {
 } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
 import { Toaster } from "@/components/ui/sonner";
+import { AuthProvider, useAuth } from "@/lib/auth-context";
+import { AuthStack } from "@/components/auth/AuthStack";
+import { OnboardingScreen } from "@/components/auth/OnboardingScreen";
 
 import appCss from "../styles.css?url";
 
