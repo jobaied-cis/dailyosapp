@@ -34,6 +34,7 @@ import { useTakaSymbol, formatTaka } from "@/lib/currency";
 import { useAuth } from "@/lib/auth-context";
 import { X } from "lucide-react";
 import { getDailyInsights, suggestionIcon } from "@/lib/ai-helper";
+import { getBehaviorInsights, behaviorIcon } from "@/lib/behavior-ai";
 
 export const Route = createFileRoute("/")({
   head: () => ({
