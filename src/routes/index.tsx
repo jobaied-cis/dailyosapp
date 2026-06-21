@@ -588,8 +588,13 @@ function Dashboard() {
               <span className="text-[12px] font-medium text-muted-foreground leading-[1.4] flex items-center gap-1.5">
                 <TrendingDown className="size-3.5 text-primary/70" /> Today
                 {dailyLimit > 0 && (
-                  <span aria-label="status" className="text-[12px] leading-none">
-                    {limitPct * 100 > 100 ? "🔴" : limitPct * 100 >= 80 ? "🟡" : "🟢"}
+                  <span aria-label="status" className="relative inline-flex text-[12px] leading-none">
+                    {limitPct * 100 > 100 ? "🔴" : limitPct * 100 >= 80 ? "🟡" : (
+                      <>
+                        <span className="absolute inset-0 inline-flex rounded-full bg-emerald-400/40 animate-ping opacity-50" aria-hidden />
+                        <span className="relative">🟢</span>
+                      </>
+                    )}
                   </span>
                 )}
               </span>
