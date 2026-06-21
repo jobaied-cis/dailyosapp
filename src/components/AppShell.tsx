@@ -87,7 +87,7 @@ function CurrencyToggle() {
   return (
     <CurrencyTrigger
       ariaLabel="Change currency"
-      className="press inline-flex items-center justify-center size-10 rounded-full bg-secondary text-foreground hover:bg-secondary/80 font-bold text-base leading-none"
+      className="inline-flex items-center justify-center w-8 h-8 rounded-full transition-all duration-150 active:scale-95 bg-blue-500/10 text-blue-600 dark:bg-emerald-400/15 dark:text-emerald-400 font-bold text-sm leading-none"
     >
       {label}
     </CurrencyTrigger>
