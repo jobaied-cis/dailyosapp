@@ -14,6 +14,7 @@ export type AIContext = {
   todayExpense?: number;
   dailyLimit?: number;
   currencySymbol?: string;
+  memoryInsights?: string[];
 };
 
 export function hasAnyContext(ctx: AIContext): boolean {
@@ -43,6 +44,10 @@ export function buildAIPrompt(ctx: AIContext, userPrompt: string): string {
       ? `${sym}${ctx.todayExpense ?? 0} / ${sym}${ctx.dailyLimit}`
       : `${sym}${ctx.todayExpense ?? 0}`;
 
+  const memory = ctx.memoryInsights?.length
+    ? ctx.memoryInsights.slice(0, 3).map((m) => `  - ${m}`).join("\n")
+    : "  - (none yet)";
+
   return [
     "You are a smart productivity assistant.",
     "",
@@ -54,6 +59,9 @@ export function buildAIPrompt(ctx: AIContext, userPrompt: string): string {
     `- Today's events: ${events}`,
     `- Active mission: ${mission}`,
     `- Today's spending: ${spend}`,
+    "",
+    "User behavior patterns:",
+    memory,
     "",
     `User question: ${userPrompt}`,
     "",

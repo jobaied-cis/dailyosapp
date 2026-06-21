@@ -35,6 +35,7 @@ import { useAuth } from "@/lib/auth-context";
 import { X } from "lucide-react";
 import { getDailyInsights, suggestionIcon } from "@/lib/ai-helper";
 import { getBehaviorInsights, behaviorIcon } from "@/lib/behavior-ai";
+import { getMemoryInsights, memoryIcon } from "@/lib/memory-ai";
 import { AIAssistantSheet } from "@/components/AIAssistantSheet";
 import { Bot } from "lucide-react";
 
@@ -308,6 +309,20 @@ function Dashboard() {
     [expenses, nowTick],
   );
 
+  // ---- Memory AI: long-term pattern memory (last 14 days) ----
+  const memoryInsights = useMemo(() => getMemoryInsights(), [nowTick]);
+  const [memoryOffset, setMemoryOffset] = useState(0);
+  useEffect(() => {
+    if (memoryInsights.length <= 1) return;
+    const id = setInterval(() => setMemoryOffset((o) => o + 1), 6000);
+    return () => clearInterval(id);
+  }, [memoryInsights.length]);
+  const memoryInsight =
+    memoryInsights.length > 0
+      ? memoryInsights[memoryOffset % memoryInsights.length]
+      : null;
+
+
 
   
 
@@ -386,6 +401,17 @@ function Dashboard() {
                   </li>
                 ))}
               </ul>
+            )}
+            {memoryInsight && (
+              <p
+                key={`m-${memoryInsight.message}`}
+                className="text-[11px] font-medium text-white/65 leading-[1.4] mt-1 flex items-start gap-1.5 animate-fade-in"
+              >
+                <span aria-hidden className="text-[12px] leading-[1.4]">
+                  {memoryIcon(memoryInsight.type)}
+                </span>
+                <span>{memoryInsight.message}</span>
+              </p>
             )}
             <p className="text-[12px] font-medium text-white/75 leading-[1.4] mt-1">
               {done} done · {eventCount} events · {formatTaka(todayExpense, takaSym)} spent
