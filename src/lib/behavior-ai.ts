@@ -9,6 +9,20 @@ import { taskShowsOnWeekday } from "@/lib/tasks-store";
 import { isCompletedOn } from "@/lib/task-completions-store";
 import type { Expense } from "@/lib/expenses-store";
 
+const TASKS_KEY = "dailyos.tasks.v1";
+
+function readAllTasks(): Task[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(TASKS_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? (parsed as Task[]) : [];
+  } catch {
+    return [];
+  }
+}
+
 export type BehaviorType = "pattern" | "warning" | "positive";
 
 export type BehaviorInsight = {
