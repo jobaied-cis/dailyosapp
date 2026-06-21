@@ -299,6 +299,14 @@ function Dashboard() {
         aiInsights[insightOffset % aiInsights.length],
         aiInsights[(insightOffset + 1) % aiInsights.length],
       ];
+
+  // ---- Behavior AI: passive pattern detection over last 7 days ----
+  const behaviorInsights = useMemo(
+    () => getBehaviorInsights({ expenses }).slice(0, 2),
+    [expenses, nowTick],
+  );
+
+
   
 
   // ---- First-app-load welcome banner (set by ProfileSetup finish) ----
