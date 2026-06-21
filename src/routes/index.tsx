@@ -94,7 +94,7 @@ function hhmmToMin(s: string) {
   return h * 60 + m;
 }
 
-const CARD = "rounded-2xl p-4 border border-border/60 bg-card shadow-sm";
+const CARD = "rounded-2xl p-4 border border-border/60 bg-card shadow-sm transition-all duration-200 hover:shadow-md active:scale-[0.98]";
 const PRESS = "press will-change-transform";
 
 function Dashboard() {
@@ -413,7 +413,8 @@ function Dashboard() {
       </Link>
 
       {/* Today's Mission */}
-      <section className={`${CARD} ${PRESS}`}>
+      <div className="rounded-2xl p-[1px] bg-gradient-to-r from-blue-500/40 via-indigo-400/30 to-emerald-400/40 transition-all duration-200 hover:shadow-md active:scale-[0.98]">
+      <section className="rounded-[15px] p-4 bg-card shadow-sm">
         <div className="flex items-center justify-between mb-3">
           <span className="text-[11px] font-medium uppercase tracking-[0.5px] leading-[1.3] text-muted-foreground flex items-center gap-1.5">
             <Target className="size-3.5" /> Today's Mission
@@ -434,10 +435,10 @@ function Dashboard() {
               const daysLeft = Math.max(0, mission.days - currentDay);
               return (
                 <div className="mt-3 space-y-1.5">
-                  <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                  <div className={`h-1.5 bg-muted rounded-full overflow-hidden ${clamped === 0 ? "animate-soft-pulse" : ""}`}>
                     <div
-                      className="h-full bg-primary rounded-full transition-all"
-                      style={{ width: `${clamped}%` }}
+                      className="h-full bg-gradient-to-r from-blue-500 to-emerald-400 rounded-full"
+                      style={{ width: `${clamped}%`, transition: "width 0.6s ease-out" }}
                     />
                   </div>
                   <div className="flex items-center justify-between">
@@ -468,9 +469,12 @@ function Dashboard() {
           <p className="text-sm text-muted-foreground">No active mission 🎯</p>
         )}
       </section>
+      </div>
+
+
 
       {/* Today's Events */}
-      <Link to="/events" className={`block ${CARD} ${PRESS}`}>
+      <Link to="/events" className={`block ${CARD} ${PRESS} ${showEvents.length > 0 ? "bg-green-50 dark:bg-emerald-500/10 border-emerald-500/20" : ""}`}>
         <div className="flex items-center justify-between mb-3">
           <span className="text-[11px] font-medium uppercase tracking-[0.5px] leading-[1.3] text-muted-foreground flex items-center gap-1.5">
             <CalendarDays className="size-3.5" /> Today's Events
@@ -553,7 +557,7 @@ function Dashboard() {
             )}
           </div>
         ) : (
-          <p className="text-sm text-muted-foreground py-1">You're all clear today ✨</p>
+          <p className="text-sm text-muted-foreground py-1">You're all clear today <span className="inline-block animate-float-y">✨</span></p>
         )}
       </Link>
 
@@ -584,8 +588,13 @@ function Dashboard() {
               <span className="text-[12px] font-medium text-muted-foreground leading-[1.4] flex items-center gap-1.5">
                 <TrendingDown className="size-3.5 text-primary/70" /> Today
                 {dailyLimit > 0 && (
-                  <span aria-label="status" className="text-[12px] leading-none">
-                    {limitPct * 100 > 100 ? "🔴" : limitPct * 100 >= 80 ? "🟡" : "🟢"}
+                  <span aria-label="status" className="relative inline-flex text-[12px] leading-none">
+                    {limitPct * 100 > 100 ? "🔴" : limitPct * 100 >= 80 ? "🟡" : (
+                      <>
+                        <span className="absolute inset-0 inline-flex rounded-full bg-emerald-400/40 animate-ping opacity-50" aria-hidden />
+                        <span className="relative">🟢</span>
+                      </>
+                    )}
                   </span>
                 )}
               </span>
@@ -609,7 +618,7 @@ function Dashboard() {
                 <div className="space-y-1">
                   <div className="h-2 bg-muted rounded-full overflow-hidden">
                     <div
-                      className={`h-full rounded-full transition-all ${barClass}`}
+                      className={`h-full rounded-full transition-all duration-500 ease-out ${barClass}`}
                       style={{ width: `${Math.min(pctNum, 100)}%` }}
                     />
                   </div>
@@ -622,7 +631,7 @@ function Dashboard() {
                         <AlertTriangle className="size-3" /> You're over today — adjust tomorrow 💡
                       </span>
                     ) : (
-                      <span className="text-[11px] font-semibold text-emerald-600 leading-[1.3]">
+                      <span className="text-[11px] font-semibold text-emerald-600 leading-[1.3] animate-fade-in">
                         Safe to spend today: {formatTaka(safeToSpend, takaSym)}
                       </span>
                     )}
