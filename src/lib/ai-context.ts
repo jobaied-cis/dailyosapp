@@ -15,6 +15,10 @@ export type AIContext = {
   dailyLimit?: number;
   currencySymbol?: string;
   memoryInsights?: string[];
+  nextTaskTitle?: string;
+  nextTaskTime?: string;
+  nextEventTitle?: string;
+  nextEventInMinutes?: number;
 };
 
 export function hasAnyContext(ctx: AIContext): boolean {
