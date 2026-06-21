@@ -99,6 +99,17 @@ function getServerSnapshot(): Task[] {
   return EMPTY_TASKS;
 }
 
+/** Raw template list (no per-day overlay). Useful for multi-day analytics. */
+export function getAllRawTasks(): Task[] {
+  ensureInit();
+  return cache;
+}
+
+/** Reactive raw template list — same shape as getAllRawTasks but subscribes. */
+export function useAllRawTasks(): Task[] {
+  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+}
+
 /** Does this task's repeat rule include the given weekday? (0=Sun … 6=Sat) */
 export function taskShowsOnWeekday(t: Task, weekday: number): boolean {
   const r = t.repeat;
