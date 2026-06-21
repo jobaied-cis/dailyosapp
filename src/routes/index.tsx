@@ -181,9 +181,11 @@ function Dashboard() {
     .reduce((s, e) => s + e.amount, 0);
   const balance = totalIncome - totalExpenseAll;
 
-  const todayExpense = expenses
-    .filter((e) => e.type === "expense" && e.createdAt >= todayStart && e.createdAt < todayEnd)
-    .reduce((s, e) => s + e.amount, 0);
+  const todayExpenseEntries = expenses.filter(
+    (e) => e.type === "expense" && e.createdAt >= todayStart && e.createdAt < todayEnd,
+  );
+  const todayExpense = todayExpenseEntries.reduce((s, e) => s + e.amount, 0);
+  const hasExpenseToday = todayExpenseEntries.length > 0;
 
   const monthExpense = expenses
     .filter((e) => e.type === "expense" && e.createdAt >= monthStart && e.createdAt < monthEnd)
