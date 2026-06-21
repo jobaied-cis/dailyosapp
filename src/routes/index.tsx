@@ -310,12 +310,23 @@ function Dashboard() {
 
   // ---- Behavior AI: passive pattern detection over last 7 days ----
   const behaviorInsights = useMemo(
-    () => getBehaviorInsights({ expenses }).slice(0, 2),
-    [expenses, nowTick],
+    () => getBehaviorInsights({ tasks, expenses }).slice(0, 2),
+    [tasks, expenses],
   );
 
   // ---- Memory AI: long-term pattern memory (last 14 days) ----
-  const memoryInsights = useMemo(() => getMemoryInsights(), [nowTick]);
+  // Computed once on mount + when window regains focus (no per-minute churn).
+  const [memoryRefresh, setMemoryRefresh] = useState(0);
+  useEffect(() => {
+    const onFocus = () => setMemoryRefresh((n) => n + 1);
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onFocus);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onFocus);
+    };
+  }, []);
+  const memoryInsights = useMemo(() => getMemoryInsights(), [memoryRefresh]);
   const [memoryOffset, setMemoryOffset] = useState(0);
   useEffect(() => {
     if (memoryInsights.length <= 1) return;
