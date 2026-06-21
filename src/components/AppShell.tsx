@@ -1,16 +1,12 @@
 import { Link, Outlet, useLocation } from "@tanstack/react-router";
 import { CalendarDays, Home, ListChecks, Moon, Sun, Target, Wallet } from "lucide-react";
+import { useEffect, useRef, useState, type MouseEvent, type ReactNode } from "react";
 import { useTheme } from "@/lib/theme-store";
 import { useCurrency, TAKA } from "@/lib/currency";
 import { CurrencyTrigger } from "@/components/CurrencySheet";
 
 export function AppShell() {
   const { pathname } = useLocation();
-
-  const titles: Record<string, string> = {
-    "/": "DailyOS",
-    "/routine": "DailyOS",
-  };
 
   return (
     <div className="min-h-screen bg-background flex justify-center">
@@ -40,7 +36,6 @@ export function AppShell() {
             </div>
             <div className="flex items-center gap-2 shrink-0">
               <CurrencyToggle />
-              <span aria-hidden className="w-px h-5 mx-1 bg-slate-200 dark:bg-white/10" />
               <ThemeToggle />
             </div>
           </div>
@@ -64,33 +59,169 @@ export function AppShell() {
   );
 }
 
-function ThemeToggle() {
-  const { theme, toggle, mounted } = useTheme();
+/* --- Ripple hook --- */
+function useRipples() {
+  const [ripples, setRipples] = useState<{ id: number; x: number; y: number }[]>([]);
+  const addRipple = (e: MouseEvent<HTMLElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const id = Date.now() + Math.random();
+    setRipples((r) => [...r, { id, x: e.clientX - rect.left, y: e.clientY - rect.top }]);
+    setTimeout(() => setRipples((r) => r.filter((p) => p.id !== id)), 520);
+  };
+  const node = (
+    <>
+      {ripples.map((r) => (
+        <span
+          key={r.id}
+          className="header-ripple"
+          style={{ left: r.x, top: r.y }}
+        />
+      ))}
+    </>
+  );
+  return { node, addRipple };
+}
+
+/* --- Toggle switch shell --- */
+function ToggleSwitch({
+  on,
+  onClick,
+  ariaLabel,
+  trackClass,
+  knobClass,
+  children,
+  extras,
+}: {
+  on: boolean;
+  onClick: (e: MouseEvent<HTMLButtonElement>) => void;
+  ariaLabel: string;
+  trackClass: string;
+  knobClass: string;
+  children: ReactNode;
+  extras?: ReactNode;
+}) {
+  const { node, addRipple } = useRipples();
   return (
     <button
-      onClick={toggle}
-      aria-label="Toggle theme"
-      className="inline-flex items-center justify-center w-8 h-8 rounded-full transition-all duration-150 active:scale-95 bg-slate-900/5 text-slate-600 dark:bg-white/10 dark:text-white/80"
+      type="button"
+      aria-label={ariaLabel}
+      aria-pressed={on}
+      onClick={(e) => {
+        addRipple(e);
+        onClick(e);
+      }}
+      className={`relative overflow-hidden rounded-full transition-all duration-300 ease-out active:scale-95 ${trackClass}`}
+      style={{ width: 60, height: 32 }}
     >
-      {mounted ? (
-        theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />
-      ) : (
-        <span className="w-4 h-4" />
-      )}
+      {extras}
+      <span
+        className={`absolute top-1/2 -translate-y-1/2 rounded-full shadow-md flex items-center justify-center ${knobClass}`}
+        style={{
+          width: 26,
+          height: 26,
+          left: on ? 31 : 3,
+          transition: "left 320ms cubic-bezier(0.34, 1.56, 0.64, 1), transform 400ms cubic-bezier(0.34, 1.56, 0.64, 1), background 300ms ease",
+          transform: on ? "rotate(360deg)" : "rotate(0deg)",
+        }}
+      >
+        {children}
+      </span>
+      {node}
     </button>
+  );
+}
+
+function ThemeToggle() {
+  const { theme, toggle, mounted } = useTheme();
+  const isDark = mounted && theme === "dark";
+
+  return (
+    <ToggleSwitch
+      on={isDark}
+      onClick={toggle}
+      ariaLabel="Toggle theme"
+      trackClass={
+        isDark
+          ? "bg-gradient-to-r from-indigo-900 via-slate-900 to-slate-950"
+          : "bg-gradient-to-r from-amber-300 via-orange-300 to-amber-400"
+      }
+      knobClass={
+        isDark
+          ? "bg-gradient-to-br from-slate-200 to-slate-400 text-slate-800"
+          : "bg-gradient-to-br from-white to-amber-50 text-amber-500"
+      }
+      extras={
+        isDark ? (
+          <>
+            <span className="absolute header-twinkle rounded-full bg-white" style={{ width: 2, height: 2, top: 7, left: 10 }} />
+            <span className="absolute header-twinkle rounded-full bg-white" style={{ width: 2, height: 2, top: 18, left: 18, animationDelay: "0.4s" }} />
+            <span className="absolute header-twinkle rounded-full bg-white" style={{ width: 1.5, height: 1.5, top: 12, left: 22, animationDelay: "0.9s" }} />
+          </>
+        ) : null
+      }
+    >
+      <span key={isDark ? "moon" : "sun"} className="header-sym-in inline-flex">
+        {!mounted ? (
+          <span className="w-3.5 h-3.5" />
+        ) : isDark ? (
+          <Moon className="w-3.5 h-3.5" />
+        ) : (
+          <Sun className="w-3.5 h-3.5" />
+        )}
+      </span>
+    </ToggleSwitch>
   );
 }
 
 function CurrencyToggle() {
   const currency = useCurrency();
-  const label = currency === "BDT" ? TAKA : "$";
+  const isUSD = currency === "USD";
+  const label = isUSD ? "$" : TAKA;
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const { node, addRipple } = useRipples();
+
   return (
-    <CurrencyTrigger
-      ariaLabel="Change currency"
-      className="inline-flex items-center justify-center w-8 h-8 rounded-full transition-all duration-150 active:scale-95 bg-blue-500/10 text-blue-600 dark:bg-emerald-400/15 dark:text-emerald-400 font-bold text-sm leading-none"
-    >
-      {label}
-    </CurrencyTrigger>
+    <div className="relative inline-flex">
+      {/* Hidden CurrencyTrigger to reuse drawer logic */}
+      <CurrencyTrigger ariaLabel="Change currency" className="sr-only absolute pointer-events-none">
+        <span ref={(el) => { triggerRef.current = el as unknown as HTMLButtonElement; }} />
+      </CurrencyTrigger>
+      <button
+        type="button"
+        aria-label="Change currency"
+        aria-pressed={isUSD}
+        onClick={(e) => {
+          addRipple(e);
+          // Forward click to the hidden CurrencyTrigger button to open the sheet.
+          const root = (e.currentTarget.parentElement as HTMLElement | null);
+          const hidden = root?.querySelector<HTMLButtonElement>("button.sr-only");
+          hidden?.click();
+        }}
+        className={`relative overflow-hidden rounded-full transition-all duration-300 ease-out active:scale-95 ${
+          isUSD
+            ? "bg-gradient-to-l from-emerald-400 via-emerald-500 to-blue-500"
+            : "bg-gradient-to-r from-blue-500 via-indigo-500 to-emerald-400"
+        }`}
+        style={{ width: 60, height: 32 }}
+      >
+        <span
+          className={`absolute top-1/2 -translate-y-1/2 rounded-full shadow-md flex items-center justify-center font-bold text-[13px] leading-none ${
+            isUSD
+              ? "bg-gradient-to-br from-emerald-300 to-blue-400 text-white"
+              : "bg-gradient-to-br from-blue-400 to-emerald-300 text-white"
+          }`}
+          style={{
+            width: 26,
+            height: 26,
+            left: isUSD ? 31 : 3,
+            transition: "left 320ms cubic-bezier(0.34, 1.56, 0.64, 1), background 300ms ease",
+          }}
+        >
+          <span key={label} className="header-sym-in inline-block">{label}</span>
+        </span>
+        {node}
+      </button>
+    </div>
   );
 }
 
