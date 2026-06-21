@@ -266,8 +266,50 @@ function Dashboard() {
 
   const routineCtaLabel = done > 0 && !allDone ? "Continue routine" : "Open today's routine";
 
+  // ---- Personalization (from onboarding priorities) ----
+  const { userProfile } = useAuth();
+  const priorities = userProfile?.priorities ?? [];
+  const focusMission = priorities.includes("study");
+  const focusRoutine = priorities.includes("productivity") || priorities.includes("fitness");
+  const focusExpense = priorities.includes("finance");
+
+  // ---- First-app-load welcome banner (set by ProfileSetup finish) ----
+  const [showWelcome, setShowWelcome] = useState(false);
+  useEffect(() => {
+    try {
+      if (sessionStorage.getItem("dailyos.welcomeBanner") === "1") {
+        sessionStorage.removeItem("dailyos.welcomeBanner");
+        setShowWelcome(true);
+        const t = setTimeout(() => setShowWelcome(false), 6000);
+        return () => clearTimeout(t);
+      }
+    } catch {
+      /* noop */
+    }
+  }, []);
+
   return (
     <div className="space-y-4 stagger-sections">
+      {showWelcome && (
+        <div
+          className="relative overflow-hidden rounded-2xl border border-primary/30 bg-gradient-to-r from-primary/15 via-primary/10 to-emerald-500/15 p-3.5 pr-10 animate-fade-in"
+        >
+          <p className="text-[13px] font-semibold text-foreground leading-[1.3]">
+            Welcome to your system 🚀
+          </p>
+          <p className="text-[12px] text-muted-foreground leading-[1.4] mt-0.5">
+            Everything is set. Let's get started.
+          </p>
+          <button
+            onClick={() => setShowWelcome(false)}
+            aria-label="Dismiss welcome"
+            className="absolute top-2.5 right-2.5 size-6 inline-flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-foreground/5 transition-colors"
+          >
+            <X className="size-3.5" />
+          </button>
+        </div>
+      )}
+
       {/* Greeting / Hero */}
       <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 bg-[length:200%_200%] animate-[gradient-shift_8s_ease_infinite] p-4 shadow-lg ring-1 ring-inset ring-white/10 text-white">
         <div className="pointer-events-none absolute -top-8 -right-8 size-32 rounded-full bg-white/20 blur-3xl" />
