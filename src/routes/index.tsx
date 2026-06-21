@@ -26,6 +26,7 @@ import {
   ListChecks,
   CalendarPlus,
   Sparkles,
+  Settings as SettingsIcon,
 } from "lucide-react";
 import { useExpenses, getDailyLimit } from "@/lib/expenses-store";
 import { useStreak } from "@/lib/streak-store";
