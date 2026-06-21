@@ -35,6 +35,7 @@ import { useAuth } from "@/lib/auth-context";
 import { X } from "lucide-react";
 import { getDailyInsights, suggestionIcon } from "@/lib/ai-helper";
 import { getBehaviorInsights, behaviorIcon } from "@/lib/behavior-ai";
+import { getMemoryInsights, memoryIcon } from "@/lib/memory-ai";
 import { AIAssistantSheet } from "@/components/AIAssistantSheet";
 import { Bot } from "lucide-react";
 
@@ -307,6 +308,20 @@ function Dashboard() {
     () => getBehaviorInsights({ expenses }).slice(0, 2),
     [expenses, nowTick],
   );
+
+  // ---- Memory AI: long-term pattern memory (last 14 days) ----
+  const memoryInsights = useMemo(() => getMemoryInsights(), [nowTick]);
+  const [memoryOffset, setMemoryOffset] = useState(0);
+  useEffect(() => {
+    if (memoryInsights.length <= 1) return;
+    const id = setInterval(() => setMemoryOffset((o) => o + 1), 6000);
+    return () => clearInterval(id);
+  }, [memoryInsights.length]);
+  const memoryInsight =
+    memoryInsights.length > 0
+      ? memoryInsights[memoryOffset % memoryInsights.length]
+      : null;
+
 
 
   
