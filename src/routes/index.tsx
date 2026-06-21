@@ -329,8 +329,9 @@ function Dashboard() {
             <h1 className="text-[22px] font-bold text-white tracking-tight leading-[1.2]">
               {greeting}
             </h1>
-            <p className="text-[13px] font-medium text-white/90 leading-[1.4] mt-1.5">
-              {intel}
+            <p className="text-[13px] font-medium text-white/90 leading-[1.4] mt-1.5 flex items-center gap-1.5">
+              <span aria-hidden className="text-[14px] leading-none">{intelIcon}</span>
+              <span>{intel}</span>
             </p>
             <p className="text-[12px] font-medium text-white/75 leading-[1.4] mt-1">
               {done} done · {eventCount} events · {formatTaka(todayExpense, takaSym)} spent
