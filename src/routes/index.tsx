@@ -273,16 +273,32 @@ function Dashboard() {
   const focusExpense = priorities.includes("finance");
 
   // ---- AI personalization engine (frontend-only, rule-based) ----
-  const aiSuggestion = getDailySuggestion({
+  const upcomingEventCount = todaysEvents.filter(
+    (e) => !e.completed && new Date(`${e.date}T${e.time}`).getTime() > nowTick,
+  ).length;
+  const aiInsights = getDailyInsights({
     priorities,
     hasMission: !!mission,
     incompleteTaskCount: routineRemaining,
     totalTaskCount: total,
     todayExpense,
     dailyLimit,
+    upcomingEventCount,
   });
-  const intel = aiSuggestion.message;
-  const intelIcon = suggestionIcon(aiSuggestion.type);
+  // Rotate which two insights are shown every 5s for a "live" feel.
+  const [insightOffset, setInsightOffset] = useState(0);
+  useEffect(() => {
+    if (aiInsights.length <= 2) return;
+    const id = setInterval(() => setInsightOffset((o) => o + 1), 5000);
+    return () => clearInterval(id);
+  }, [aiInsights.length]);
+  const visibleInsights = aiInsights.length <= 2
+    ? aiInsights.slice(0, 2)
+    : [
+        aiInsights[insightOffset % aiInsights.length],
+        aiInsights[(insightOffset + 1) % aiInsights.length],
+      ];
+  const intel = aiInsights[0].message;
 
   // ---- First-app-load welcome banner (set by ProfileSetup finish) ----
   const [showWelcome, setShowWelcome] = useState(false);
