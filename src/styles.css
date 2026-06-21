@@ -545,3 +545,36 @@ html { scroll-behavior: smooth; }
   50% { background-position: 100% 50%; }
   100% { background-position: 0% 50%; }
 }
+
+/* Header toggles — knob slide, ripple, twinkle */
+@keyframes header-ripple {
+  0%   { transform: translate(-50%, -50%) scale(0); opacity: 0.45; }
+  100% { transform: translate(-50%, -50%) scale(2.6); opacity: 0; }
+}
+.header-ripple {
+  position: absolute;
+  width: 60px;
+  height: 60px;
+  border-radius: 9999px;
+  background: hsl(var(--primary) / 0.35);
+  pointer-events: none;
+  animation: header-ripple 500ms ease-out forwards;
+}
+
+@keyframes header-twinkle {
+  0%, 100% { opacity: 0.25; transform: scale(0.85); }
+  50%      { opacity: 1;    transform: scale(1.1); }
+}
+.header-twinkle { animation: header-twinkle 1.8s ease-in-out infinite; }
+
+@keyframes header-sym-in {
+  0%   { opacity: 0; transform: scale(0.5); }
+  100% { opacity: 1; transform: scale(1); }
+}
+.header-sym-in { animation: header-sym-in 220ms cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .header-ripple,
+  .header-twinkle,
+  .header-sym-in { animation: none !important; }
+}
