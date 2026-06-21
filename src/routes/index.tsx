@@ -272,6 +272,18 @@ function Dashboard() {
   const focusRoutine = priorities.includes("productivity") || priorities.includes("fitness");
   const focusExpense = priorities.includes("finance");
 
+  // ---- AI personalization engine (frontend-only, rule-based) ----
+  const aiSuggestion = getDailySuggestion({
+    priorities,
+    hasMission: !!mission,
+    incompleteTaskCount: routineRemaining,
+    totalTaskCount: total,
+    todayExpense,
+    dailyLimit,
+  });
+  const intel = aiSuggestion.message;
+  const intelIcon = suggestionIcon(aiSuggestion.type);
+
   // ---- First-app-load welcome banner (set by ProfileSetup finish) ----
   const [showWelcome, setShowWelcome] = useState(false);
   useEffect(() => {
