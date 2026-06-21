@@ -202,26 +202,27 @@ function SettingsPage() {
           Actions
         </h2>
 
-        <div className="space-y-1.5">
+        <div className="grid grid-cols-2 gap-2.5">
           <button
             onClick={handleResetOnboarding}
-            className="w-full h-11 rounded-[12px] border border-border/70 bg-transparent hover:bg-secondary/40 text-foreground text-[13px] font-semibold flex items-center justify-center gap-2 active:scale-[0.96] transition-all"
+            className="h-11 rounded-[14px] border border-amber-500/40 bg-amber-500/10 hover:bg-amber-500/15 text-amber-700 dark:text-amber-300 text-[13px] font-semibold flex items-center justify-center gap-2 active:scale-[0.96] transition-all"
           >
-            <RefreshCcw className="size-4 text-muted-foreground" />
-            Restart onboarding
+            <RefreshCcw className="size-4" />
+            Restart
           </button>
-          <p className="text-[11px] text-muted-foreground text-center px-2">
-            This will restart your onboarding experience
-          </p>
+
+          <button
+            onClick={handleLogout}
+            className="h-11 rounded-[14px] bg-red-500/90 hover:bg-red-500 text-white text-[13px] font-semibold flex items-center justify-center gap-2 shadow-sm shadow-red-500/20 active:scale-[0.96] transition-all"
+          >
+            <LogOut className="size-4" />
+            Logout
+          </button>
         </div>
 
-        <button
-          onClick={handleLogout}
-          className="w-full h-11 rounded-[12px] bg-red-500/90 hover:bg-red-500 text-white text-[13px] font-semibold flex items-center justify-center gap-2.5 shadow-sm shadow-red-500/15 active:scale-[0.96] transition-all"
-        >
-          <LogOut className="size-4" />
-          <span>Logout</span>
-        </button>
+        <p className="text-[11px] text-muted-foreground text-center px-2">
+          Restart will reset your onboarding experience
+        </p>
       </section>
 
       {/* About */}
