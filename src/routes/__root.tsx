@@ -130,8 +130,27 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AppShell />
-      <Toaster position="top-center" />
+      <AuthProvider>
+        <RootSwitch />
+        <Toaster position="top-center" />
+      </AuthProvider>
     </QueryClientProvider>
   );
+}
+
+/**
+ * Root navigation switch (mirrors RN spec):
+ *   isFirstTime  → Onboarding (Intro)
+ *   !isLoggedIn  → AuthStack
+ *   else         → AppStack (AppShell with routed Outlet)
+ */
+function RootSwitch() {
+  const { loading, isFirstTime, isLoggedIn } = useAuth();
+
+  if (loading) {
+    return <div className="min-h-dvh bg-background" aria-hidden />;
+  }
+  if (isFirstTime) return <OnboardingScreen />;
+  if (!isLoggedIn) return <AuthStack />;
+  return <AppShell />;
 }
