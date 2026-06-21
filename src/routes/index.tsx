@@ -211,33 +211,34 @@ function Dashboard() {
   else if (nextEvent && minsToEvent <= 30) intel = `Next event in ${minsToEvent}m — be ready ⏳`;
   else if (routineRemaining > 0) intel = `You have ${routineRemaining} task${routineRemaining > 1 ? "s" : ""} left — stay focused 💪`;
 
-  // Priority card
+  // Priority card — strict order: overLimit → nextEvent(≤15) → currentTask → nextTask
   type Priority = { label: string; main: string; sub?: string; to: "/routine" | "/events" | "/expenses" } | null;
   let priority: Priority = null;
-  if (nextEvent && minsToEvent <= 15) {
-    priority = {
-      label: "NOW",
-      main: nextEvent.title,
-      sub: `Starts in ${minsToEvent}m`,
-      to: "/events",
-    };
-  } else if (currentTask && (() => {
+  const inCurrentWindow = currentTask && (() => {
     const start = hhmmToMin(currentTask.time);
     const end = currentTask.endTime ? hhmmToMin(currentTask.endTime) : start + 30;
     return nowMin >= start && nowMin < end;
-  })()) {
+  })();
+  if (overLimit) {
+    priority = {
+      label: "PRIORITY",
+      main: "You're over budget today ⚠️",
+      sub: `Spent ${formatTaka(todayExpense, takaSym)} of ${formatTaka(dailyLimit, takaSym)}`,
+      to: "/expenses",
+    };
+  } else if (nextEvent && minsToEvent <= 15) {
+    priority = {
+      label: "NOW",
+      main: `${nextEvent.title} (in ${minsToEvent}m)`,
+      sub: `Starts in ${minsToEvent}m`,
+      to: "/events",
+    };
+  } else if (inCurrentWindow && currentTask) {
     priority = {
       label: "NOW",
       main: currentTask.title,
       sub: `${formatTime12(currentTask.time)}${currentTask.endTime ? ` – ${formatTime12(currentTask.endTime)}` : ""}`,
       to: "/routine",
-    };
-  } else if (overLimit) {
-    priority = {
-      label: "PRIORITY",
-      main: "Heads up: over daily limit",
-      sub: `Spent ${formatTaka(todayExpense, takaSym)} of ${formatTaka(dailyLimit, takaSym)}`,
-      to: "/expenses",
     };
   } else if (nextTask) {
     priority = {
