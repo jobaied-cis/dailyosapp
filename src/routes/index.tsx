@@ -883,25 +883,41 @@ function Dashboard() {
           </span>
           <span className="text-[10px] font-semibold text-muted-foreground/80">Last 7 days</span>
         </div>
-        <p className="text-[13px] font-semibold text-foreground leading-[1.4]">
-          {weeklyReport.summary}
-        </p>
-        {weeklyReport.stats.length > 0 && (
-          <div className="grid grid-cols-3 gap-2 mt-3">
-            {weeklyReport.stats.slice(0, 3).map((s) => (
-              <div
-                key={s.label}
-                className="rounded-xl border border-border/60 bg-background/60 px-2 py-2 text-center"
-              >
-                <div className="text-[14px] leading-none">{s.icon}</div>
-                <div className="text-[13px] font-bold text-foreground leading-[1.2] mt-1">{s.value}</div>
-                <div className="text-[10px] font-medium text-muted-foreground leading-[1.2] mt-0.5 truncate">
-                  {s.label}
+        {(() => {
+          const hasActivity = weeklyReport.stats.some(
+            (s) => s.value && s.value !== "0" && s.value !== "0/7",
+          );
+          if (!hasActivity) {
+            return (
+              <p className="text-[13px] font-medium text-muted-foreground leading-[1.5]">
+                Not enough activity yet — start tracking 🚀
+              </p>
+            );
+          }
+          return (
+            <>
+              <p className="text-[13px] font-semibold text-foreground leading-[1.4]">
+                {weeklyReport.summary}
+              </p>
+              {weeklyReport.stats.length > 0 && (
+                <div className="grid grid-cols-3 gap-2 mt-3">
+                  {weeklyReport.stats.slice(0, 3).map((s) => (
+                    <div
+                      key={s.label}
+                      className="rounded-xl border border-border/60 bg-background/60 px-2 py-2 text-center"
+                    >
+                      <div className="text-[14px] leading-none">{s.icon}</div>
+                      <div className="text-[13px] font-bold text-foreground leading-[1.2] mt-1">{s.value}</div>
+                      <div className="text-[10px] font-medium text-muted-foreground leading-[1.2] mt-0.5 truncate">
+                        {s.label}
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              </div>
-            ))}
-          </div>
-        )}
+              )}
+            </>
+          );
+        })()}
         {weeklyReport.insights.length > 0 && (
           <ul className="mt-3 space-y-1.5 border-t border-border/40 pt-3">
             {weeklyReport.insights.slice(0, 3).map((ins, i) => (
