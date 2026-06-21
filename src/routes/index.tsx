@@ -260,23 +260,23 @@ function Dashboard() {
     <div className="space-y-4 stagger-sections">
       {/* Greeting / Hero */}
       <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 bg-[length:200%_200%] animate-[gradient-shift_8s_ease_infinite] p-4 shadow-lg ring-1 ring-inset ring-white/10 text-white">
-        <div className="pointer-events-none absolute -top-8 -right-8 size-32 rounded-full bg-primary/15 blur-3xl" />
+        <div className="pointer-events-none absolute -top-8 -right-8 size-32 rounded-full bg-white/20 blur-3xl" />
         <div className="relative flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
-            <h1 className="text-[22px] font-bold text-foreground tracking-tight leading-[1.2]">
+            <h1 className="text-[22px] font-bold text-white tracking-tight leading-[1.2]">
               {greeting}
             </h1>
-            <p className="text-[13px] font-medium text-foreground/80 leading-[1.4] mt-1.5">
+            <p className="text-[13px] font-medium text-white/90 leading-[1.4] mt-1.5">
               {intel}
             </p>
-            <p className="text-[12px] font-medium text-muted-foreground leading-[1.4] mt-1">
+            <p className="text-[12px] font-medium text-white/75 leading-[1.4] mt-1">
               {done} done · {eventCount} events · {formatTaka(todayExpense, takaSym)} spent
             </p>
-            <p className="text-[11px] font-medium text-muted-foreground tracking-[0.5px] leading-[1.3] mt-1">{today}</p>
+            <p className="text-[11px] font-medium text-white/70 tracking-[0.5px] leading-[1.3] mt-1">{today}</p>
           </div>
           <div className="flex flex-col items-end gap-1.5 shrink-0">
             {streak > 0 && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 text-amber-600 px-2.5 py-1 text-[11px] font-semibold border border-amber-500/20 leading-none">
+              <span className="inline-flex items-center gap-1 rounded-full bg-white/15 text-white px-2.5 py-1 text-[11px] font-semibold border border-white/20 leading-none">
                 <Flame className="size-3.5" /> {streak}
               </span>
             )}
@@ -284,10 +284,10 @@ function Dashboard() {
               aria-label={`Status: ${statusLabel}`}
               className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-bold uppercase tracking-wider border leading-none ${
                 status === "red"
-                  ? "bg-red-500/15 text-red-600 border-red-500/30"
+                  ? "bg-amber-100 text-amber-700 border-amber-200"
                   : status === "yellow"
-                    ? "bg-amber-500/15 text-amber-700 border-amber-500/30"
-                    : "bg-emerald-500/15 text-emerald-600 border-emerald-500/30"
+                    ? "bg-amber-100 text-amber-700 border-amber-200"
+                    : "bg-emerald-100 text-emerald-700 border-emerald-200"
               }`}
             >
               <span className="text-[11px] leading-none">{statusEmoji}</span>
