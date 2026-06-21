@@ -33,6 +33,8 @@ function SettingsPage() {
   const navigate = useNavigate();
   const { userProfile, logout } = useAuth();
   const currency = useCurrency();
+  const { theme, setTheme, mounted } = useTheme();
+
 
   const name = userProfile?.name || "Your name";
   const avatar = userProfile?.avatar || "🙂";
