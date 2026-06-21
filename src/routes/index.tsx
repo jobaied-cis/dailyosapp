@@ -298,7 +298,7 @@ function Dashboard() {
         aiInsights[insightOffset % aiInsights.length],
         aiInsights[(insightOffset + 1) % aiInsights.length],
       ];
-  const intel = aiInsights[0].message;
+  
 
   // ---- First-app-load welcome banner (set by ProfileSetup finish) ----
   const [showWelcome, setShowWelcome] = useState(false);
