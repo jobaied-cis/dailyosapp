@@ -33,6 +33,7 @@ import { useStreak } from "@/lib/streak-store";
 import { useTakaSymbol, formatTaka } from "@/lib/currency";
 import { useAuth } from "@/lib/auth-context";
 import { X } from "lucide-react";
+import { getDailySuggestion, suggestionIcon } from "@/lib/ai-helper";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -210,11 +211,8 @@ function Dashboard() {
   const statusEmoji = status === "red" ? "🔴" : status === "yellow" ? "🟡" : "🟢";
   const statusLabel = status === "red" ? "Heads up" : status === "yellow" ? "Busy" : "On track";
 
-  // Intel line
-  let intel = "You're on track today — keep going 🚀";
-  if (overLimit) intel = "Spending is high today — stay mindful ⚠️";
-  else if (nextEvent && minsToEvent <= 30) intel = `Next event in ${minsToEvent}m — be ready ⏳`;
-  else if (routineRemaining > 0) intel = `You have ${routineRemaining} task${routineRemaining > 1 ? "s" : ""} left — stay focused 💪`;
+  // Intel line is computed below after userProfile is read.
+
 
   // Priority card — strict order: overLimit → nextEvent(≤15) → currentTask → nextTask
   type Priority = { label: string; main: string; sub?: string; to: "/routine" | "/events" | "/expenses" } | null;
@@ -274,6 +272,18 @@ function Dashboard() {
   const focusRoutine = priorities.includes("productivity") || priorities.includes("fitness");
   const focusExpense = priorities.includes("finance");
 
+  // ---- AI personalization engine (frontend-only, rule-based) ----
+  const aiSuggestion = getDailySuggestion({
+    priorities,
+    hasMission: !!mission,
+    incompleteTaskCount: routineRemaining,
+    totalTaskCount: total,
+    todayExpense,
+    dailyLimit,
+  });
+  const intel = aiSuggestion.message;
+  const intelIcon = suggestionIcon(aiSuggestion.type);
+
   // ---- First-app-load welcome banner (set by ProfileSetup finish) ----
   const [showWelcome, setShowWelcome] = useState(false);
   useEffect(() => {
@@ -319,8 +329,9 @@ function Dashboard() {
             <h1 className="text-[22px] font-bold text-white tracking-tight leading-[1.2]">
               {greeting}
             </h1>
-            <p className="text-[13px] font-medium text-white/90 leading-[1.4] mt-1.5">
-              {intel}
+            <p className="text-[13px] font-medium text-white/90 leading-[1.4] mt-1.5 flex items-center gap-1.5">
+              <span aria-hidden className="text-[14px] leading-none">{intelIcon}</span>
+              <span>{intel}</span>
             </p>
             <p className="text-[12px] font-medium text-white/75 leading-[1.4] mt-1">
               {done} done · {eventCount} events · {formatTaka(todayExpense, takaSym)} spent
