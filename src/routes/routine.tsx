@@ -715,7 +715,7 @@ function RoutinePage() {
               <ClipboardList className="size-7 text-muted-foreground" />
             </div>
             <p className="text-base font-semibold text-foreground">No tasks yet</p>
-            <p className="text-sm text-muted-foreground mt-1.5">Add your first routine</p>
+            <p className="text-sm text-muted-foreground mt-1.5">Start by adding your first task 💪</p>
           </li>
         )}
       </ul>

@@ -757,7 +757,7 @@ function EventsPage() {
               <span className="text-3xl">🎉</span>
             </div>
             <p className="text-base font-semibold text-foreground">Free day 🎉</p>
-            <p className="text-sm text-muted-foreground mt-1">Plan something new</p>
+            <p className="text-sm text-muted-foreground mt-1">Plan something ahead 📅</p>
             <button
               onClick={openAdd}
               className="press mt-4 inline-flex items-center gap-1.5 bg-primary text-primary-foreground rounded-2xl px-4 py-2 text-sm font-semibold shadow-[0_4px_16px_-4px_rgba(37,99,235,0.35)]"

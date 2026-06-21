@@ -73,6 +73,9 @@ function WelcomeScreen({ go }: GoProp) {
           Daily<span style={{ color: "#378ADD" }}>OS</span>
         </h1>
         <p className="mt-2 text-sm text-white/60">Your Life Operating System</p>
+        <p className="mt-4 text-[13px] text-white/50 max-w-[260px] leading-relaxed">
+          Take control of your life, one day at a time.
+        </p>
       </div>
 
       <div className="flex flex-col gap-3 pb-4 animate-fade-in">
@@ -86,7 +89,7 @@ function WelcomeScreen({ go }: GoProp) {
             boxShadow: "0 10px 30px -12px rgba(55,138,221,0.6)",
           }}
         >
-          Start your journey 🚀
+          Start your system 🚀
         </button>
         <button
           onClick={() => go("login")}
