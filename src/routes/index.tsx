@@ -34,6 +34,7 @@ import { useTakaSymbol, formatTaka } from "@/lib/currency";
 import { useAuth } from "@/lib/auth-context";
 import { X } from "lucide-react";
 import { getDailyInsights, suggestionIcon } from "@/lib/ai-helper";
+import { getBehaviorInsights, behaviorIcon } from "@/lib/behavior-ai";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -298,6 +299,14 @@ function Dashboard() {
         aiInsights[insightOffset % aiInsights.length],
         aiInsights[(insightOffset + 1) % aiInsights.length],
       ];
+
+  // ---- Behavior AI: passive pattern detection over last 7 days ----
+  const behaviorInsights = useMemo(
+    () => getBehaviorInsights({ expenses }).slice(0, 2),
+    [expenses, nowTick],
+  );
+
+
   
 
   // ---- First-app-load welcome banner (set by ProfileSetup finish) ----
@@ -358,6 +367,21 @@ function Dashboard() {
                 </li>
               ))}
             </ul>
+            {behaviorInsights.length > 0 && (
+              <ul className="mt-1.5 space-y-0.5 border-t border-white/15 pt-1.5">
+                {behaviorInsights.map((ins, i) => (
+                  <li
+                    key={`b-${ins.type}-${i}-${ins.message}`}
+                    className="text-[11px] font-medium text-white/70 leading-[1.4] flex items-start gap-1.5"
+                  >
+                    <span aria-hidden className="text-[12px] leading-[1.4]">
+                      {behaviorIcon(ins.type)}
+                    </span>
+                    <span>{ins.message}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
             <p className="text-[12px] font-medium text-white/75 leading-[1.4] mt-1">
               {done} done · {eventCount} events · {formatTaka(todayExpense, takaSym)} spent
             </p>
