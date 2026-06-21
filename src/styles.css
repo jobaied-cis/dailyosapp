@@ -578,3 +578,21 @@ html { scroll-behavior: smooth; }
   .header-twinkle,
   .header-sym-in { animation: none !important; }
 }
+
+/* Home card polish */
+@keyframes float-y {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-4px); }
+}
+.animate-float-y { animation: float-y 2.4s ease-in-out infinite; }
+
+@keyframes soft-pulse {
+  0%, 100% { opacity: 0.55; }
+  50%      { opacity: 1; }
+}
+.animate-soft-pulse { animation: soft-pulse 2.4s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-float-y,
+  .animate-soft-pulse { animation: none !important; }
+}
