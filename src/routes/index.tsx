@@ -242,12 +242,18 @@ function Dashboard() {
     };
   } else if (nextTask) {
     priority = {
-      label: "NEXT",
+      label: "✨ Up next",
       main: nextTask.title,
       sub: `at ${formatTime12(nextTask.time)}`,
       to: "/routine",
     };
   }
+
+  // Track if Priority card is already surfacing the current/next routine task
+  // so the Routine card can avoid repeating the same line.
+  const priorityShowsRoutineTask =
+    priority?.to === "/routine" &&
+    ((inCurrentWindow && !!currentTask) || (!inCurrentWindow && !!nextTask));
 
   const allDone = total > 0 && done === total;
   const endOfDayMissed = !allDone && new Date().getHours() >= 23;
