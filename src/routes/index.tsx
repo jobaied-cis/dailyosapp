@@ -469,6 +469,9 @@ function Dashboard() {
           <p className="text-sm text-muted-foreground">No active mission 🎯</p>
         )}
       </section>
+      </div>
+
+
 
       {/* Today's Events */}
       <Link to="/events" className={`block ${CARD} ${PRESS}`}>
