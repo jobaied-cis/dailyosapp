@@ -582,18 +582,55 @@ function DayCard({
   onEdit,
   defaultOpen = false,
   isToday = false,
+  hideWhenEmptyAndFiltered = false,
 }: {
   dayKey: string;
   items: Expense[];
   onEdit: (e: Expense) => void;
   defaultOpen?: boolean;
   isToday?: boolean;
+  hideWhenEmptyAndFiltered?: boolean;
 }) {
   const taka = useTakaSymbol();
   const [isOpen, setIsOpen] = useState(defaultOpen);
+  const [revealedId, setRevealedId] = useState<string | null>(null);
+  const longPressTimer = useRef<number | null>(null);
 
-  // Empty state — only render for Today, hide entirely for other days
+  const startLongPress = (id: string) => {
+    if (longPressTimer.current) window.clearTimeout(longPressTimer.current);
+    longPressTimer.current = window.setTimeout(() => {
+      setRevealedId(id);
+    }, 500);
+  };
+  const cancelLongPress = () => {
+    if (longPressTimer.current) {
+      window.clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  };
+
+  const handleDelete = (e: Expense) => {
+    const snap = e;
+    deleteExpense(e.id);
+    toast("Entry deleted", {
+      action: {
+        label: "Undo",
+        onClick: () =>
+          snap.type === "income"
+            ? addIncome({ amount: snap.amount, title: snap.title })
+            : addExpense({
+                title: snap.title,
+                amount: snap.amount,
+                type: "expense",
+                category: snap.category,
+              }),
+      },
+    });
+  };
+
+  // Empty state
   if (items.length === 0) {
+    if (hideWhenEmptyAndFiltered) return null;
     if (!isToday) return null;
     return (
       <section className="bg-card border border-border/60 rounded-[1.25rem] shadow-[0_2px_12px_-4px_rgba(15,23,42,0.06)] overflow-hidden">
@@ -654,86 +691,93 @@ function DayCard({
           {items.map((e, idx) => {
             const isIncome = e.type === "income";
             const isMostRecent = isToday && idx === 0;
+            const revealed = revealedId === e.id;
             return (
-              <li
-                key={e.id}
-                className={`group card-pop flex items-stretch bg-secondary/40 rounded-2xl overflow-hidden ${
-                  isMostRecent
-                    ? "ring-1 ring-primary/40 shadow-[0_4px_18px_-6px_rgba(59,130,246,0.35)] bg-secondary/60"
-                    : "shadow-sm"
-                }`}
-              >
-                <div
-                  className="w-[3px] shrink-0"
-                  style={{ backgroundColor: isIncome ? "#14B8A6" : CATEGORY_COLOR[e.category] }}
-                />
-                <div className="flex items-center justify-between flex-1 p-3 min-w-0">
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
+              <li key={e.id} className="card-pop">
+                <SwipeableRow
+                  onSwipeLeft={() => handleDelete(e)}
+                  onSwipeRight={() => onEdit(e)}
+                  leftLabel="Delete"
+                  rightLabel="Edit"
+                  rightIcon="edit"
+                  rightBgClass="bg-primary/90 text-primary-foreground"
+                >
+                  <div
+                    onPointerDown={() => startLongPress(e.id)}
+                    onPointerUp={cancelLongPress}
+                    onPointerLeave={cancelLongPress}
+                    onPointerCancel={cancelLongPress}
+                    className={`flex items-stretch bg-secondary/40 rounded-2xl overflow-hidden ${
+                      isMostRecent
+                        ? "ring-1 ring-primary/40 shadow-[0_4px_18px_-6px_rgba(59,130,246,0.35)] bg-secondary/60"
+                        : "shadow-sm"
+                    }`}
+                  >
                     <div
-                      className={`size-9 shrink-0 rounded-full flex items-center justify-center ${
-                        isIncome ? "bg-emerald-500/10" : "bg-destructive/10"
-                      }`}
-                    >
-                      {isIncome ? (
-                        <ArrowDownCircle className="size-5 text-emerald-600" />
-                      ) : (
-                        <ArrowUpCircle className="size-5 text-destructive" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <h4 className="font-semibold text-foreground text-[0.9rem] truncate">
-                          <span className="mr-1.5">{isIncome ? "💰" : CATEGORY_EMOJI[e.category]}</span>
-                          {e.title}
-                        </h4>
-                        {!isIncome && (
-                          <span
-                            className="shrink-0 inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full text-foreground/90"
-                            style={{
-                              backgroundColor: `${CATEGORY_COLOR[e.category]}22`,
-                            }}
-                          >
-                            {e.category}
-                          </span>
+                      className="w-1 shrink-0"
+                      style={{
+                        backgroundColor: isIncome ? "#14B8A6" : CATEGORY_COLOR[e.category],
+                      }}
+                    />
+                    <div className="flex items-center justify-between flex-1 p-3 min-w-0 gap-3">
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <div
+                          className="size-9 shrink-0 rounded-full flex items-center justify-center text-base"
+                          style={{
+                            backgroundColor: isIncome
+                              ? "#14B8A622"
+                              : `${CATEGORY_COLOR[e.category]}22`,
+                          }}
+                        >
+                          {isIncome ? "💰" : CATEGORY_EMOJI[e.category]}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-semibold text-foreground text-[0.9rem] truncate leading-tight">
+                            {e.title}
+                          </h4>
+                          <p className="text-[11px] text-muted-foreground mt-0.5 font-medium">
+                            {isIncome ? "Income" : e.category}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <p
+                          className={`text-sm font-mono font-bold ${
+                            isIncome ? "text-emerald-600" : "text-foreground"
+                          }`}
+                        >
+                          {isIncome ? "+" : "-"}{formatTaka(e.amount, taka)}
+                        </p>
+                        {revealed && (
+                          <div className="flex items-center gap-0.5 animate-in fade-in duration-150">
+                            <button
+                              onClick={(ev) => {
+                                ev.stopPropagation();
+                                setRevealedId(null);
+                                onEdit(e);
+                              }}
+                              aria-label="Edit entry"
+                              className="press text-primary p-1.5 rounded-full bg-primary/10"
+                            >
+                              <Pencil className="size-3.5" />
+                            </button>
+                            <button
+                              onClick={(ev) => {
+                                ev.stopPropagation();
+                                setRevealedId(null);
+                                handleDelete(e);
+                              }}
+                              aria-label="Delete entry"
+                              className="press text-destructive p-1.5 rounded-full bg-destructive/10"
+                            >
+                              <Trash2 className="size-3.5" />
+                            </button>
+                          </div>
                         )}
                       </div>
-                      <p
-                        className={`text-sm font-mono font-semibold mt-0.5 ${
-                          isIncome ? "text-emerald-600" : "text-destructive"
-                        }`}
-                      >
-                        {isIncome ? "+" : "-"}{formatTaka(e.amount, taka)}
-                      </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => onEdit(e)}
-                      aria-label="Edit entry"
-                      className="press text-muted-foreground/40 hover:text-primary p-1.5 rounded-full hover:bg-primary/5"
-                    >
-                      <Pencil className="size-4" />
-                    </button>
-                    <button
-                      onClick={() => {
-                        const snap = e;
-                        deleteExpense(e.id);
-                        toast("Entry deleted", {
-                          action: {
-                            label: "Undo",
-                            onClick: () => snap.type === "income"
-                              ? addIncome({ amount: snap.amount, title: snap.title })
-                              : addExpense({ title: snap.title, amount: snap.amount, type: "expense", category: snap.category }),
-                          },
-                        });
-                      }}
-                      aria-label="Delete entry"
-                      className="press text-muted-foreground/40 hover:text-destructive p-1.5 rounded-full hover:bg-destructive/5"
-                    >
-                      <Trash2 className="size-4" />
-                    </button>
-                  </div>
-                </div>
+                </SwipeableRow>
               </li>
             );
           })}
@@ -742,6 +786,7 @@ function DayCard({
     </section>
   );
 }
+
 
 
 function DayGroupedHistory({
