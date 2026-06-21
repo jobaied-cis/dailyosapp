@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { ChevronLeft, LogOut, RefreshCcw, User } from "lucide-react";
+import { ChevronLeft, ChevronRight, LogOut, RefreshCcw, User } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { CurrencyTrigger } from "@/components/CurrencySheet";
 import { useCurrency, TAKA } from "@/lib/currency";
@@ -56,27 +56,29 @@ function SettingsPage() {
   };
 
   return (
-    <div className="space-y-4 animate-fade-in">
+    <div className="space-y-5 animate-fade-in">
       {/* Header */}
-      <div className="flex items-start gap-3">
+      <div className="flex items-center gap-3 pt-1">
         <button
           onClick={() => navigate({ to: "/" })}
           aria-label="Back"
-          className="size-9 inline-flex items-center justify-center rounded-xl border border-border/60 bg-card text-foreground active:scale-95 transition-transform"
+          className="size-10 inline-flex items-center justify-center rounded-xl border border-border/60 bg-card text-foreground active:scale-[0.96] hover:bg-secondary/40 transition-all"
         >
-          <ChevronLeft className="size-4" />
+          <ChevronLeft className="size-[18px]" />
         </button>
         <div className="flex-1 min-w-0">
-          <h1 className="text-[22px] font-bold tracking-tight leading-tight">Settings ⚙️</h1>
-          <p className="text-[13px] text-muted-foreground leading-snug">Manage your system</p>
+          <h1 className="text-[22px] font-bold tracking-tight leading-none">Settings ⚙️</h1>
+          <p className="text-[13px] text-muted-foreground leading-snug mt-1.5">
+            Manage your system
+          </p>
         </div>
       </div>
 
       {/* Profile */}
-      <section className="rounded-[14px] border border-border/60 bg-card p-4 space-y-4">
+      <section className="rounded-[14px] border border-border/60 bg-card p-4 space-y-4 shadow-sm transition-all hover:border-border hover:shadow-md">
         <div className="flex items-center gap-3">
           <div
-            className="size-14 rounded-full flex items-center justify-center text-2xl border border-border/60 bg-background"
+            className="size-14 rounded-full flex items-center justify-center text-2xl border border-primary/30 bg-gradient-to-br from-primary/15 to-primary/5 shadow-inner"
             aria-hidden
           >
             {avatar}
@@ -90,14 +92,15 @@ function SettingsPage() {
         </div>
         <button
           type="button"
-          className="w-full h-10 rounded-[12px] border border-border/60 bg-background text-[13px] font-semibold text-foreground active:scale-[0.98] transition-transform"
+          className="w-full h-11 rounded-[12px] border border-primary/30 bg-primary/10 hover:bg-primary/15 text-primary text-[13px] font-semibold flex items-center justify-center gap-1.5 active:scale-[0.96] transition-all"
         >
           Edit Profile
+          <ChevronRight className="size-4" />
         </button>
       </section>
 
       {/* Preferences */}
-      <section className="rounded-[14px] border border-border/60 bg-card p-4 space-y-3">
+      <section className="rounded-[14px] border border-border/60 bg-card p-4 space-y-3 shadow-sm transition-all hover:border-border">
         <div>
           <h2 className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
             Preferences
@@ -105,7 +108,11 @@ function SettingsPage() {
           <p className="text-[12px] text-muted-foreground mt-1">Your selected priorities</p>
         </div>
         {priorities.length === 0 ? (
-          <p className="text-[13px] text-muted-foreground">No priorities selected.</p>
+          <div className="rounded-[12px] border border-dashed border-border/60 bg-background/40 px-3 py-4 text-center">
+            <p className="text-[13px] text-muted-foreground">
+              Select what matters to you to personalize your system 🎯
+            </p>
+          </div>
         ) : (
           <div className="flex flex-wrap gap-2">
             {priorities.map((p) => {
@@ -129,34 +136,41 @@ function SettingsPage() {
           </p>
           <CurrencyTrigger
             ariaLabel="Change currency"
-            className="w-full h-10 rounded-[12px] border border-border/60 bg-background text-[13px] font-semibold text-foreground flex items-center justify-between px-3 active:scale-[0.98] transition-transform"
+            className="w-full h-11 rounded-[12px] border border-border/60 bg-background hover:bg-secondary/40 text-[13px] font-semibold text-foreground flex items-center justify-between px-3 active:scale-[0.96] transition-all"
           >
             <span className="inline-flex items-center gap-2">
               <User className="size-4 text-primary" />
               {currencySymbol} {currency}
             </span>
-            <span className="text-[12px] text-muted-foreground">Change</span>
+            <span className="text-[12px] text-muted-foreground inline-flex items-center gap-0.5">
+              Change <ChevronRight className="size-3.5" />
+            </span>
           </CurrencyTrigger>
         </div>
       </section>
 
       {/* Actions */}
-      <section className="rounded-[14px] border border-border/60 bg-card p-4 space-y-3">
+      <section className="rounded-[14px] border border-border/60 bg-card p-4 space-y-3 shadow-sm">
         <h2 className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
           Actions
         </h2>
 
-        <button
-          onClick={handleResetOnboarding}
-          className="w-full h-11 rounded-[12px] border border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-300 text-[13px] font-semibold flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
-        >
-          <RefreshCcw className="size-4" />
-          Restart onboarding
-        </button>
+        <div className="space-y-1.5">
+          <button
+            onClick={handleResetOnboarding}
+            className="w-full h-11 rounded-[12px] border border-border/70 bg-transparent hover:bg-secondary/40 text-foreground text-[13px] font-semibold flex items-center justify-center gap-2 active:scale-[0.96] transition-all"
+          >
+            <RefreshCcw className="size-4 text-muted-foreground" />
+            Restart onboarding
+          </button>
+          <p className="text-[11px] text-muted-foreground text-center px-2">
+            This will restart your onboarding experience
+          </p>
+        </div>
 
         <button
           onClick={handleLogout}
-          className="w-full h-11 rounded-[12px] border border-red-500/40 bg-red-500/10 text-red-600 dark:text-red-300 text-[13px] font-semibold flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
+          className="w-full h-11 rounded-[12px] bg-red-600 hover:bg-red-600/90 text-white text-[13px] font-semibold flex items-center justify-center gap-2 shadow-md shadow-red-600/20 active:scale-[0.96] transition-all"
         >
           <LogOut className="size-4" />
           Logout
