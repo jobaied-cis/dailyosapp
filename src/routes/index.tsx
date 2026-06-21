@@ -832,6 +832,61 @@ function Dashboard() {
           </div>
         </div>
       </section>
+      {/* Weekly Report */}
+      <section className={`${CARD} bg-gradient-to-br from-indigo-500/5 to-blue-500/5 border-indigo-500/20`}>
+        <div className="flex items-center justify-between mb-3">
+          <span className="text-[11px] font-medium uppercase tracking-[0.5px] leading-[1.3] text-muted-foreground flex items-center gap-1.5">
+            <BarChart3 className="size-3.5" /> Weekly Report 📊
+          </span>
+          <span className="text-[10px] font-semibold text-muted-foreground/80">Last 7 days</span>
+        </div>
+        <p className="text-[13px] font-semibold text-foreground leading-[1.4]">
+          {weeklyReport.summary}
+        </p>
+        {weeklyReport.stats.length > 0 && (
+          <div className="grid grid-cols-3 gap-2 mt-3">
+            {weeklyReport.stats.slice(0, 3).map((s) => (
+              <div
+                key={s.label}
+                className="rounded-xl border border-border/60 bg-background/60 px-2 py-2 text-center"
+              >
+                <div className="text-[14px] leading-none">{s.icon}</div>
+                <div className="text-[13px] font-bold text-foreground leading-[1.2] mt-1">{s.value}</div>
+                <div className="text-[10px] font-medium text-muted-foreground leading-[1.2] mt-0.5 truncate">
+                  {s.label}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+        {weeklyReport.insights.length > 0 && (
+          <ul className="mt-3 space-y-1.5 border-t border-border/40 pt-3">
+            {weeklyReport.insights.slice(0, 3).map((ins, i) => (
+              <li
+                key={`w-${i}-${ins.message}`}
+                className={`text-[12px] leading-[1.4] flex items-start gap-1.5 ${
+                  ins.tone === "warning"
+                    ? "text-amber-600"
+                    : ins.tone === "positive"
+                      ? "text-emerald-600"
+                      : "text-foreground/80"
+                }`}
+              >
+                <span aria-hidden>•</span>
+                <span>{ins.message}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+        <button
+          type="button"
+          onClick={() => setAiOpen(true)}
+          className="mt-3 w-full h-10 rounded-xl border border-primary/30 bg-primary/10 hover:bg-primary/15 text-primary text-[12px] font-semibold active:scale-[0.97] transition-all"
+        >
+          View full report →
+        </button>
+      </section>
+
       <DevResetButton />
 
       <button
