@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as RoutineRouteImport } from './routes/routine'
 import { Route as MissionsRouteImport } from './routes/missions'
 import { Route as ExpensesRouteImport } from './routes/expenses'
@@ -16,6 +17,11 @@ import { Route as EventsRouteImport } from './routes/events'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as MissionsMissionIdRouteImport } from './routes/missions.$missionId'
 
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RoutineRoute = RoutineRouteImport.update({
   id: '/routine',
   path: '/routine',
@@ -53,6 +59,7 @@ export interface FileRoutesByFullPath {
   '/expenses': typeof ExpensesRoute
   '/missions': typeof MissionsRouteWithChildren
   '/routine': typeof RoutineRoute
+  '/settings': typeof SettingsRoute
   '/missions/$missionId': typeof MissionsMissionIdRoute
 }
 export interface FileRoutesByTo {
@@ -61,6 +68,7 @@ export interface FileRoutesByTo {
   '/expenses': typeof ExpensesRoute
   '/missions': typeof MissionsRouteWithChildren
   '/routine': typeof RoutineRoute
+  '/settings': typeof SettingsRoute
   '/missions/$missionId': typeof MissionsMissionIdRoute
 }
 export interface FileRoutesById {
@@ -70,6 +78,7 @@ export interface FileRoutesById {
   '/expenses': typeof ExpensesRoute
   '/missions': typeof MissionsRouteWithChildren
   '/routine': typeof RoutineRoute
+  '/settings': typeof SettingsRoute
   '/missions/$missionId': typeof MissionsMissionIdRoute
 }
 export interface FileRouteTypes {
@@ -80,6 +89,7 @@ export interface FileRouteTypes {
     | '/expenses'
     | '/missions'
     | '/routine'
+    | '/settings'
     | '/missions/$missionId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -88,6 +98,7 @@ export interface FileRouteTypes {
     | '/expenses'
     | '/missions'
     | '/routine'
+    | '/settings'
     | '/missions/$missionId'
   id:
     | '__root__'
@@ -96,6 +107,7 @@ export interface FileRouteTypes {
     | '/expenses'
     | '/missions'
     | '/routine'
+    | '/settings'
     | '/missions/$missionId'
   fileRoutesById: FileRoutesById
 }
@@ -105,10 +117,18 @@ export interface RootRouteChildren {
   ExpensesRoute: typeof ExpensesRoute
   MissionsRoute: typeof MissionsRouteWithChildren
   RoutineRoute: typeof RoutineRoute
+  SettingsRoute: typeof SettingsRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/routine': {
       id: '/routine'
       path: '/routine'
@@ -172,17 +192,8 @@ const rootRouteChildren: RootRouteChildren = {
   ExpensesRoute: ExpensesRoute,
   MissionsRoute: MissionsRouteWithChildren,
   RoutineRoute: RoutineRoute,
+  SettingsRoute: SettingsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
