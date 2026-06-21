@@ -211,17 +211,8 @@ function Dashboard() {
   const statusEmoji = status === "red" ? "🔴" : status === "yellow" ? "🟡" : "🟢";
   const statusLabel = status === "red" ? "Heads up" : status === "yellow" ? "Busy" : "On track";
 
-  // Intel line — AI personalization engine (frontend-only, rule-based)
-  const aiSuggestion = getDailySuggestion({
-    priorities: userProfile?.priorities,
-    hasMission: !!mission,
-    incompleteTaskCount: routineRemaining,
-    totalTaskCount: total,
-    todayExpense,
-    dailyLimit,
-  });
-  const intel = aiSuggestion.message;
-  const intelIcon = suggestionIcon(aiSuggestion.type);
+  // Intel line is computed below after userProfile is read.
+
 
   // Priority card — strict order: overLimit → nextEvent(≤15) → currentTask → nextTask
   type Priority = { label: string; main: string; sub?: string; to: "/routine" | "/events" | "/expenses" } | null;
