@@ -631,7 +631,7 @@ function Dashboard() {
                         <AlertTriangle className="size-3" /> You're over today — adjust tomorrow 💡
                       </span>
                     ) : (
-                      <span className="text-[11px] font-semibold text-emerald-600 leading-[1.3]">
+                      <span className="text-[11px] font-semibold text-emerald-600 leading-[1.3] animate-fade-in">
                         Safe to spend today: {formatTaka(safeToSpend, takaSym)}
                       </span>
                     )}
