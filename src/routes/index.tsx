@@ -487,45 +487,26 @@ function Dashboard() {
             <h1 className="text-[22px] font-bold text-white tracking-tight leading-[1.2]">
               {greeting}
             </h1>
-            <ul className="mt-1.5 space-y-1" aria-live="polite" aria-atomic="true">
-              {visibleInsights.map((ins, i) => (
-                <li
-                  key={`${ins.type}-${i}-${ins.message}`}
-                  className="text-[13px] font-medium text-white/90 leading-[1.4] flex items-start gap-1.5 animate-fade-in"
+            <div
+              className="mt-1.5 min-h-[20px]"
+              aria-live="polite"
+              aria-atomic="true"
+            >
+              {currentHero && (
+                <p
+                  key={currentHero.message}
+                  className={`text-[13px] font-medium text-white/90 leading-[1.4] flex items-start gap-1.5 transition-opacity duration-300 ${
+                    heroVisible ? "opacity-100" : "opacity-0"
+                  }`}
                 >
                   <span aria-hidden className="text-[14px] leading-[1.4]">
-                    {suggestionIcon(ins.type)}
+                    {currentHero.emoji}
                   </span>
-                  <span>{ins.message}</span>
-                </li>
-              ))}
-            </ul>
-            {behaviorInsights.length > 0 && (
-              <ul className="mt-1.5 space-y-0.5 border-t border-white/15 pt-1.5">
-                {behaviorInsights.map((ins, i) => (
-                  <li
-                    key={`b-${ins.type}-${i}-${ins.message}`}
-                    className="text-[11px] font-medium text-white/70 leading-[1.4] flex items-start gap-1.5"
-                  >
-                    <span aria-hidden className="text-[12px] leading-[1.4]">
-                      {behaviorIcon(ins.type)}
-                    </span>
-                    <span>{ins.message}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-            {memoryInsight && (
-              <p
-                key={`m-${memoryInsight.message}`}
-                className="text-[11px] font-medium text-white/65 leading-[1.4] mt-1 flex items-start gap-1.5 animate-fade-in"
-              >
-                <span aria-hidden className="text-[12px] leading-[1.4]">
-                  {memoryIcon(memoryInsight.type)}
-                </span>
-                <span>{memoryInsight.message}</span>
-              </p>
-            )}
+                  <span className="truncate">{currentHero.message}</span>
+                </p>
+              )}
+            </div>
+
             <p className="text-[12px] font-medium text-white/75 leading-[1.4] mt-1">
               {done} done · {eventCount} events · {formatTaka(todayExpense, takaSym)} spent
             </p>
