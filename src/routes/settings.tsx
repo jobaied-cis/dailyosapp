@@ -92,11 +92,13 @@ function SettingsPage() {
         </div>
         <button
           type="button"
+          onClick={() => navigate({ to: "/edit-profile" })}
           className="w-full h-11 rounded-[12px] border border-primary/30 bg-primary/10 hover:bg-primary/15 text-primary text-[13px] font-semibold flex items-center justify-center gap-1.5 active:scale-[0.96] transition-all"
         >
           Edit Profile
           <ChevronRight className="size-4" />
         </button>
+
       </section>
 
       {/* Preferences */}
