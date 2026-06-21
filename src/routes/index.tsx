@@ -367,6 +367,21 @@ function Dashboard() {
                 </li>
               ))}
             </ul>
+            {behaviorInsights.length > 0 && (
+              <ul className="mt-1.5 space-y-0.5 border-t border-white/15 pt-1.5">
+                {behaviorInsights.map((ins, i) => (
+                  <li
+                    key={`b-${ins.type}-${i}-${ins.message}`}
+                    className="text-[11px] font-medium text-white/70 leading-[1.4] flex items-start gap-1.5"
+                  >
+                    <span aria-hidden className="text-[12px] leading-[1.4]">
+                      {behaviorIcon(ins.type)}
+                    </span>
+                    <span>{ins.message}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
             <p className="text-[12px] font-medium text-white/75 leading-[1.4] mt-1">
               {done} done · {eventCount} events · {formatTaka(todayExpense, takaSym)} spent
             </p>
