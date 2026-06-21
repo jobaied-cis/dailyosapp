@@ -932,8 +932,17 @@ function WeeklyChart({ entries, dailyLimit }: { entries: Expense[]; dailyLimit: 
   );
 }
 
-function CategoryBreakdown({ entries }: { entries: Expense[] }) {
-
+function CategoryBreakdown({
+  entries,
+  prevMonthEntries = [],
+  activeCategory = null,
+  onSelectCategory,
+}: {
+  entries: Expense[];
+  prevMonthEntries?: Expense[];
+  activeCategory?: ExpenseCategory | null;
+  onSelectCategory?: (c: ExpenseCategory) => void;
+}) {
   const taka = useTakaSymbol();
   const expenseEntries = entries.filter((e) => e.type === "expense");
   const totalExpense = expenseEntries.reduce((s, e) => s + e.amount, 0);
@@ -948,9 +957,18 @@ function CategoryBreakdown({ entries }: { entries: Expense[] }) {
     categoryTotals[e.category] += e.amount;
   }
 
+  const prevTotals: Record<ExpenseCategory, number> = {
+    Food: 0,
+    Transport: 0,
+    Study: 0,
+    Others: 0,
+  };
+  for (const e of prevMonthEntries) {
+    if (e.type === "expense") prevTotals[e.category] += e.amount;
+  }
+
   if (totalExpense === 0) return null;
 
-  // Determine top category
   let topCategory: ExpenseCategory | null = null;
   let maxAmount = 0;
   for (const cat of CATEGORIES) {
@@ -966,36 +984,67 @@ function CategoryBreakdown({ entries }: { entries: Expense[] }) {
         Category Breakdown
       </h3>
       <p className="text-xs text-muted-foreground mt-0.5 mb-3">
-        Where your money goes
+        Tap a category to filter
       </p>
-      <div className="space-y-4">
+      <div className="space-y-3">
         {CATEGORIES.map((cat) => {
           const amount = categoryTotals[cat];
           if (amount <= 0) return null;
           const percent = totalExpense > 0 ? (amount / totalExpense) * 100 : 0;
           const isTop = topCategory === cat;
+          const isActive = activeCategory === cat;
+          const prev = prevTotals[cat];
+          let trendNode: React.ReactNode = null;
+          if (prev > 0) {
+            const delta = ((amount - prev) / prev) * 100;
+            const up = delta > 0;
+            const flat = Math.abs(delta) < 1;
+            trendNode = (
+              <span
+                className={`text-[10px] font-semibold ml-1.5 ${
+                  flat
+                    ? "text-muted-foreground"
+                    : up
+                      ? "text-red-500"
+                      : "text-emerald-600"
+                }`}
+              >
+                {flat ? "≈" : up ? "↑" : "↓"} {Math.abs(Math.round(delta))}% vs last month
+              </span>
+            );
+          } else if (amount > 0) {
+            trendNode = (
+              <span className="text-[10px] font-semibold text-muted-foreground ml-1.5">
+                new this month
+              </span>
+            );
+          }
           return (
-            <div
+            <button
               key={cat}
-              className="group card-pop rounded-xl -mx-1 px-1 py-1"
+              type="button"
+              onClick={() => onSelectCategory?.(cat)}
+              className={`press w-full text-left card-pop rounded-xl px-2 py-2 transition-colors ${
+                isActive ? "bg-primary/10 ring-1 ring-primary/40" : "hover:bg-secondary/40"
+              }`}
             >
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
+              <div className="flex items-center justify-between mb-2 gap-2">
+                <div className="flex items-center gap-2 min-w-0">
                   <span className="text-base">{CATEGORY_EMOJI[cat]}</span>
                   <span
-                    className={`text-sm font-semibold ${
+                    className={`text-sm font-semibold truncate ${
                       isTop ? "text-foreground" : "text-foreground/80"
                     }`}
                   >
                     {cat}
                   </span>
                   {isTop && (
-                    <span className="inline-flex items-center text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+                    <span className="inline-flex items-center text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-primary/10 text-primary shrink-0">
                       Top
                     </span>
                   )}
                 </div>
-                <span className="text-sm font-bold tabular-nums">
+                <span className="text-sm font-bold tabular-nums shrink-0">
                   <span className={isTop ? "text-foreground" : "text-muted-foreground"}>
                     {formatTaka(amount, taka)}
                   </span>
@@ -1014,7 +1063,8 @@ function CategoryBreakdown({ entries }: { entries: Expense[] }) {
                   }}
                 />
               </div>
-            </div>
+              {trendNode && <div className="mt-1.5">{trendNode}</div>}
+            </button>
           );
         })}
       </div>
@@ -1022,129 +1072,377 @@ function CategoryBreakdown({ entries }: { entries: Expense[] }) {
   );
 }
 
+type Insight = {
+  icon: string;
+  text: string;
+  tone: "positive" | "warning" | "neutral";
+  action?: () => void;
+};
+
 function SmartInsights({
   todayExpense,
+  yesterdayExpense = 0,
   dailyLimit,
   entries,
+  monthEntries = [],
+  onFilterCategory,
+  onScrollTo,
 }: {
   todayExpense: number;
+  yesterdayExpense?: number;
   dailyLimit: number;
   entries: Expense[];
+  monthEntries?: Expense[];
+  onFilterCategory?: (c: ExpenseCategory) => void;
+  onScrollTo?: (id: string) => void;
 }) {
-  const insights: { icon: string; text: string; accent: string }[] = [];
+  const insights: Insight[] = [];
 
-  // A. Top category insight
-  const expenseEntries = entries.filter((e) => e.type === "expense");
+  // A. Top category
+  const expenseEntries = monthEntries.filter((e) => e.type === "expense");
   const totalExpense = expenseEntries.reduce((s, e) => s + e.amount, 0);
   if (totalExpense > 0) {
     const totals: Record<string, number> = {};
-    for (const e of expenseEntries) {
-      totals[e.category] = (totals[e.category] || 0) + e.amount;
-    }
+    for (const e of expenseEntries) totals[e.category] = (totals[e.category] || 0) + e.amount;
     const topCat = Object.entries(totals).sort((a, b) => b[1] - a[1])[0];
     if (topCat) {
       const percent = Math.round((topCat[1] / totalExpense) * 100);
       insights.push({
         icon: "📊",
-        text: `${topCat[0]} is your top spending category (${percent}%)`,
-        accent: "text-foreground",
+        text: `${topCat[0]} is your top spending (${percent}%)`,
+        tone: "neutral",
+        action: () => onFilterCategory?.(topCat[0] as ExpenseCategory),
       });
     }
   }
 
-  // B. Limit behavior (this week: Mon-Sun)
-  if (dailyLimit > 0) {
-    const now = new Date();
-    const dayIdx = (now.getDay() + 6) % 7;
-    const monday = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate() - dayIdx
-    );
-    let exceededDays = 0;
-    for (let i = 0; i < 7; i++) {
-      const d = new Date(
-        monday.getFullYear(),
-        monday.getMonth(),
-        monday.getDate() + i
-      );
-      const k = dayKey(d.getTime());
-      const dayTotal = entries
-        .filter((e) => e.type === "expense" && dayKey(e.createdAt) === k)
-        .reduce((s, e) => s + e.amount, 0);
-      if (dayTotal > dailyLimit) exceededDays++;
-    }
-    if (exceededDays > 0) {
-      insights.push({
-        icon: "⚠️",
-        text: `You exceeded your daily limit on ${exceededDays} day${exceededDays > 1 ? "s" : ""} this week`,
-        accent: "text-red-400",
-      });
-    } else {
-      insights.push({
-        icon: "👏",
-        text: "Great control! You stayed within your limit this week",
-        accent: "text-emerald-400",
-      });
-    }
-  }
-
-  // C. Trend insight: today vs yesterday
-  const todayKeyStr = dayKey(Date.now());
-  const yest = new Date();
-  yest.setDate(yest.getDate() - 1);
-  const yesterdayKeyStr = dayKey(yest.getTime());
-  const yesterdayExpense = entries
-    .filter((e) => e.type === "expense" && dayKey(e.createdAt) === yesterdayKeyStr)
-    .reduce((s, e) => s + e.amount, 0);
-
+  // B. Today vs yesterday
   if (todayExpense > 0 || yesterdayExpense > 0) {
-    if (todayExpense > yesterdayExpense) {
+    if (todayExpense > yesterdayExpense && yesterdayExpense > 0) {
+      const delta = Math.round(((todayExpense - yesterdayExpense) / yesterdayExpense) * 100);
       insights.push({
         icon: "📈",
-        text: "Spending increased compared to yesterday",
-        accent: "text-red-400",
+        text: `Spending up ${delta}% vs yesterday`,
+        tone: "warning",
+        action: () => onScrollTo?.("section-yesterday"),
       });
-    } else if (todayExpense < yesterdayExpense) {
+    } else if (yesterdayExpense > todayExpense) {
       insights.push({
         icon: "📉",
         text: "Spending reduced from yesterday — great control!",
-        accent: "text-emerald-400",
+        tone: "positive",
       });
     }
   }
 
+  // C. No-spend streak
+  const noSpend = getNoSpendStreak(entries);
+  if (noSpend >= 1) {
+    insights.push({
+      icon: "🔥",
+      text: `${noSpend} no-spend day${noSpend > 1 ? "s" : ""} this week 👏`,
+      tone: "positive",
+    });
+  }
+
+  // D. Top weekday
+  const wd = getTopWeekday(monthEntries.length ? monthEntries : entries);
+  if (wd && wd.total > 0) {
+    insights.push({
+      icon: "📅",
+      text: `You spend most on ${wd.name}`,
+      tone: "neutral",
+    });
+  }
+
+  // E. Recurring
+  const recurring = getRecurringGroup(entries);
+  if (recurring) {
+    insights.push({
+      icon: "🔁",
+      text: `${recurring.title} looks recurring (~${recurring.amount} · ${recurring.count}×)`,
+      tone: "neutral",
+      action: () => onFilterCategory?.(recurring.category),
+    });
+  }
+
+  // F. Yesterday no-spend
+  if (yesterdayExpense === 0 && entries.length > 0) {
+    insights.push({
+      icon: "👏",
+      text: "Nice — no spending yesterday",
+      tone: "positive",
+    });
+  }
+
+  // Ensure at least one positive insight
+  const hasPositive = insights.some((i) => i.tone === "positive");
+  if (!hasPositive) {
+    if (dailyLimit > 0 && todayExpense <= dailyLimit) {
+      insights.unshift({
+        icon: "👍",
+        text: "You're within budget today",
+        tone: "positive",
+      });
+    } else {
+      insights.unshift({
+        icon: "✨",
+        text: "Steady tracking — keep it up",
+        tone: "positive",
+      });
+    }
+  }
+
+  const toneClass = (t: Insight["tone"]) =>
+    t === "positive"
+      ? "text-emerald-700 dark:text-emerald-400"
+      : t === "warning"
+        ? "text-amber-700 dark:text-amber-400"
+        : "text-foreground/85";
+
   return (
     <section className="card-pop bg-gradient-to-br from-amber-500/15 to-amber-700/10 border border-amber-500/20 rounded-[1.25rem] p-4 shadow-[0_4px_24px_-8px_rgba(245,158,11,0.25)]">
-      <h3 className="text-[11px] font-bold uppercase tracking-[0.12em] text-amber-400 mb-2.5 flex items-center gap-1.5">
+      <h3 className="text-[11px] font-bold uppercase tracking-[0.12em] text-amber-600 dark:text-amber-400 mb-2.5 flex items-center gap-1.5">
         <Sparkles className="size-3.5" />
         Insights
       </h3>
       {insights.length === 0 ? (
-        <div className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 bg-black/20 backdrop-blur-sm">
+        <div className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 bg-background/40 backdrop-blur-sm">
           <span className="text-sm">📊</span>
-          <span className="text-sm font-semibold text-amber-100/80">
+          <span className="text-sm font-semibold text-muted-foreground">
             No data yet — start tracking to see insights
           </span>
         </div>
       ) : (
         <div className="space-y-2">
-          {insights.map((insight, i) => (
-            <div
-              key={i}
-              className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 bg-black/20 backdrop-blur-sm"
-            >
-              <span className="text-sm">{insight.icon}</span>
-              <span className={`text-sm font-semibold ${insight.accent}`}>
-                {insight.text}
-              </span>
-            </div>
-          ))}
+          {insights.map((insight, i) => {
+            const Tag = insight.action ? "button" : "div";
+            return (
+              <Tag
+                key={i}
+                {...(insight.action
+                  ? { type: "button" as const, onClick: insight.action }
+                  : {})}
+                className={`press w-full text-left flex items-center gap-2.5 rounded-xl px-3 py-2.5 bg-background/40 backdrop-blur-sm ${
+                  insight.action ? "hover:bg-background/60" : ""
+                }`}
+              >
+                <span className="text-sm">{insight.icon}</span>
+                <span className={`text-sm font-semibold flex-1 ${toneClass(insight.tone)}`}>
+                  {insight.text}
+                </span>
+                {insight.action && (
+                  <ChevronRight className="size-3.5 text-muted-foreground shrink-0" />
+                )}
+              </Tag>
+            );
+          })}
         </div>
       )}
     </section>
   );
 }
+
+function GuidanceCard({
+  entries,
+  monthEntries,
+  selectedMonth,
+  dailyLimit,
+  todayExpense,
+}: {
+  entries: Expense[];
+  monthEntries: Expense[];
+  selectedMonth: string;
+  dailyLimit: number;
+  todayExpense: number;
+}) {
+  const taka = useTakaSymbol();
+  const remaining = dailyLimit > 0 ? Math.max(dailyLimit - todayExpense, 0) : 0;
+  const pct = dailyLimit > 0 ? (todayExpense / dailyLimit) * 100 : 0;
+
+  const projection = getProjection(entries, selectedMonth);
+
+  const income = monthEntries
+    .filter((e) => e.type === "income")
+    .reduce((s, e) => s + e.amount, 0);
+  const expense = monthEntries
+    .filter((e) => e.type === "expense")
+    .reduce((s, e) => s + e.amount, 0);
+
+  let savingRate: number | null = null;
+  if (income > 0) savingRate = Math.round(((income - expense) / income) * 100);
+
+  const savingTone =
+    savingRate === null
+      ? null
+      : savingRate >= 50
+        ? { emoji: "🎉", cls: "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400" }
+        : savingRate >= 20
+          ? { emoji: "👍", cls: "bg-primary/10 text-primary" }
+          : savingRate >= 0
+            ? { emoji: "⚠️", cls: "bg-amber-500/15 text-amber-700 dark:text-amber-500" }
+            : { emoji: "💡", cls: "bg-red-500/10 text-red-600" };
+
+  return (
+    <section className="bg-card border border-border/60 rounded-[1.25rem] p-4 shadow-[0_2px_12px_-4px_rgba(15,23,42,0.06)]">
+      <h3 className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground mb-3 flex items-center gap-1.5">
+        <Shield className="size-3.5" />
+        Guidance
+      </h3>
+      <div className="grid grid-cols-2 gap-2.5">
+        {/* Safe to spend */}
+        <div className="bg-secondary/50 rounded-xl p-3">
+          <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground">
+            <PiggyBank className="size-3" /> Safe today
+          </div>
+          {dailyLimit > 0 ? (
+            <p className="mt-1 text-base font-extrabold tabular-nums text-foreground">
+              {formatTaka(remaining, taka)}
+            </p>
+          ) : (
+            <p className="mt-1 text-xs text-muted-foreground">Set a daily limit</p>
+          )}
+        </div>
+
+        {/* Predictive warning OR encouragement */}
+        <div
+          className={`rounded-xl p-3 ${
+            dailyLimit === 0
+              ? "bg-secondary/50"
+              : pct >= 100
+                ? "bg-red-500/10"
+                : pct >= 60
+                  ? "bg-amber-500/15"
+                  : "bg-emerald-500/10"
+          }`}
+        >
+          <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground">
+            <Lightbulb className="size-3" /> Budget
+          </div>
+          {dailyLimit === 0 ? (
+            <p className="mt-1 text-xs text-muted-foreground">No limit set</p>
+          ) : pct >= 100 ? (
+            <p className="mt-1 text-xs font-semibold text-red-600">
+              {formatTaka(todayExpense - dailyLimit, taka)} over today
+            </p>
+          ) : pct >= 60 ? (
+            <p className="mt-1 text-xs font-semibold text-amber-700 dark:text-amber-500">
+              {Math.round(pct)}% used — {formatTaka(remaining, taka)} left
+            </p>
+          ) : (
+            <p className="mt-1 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+              Plenty left — {formatTaka(remaining, taka)}
+            </p>
+          )}
+        </div>
+
+        {/* Month projection */}
+        <div className="bg-secondary/50 rounded-xl p-3">
+          <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground">
+            <TargetIcon className="size-3" /> Month projection
+          </div>
+          {projection ? (
+            <>
+              <p className="mt-1 text-base font-extrabold tabular-nums text-foreground">
+                {formatTaka(projection.projected, taka)}
+              </p>
+              <p className="text-[10px] text-muted-foreground">
+                at this rate · day {projection.daysPassed}/{projection.totalDays}
+              </p>
+            </>
+          ) : (
+            <p className="mt-1 text-xs text-muted-foreground">Not enough data yet</p>
+          )}
+        </div>
+
+        {/* Saving rate */}
+        <div className={`rounded-xl p-3 ${savingTone ? savingTone.cls : "bg-secondary/50"}`}>
+          <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.1em] opacity-70">
+            <TrendingUp className="size-3" /> Saving rate
+          </div>
+          {savingRate !== null && savingTone ? (
+            <p className="mt-1 text-base font-extrabold tabular-nums">
+              {savingRate}% {savingTone.emoji}
+            </p>
+          ) : (
+            <p className="mt-1 text-xs opacity-70">Add income to track</p>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function FilterBar({
+  filter,
+  onChange,
+}: {
+  filter: Filter;
+  onChange: (f: Filter) => void;
+}) {
+  const active = filter.scope !== "month" || filter.category !== null;
+  const scopes: { key: FilterScope; label: string }[] = [
+    { key: "today", label: "Today" },
+    { key: "week", label: "Week" },
+    { key: "month", label: "Month" },
+  ];
+
+  return (
+    <section className="bg-card border border-border/60 rounded-[1.25rem] p-3 shadow-[0_2px_12px_-4px_rgba(15,23,42,0.06)]">
+      <div className="flex items-center gap-2 flex-wrap">
+        {scopes.map((s) => {
+          const isActive = filter.scope === s.key;
+          return (
+            <button
+              key={s.key}
+              type="button"
+              onClick={() => onChange({ ...filter, scope: s.key })}
+              className={`press text-[11px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full border ${
+                isActive
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "bg-secondary/60 text-foreground border-transparent"
+              }`}
+            >
+              {s.label}
+            </button>
+          );
+        })}
+        <span className="w-px h-5 bg-border mx-1" />
+        {CATEGORIES.map((cat) => {
+          const isActive = filter.category === cat;
+          return (
+            <button
+              key={cat}
+              type="button"
+              onClick={() =>
+                onChange({ ...filter, category: isActive ? null : cat })
+              }
+              className={`press text-[11px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full border flex items-center gap-1 ${
+                isActive
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "bg-secondary/60 text-foreground border-transparent"
+              }`}
+            >
+              <span>{CATEGORY_EMOJI[cat]}</span>
+              {cat}
+            </button>
+          );
+        })}
+        {active && (
+          <button
+            type="button"
+            onClick={() => onChange({ scope: "month", category: null })}
+            className="press text-[11px] font-bold uppercase tracking-wider px-3 py-1.5 rounded-full bg-destructive/10 text-destructive ml-auto"
+          >
+            Clear ✕
+          </button>
+        )}
+      </div>
+    </section>
+  );
+}
+
+
 
 function CategorySelect({
   value,
