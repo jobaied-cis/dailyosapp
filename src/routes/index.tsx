@@ -435,10 +435,10 @@ function Dashboard() {
               const daysLeft = Math.max(0, mission.days - currentDay);
               return (
                 <div className="mt-3 space-y-1.5">
-                  <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                  <div className={`h-1.5 bg-muted rounded-full overflow-hidden ${clamped === 0 ? "animate-soft-pulse" : ""}`}>
                     <div
-                      className="h-full bg-primary rounded-full transition-all"
-                      style={{ width: `${clamped}%` }}
+                      className="h-full bg-gradient-to-r from-blue-500 to-emerald-400 rounded-full"
+                      style={{ width: `${clamped}%`, transition: "width 0.6s ease-out" }}
                     />
                   </div>
                   <div className="flex items-center justify-between">
