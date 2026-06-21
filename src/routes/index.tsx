@@ -413,7 +413,8 @@ function Dashboard() {
       </Link>
 
       {/* Today's Mission */}
-      <section className={`${CARD} ${PRESS}`}>
+      <div className="rounded-2xl p-[1px] bg-gradient-to-r from-blue-500/40 via-indigo-400/30 to-emerald-400/40 transition-all duration-200 hover:shadow-md active:scale-[0.98]">
+      <section className="rounded-[15px] p-4 bg-card shadow-sm">
         <div className="flex items-center justify-between mb-3">
           <span className="text-[11px] font-medium uppercase tracking-[0.5px] leading-[1.3] text-muted-foreground flex items-center gap-1.5">
             <Target className="size-3.5" /> Today's Mission
