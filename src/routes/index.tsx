@@ -436,7 +436,7 @@ function Dashboard() {
             <h1 className="text-[22px] font-bold text-white tracking-tight leading-[1.2]">
               {greeting}
             </h1>
-            <ul className="mt-1.5 space-y-1">
+            <ul className="mt-1.5 space-y-1" aria-live="polite" aria-atomic="true">
               {visibleInsights.map((ins, i) => (
                 <li
                   key={`${ins.type}-${i}-${ins.message}`}

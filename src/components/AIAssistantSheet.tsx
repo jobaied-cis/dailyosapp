@@ -189,16 +189,18 @@ export function AIAssistantSheet({ onClose }: { onClose: () => void }) {
           </button>
         </div>
 
-        {loading && (
-          <div className="rounded-xl border border-border/60 bg-background/60 p-3 text-[13px] text-muted-foreground animate-pulse">
-            Thinking…
-          </div>
-        )}
-        {reply && !loading && (
-          <div className="rounded-xl border border-primary/30 bg-primary/5 p-3 text-[13px] text-foreground leading-[1.5] whitespace-pre-wrap animate-fade-in">
-            {reply}
-          </div>
-        )}
+        <div aria-live="polite" aria-atomic="true">
+          {loading && (
+            <div className="rounded-xl border border-border/60 bg-background/60 p-3 text-[13px] text-muted-foreground animate-pulse">
+              Thinking…
+            </div>
+          )}
+          {reply && !loading && (
+            <div className="rounded-xl border border-primary/30 bg-primary/5 p-3 text-[13px] text-foreground leading-[1.5] whitespace-pre-wrap animate-fade-in">
+              {reply}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
