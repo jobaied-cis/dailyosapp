@@ -33,7 +33,7 @@ import { useStreak } from "@/lib/streak-store";
 import { useTakaSymbol, formatTaka } from "@/lib/currency";
 import { useAuth } from "@/lib/auth-context";
 import { X } from "lucide-react";
-import { getDailySuggestion, suggestionIcon } from "@/lib/ai-helper";
+import { getDailyInsights, suggestionIcon } from "@/lib/ai-helper";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -273,16 +273,32 @@ function Dashboard() {
   const focusExpense = priorities.includes("finance");
 
   // ---- AI personalization engine (frontend-only, rule-based) ----
-  const aiSuggestion = getDailySuggestion({
+  const upcomingEventCount = todaysEvents.filter(
+    (e) => !e.completed && new Date(`${e.date}T${e.time}`).getTime() > nowTick,
+  ).length;
+  const aiInsights = getDailyInsights({
     priorities,
     hasMission: !!mission,
     incompleteTaskCount: routineRemaining,
     totalTaskCount: total,
     todayExpense,
     dailyLimit,
+    upcomingEventCount,
   });
-  const intel = aiSuggestion.message;
-  const intelIcon = suggestionIcon(aiSuggestion.type);
+  // Rotate which two insights are shown every 5s for a "live" feel.
+  const [insightOffset, setInsightOffset] = useState(0);
+  useEffect(() => {
+    if (aiInsights.length <= 2) return;
+    const id = setInterval(() => setInsightOffset((o) => o + 1), 5000);
+    return () => clearInterval(id);
+  }, [aiInsights.length]);
+  const visibleInsights = aiInsights.length <= 2
+    ? aiInsights.slice(0, 2)
+    : [
+        aiInsights[insightOffset % aiInsights.length],
+        aiInsights[(insightOffset + 1) % aiInsights.length],
+      ];
+  
 
   // ---- First-app-load welcome banner (set by ProfileSetup finish) ----
   const [showWelcome, setShowWelcome] = useState(false);
@@ -329,10 +345,19 @@ function Dashboard() {
             <h1 className="text-[22px] font-bold text-white tracking-tight leading-[1.2]">
               {greeting}
             </h1>
-            <p className="text-[13px] font-medium text-white/90 leading-[1.4] mt-1.5 flex items-center gap-1.5">
-              <span aria-hidden className="text-[14px] leading-none">{intelIcon}</span>
-              <span>{intel}</span>
-            </p>
+            <ul className="mt-1.5 space-y-1">
+              {visibleInsights.map((ins, i) => (
+                <li
+                  key={`${ins.type}-${i}-${ins.message}`}
+                  className="text-[13px] font-medium text-white/90 leading-[1.4] flex items-start gap-1.5 animate-fade-in"
+                >
+                  <span aria-hidden className="text-[14px] leading-[1.4]">
+                    {suggestionIcon(ins.type)}
+                  </span>
+                  <span>{ins.message}</span>
+                </li>
+              ))}
+            </ul>
             <p className="text-[12px] font-medium text-white/75 leading-[1.4] mt-1">
               {done} done · {eventCount} events · {formatTaka(todayExpense, takaSym)} spent
             </p>
