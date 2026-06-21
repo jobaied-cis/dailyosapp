@@ -67,7 +67,7 @@ function hhmmHour(s: string): number {
 }
 
 export function getBehaviorInsights(data: BehaviorInput): BehaviorInsight[] {
-  const tasks = data.tasks ?? [];
+  const tasks = data.tasks ?? readAllTasks();
   const expenses = data.expenses ?? [];
 
   const insights: BehaviorInsight[] = [];
