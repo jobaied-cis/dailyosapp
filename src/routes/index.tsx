@@ -619,10 +619,11 @@ function Dashboard() {
       </Link>
 
       {/* Expense Summary */}
-      <section className={CARD}>
+      <section className={`${CARD} ${focusExpense ? "border-primary/40 shadow-primary/10 ring-1 ring-primary/15" : ""}`}>
         <div className="flex items-center justify-between mb-3">
           <span className="text-[11px] font-medium uppercase tracking-[0.5px] leading-[1.3] text-muted-foreground flex items-center gap-1.5">
             <Wallet className="size-3.5" /> Expense Summary
+            {focusExpense && <FocusBadge />}
           </span>
           <Link to="/expenses" className="text-xs font-semibold text-muted-foreground hover:text-foreground">
             Details
