@@ -166,11 +166,24 @@ export function toggleTask(id: string) {
   const t = cache.find((x) => x.id === id);
   if (t && isRecurring(t)) {
     const dateKey = todayDateKey();
-    setCompletedOn(id, !isCompletedOn(id, dateKey), dateKey);
+    const wasDone = isCompletedOn(id, dateKey);
+    setCompletedOn(id, !wasDone, dateKey);
+    if (!wasDone) {
+      void import("@/lib/memory-store").then(({ logMemory }) =>
+        logMemory({ type: "task", meta: `done:${t.title}` }),
+      );
+    }
     return;
   }
+  const target = cache.find((x) => x.id === id);
   persist(cache.map((x) => (x.id === id ? { ...x, completed: !x.completed } : x)));
+  if (target && !target.completed) {
+    void import("@/lib/memory-store").then(({ logMemory }) =>
+      logMemory({ type: "task", meta: `done:${target.title}` }),
+    );
+  }
 }
+
 
 export function addTask(input: { time: string; endTime?: string; title: string; note?: string; repeat?: Repeat }) {
   ensureInit();

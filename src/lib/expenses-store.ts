@@ -84,7 +84,13 @@ export function addExpense(input: { title: string; amount: number; type?: EntryT
     createdAt: Date.now(),
   };
   persist([expense, ...cache]);
+  if (expense.type === "expense") {
+    void import("@/lib/memory-store").then(({ logMemory }) =>
+      logMemory({ type: "expense", meta: `${expense.category}:${expense.amount}` }),
+    );
+  }
 }
+
 
 export function addIncome(input: { amount: number; title?: string }) {
   ensureInit();
