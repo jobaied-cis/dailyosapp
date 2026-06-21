@@ -276,7 +276,6 @@ function Dashboard() {
   const routineCtaLabel = done > 0 && !allDone ? "Continue routine" : "Open today's routine";
 
   // ---- Personalization (from onboarding priorities) ----
-  const { userProfile } = useAuth();
   const priorities = userProfile?.priorities ?? [];
   const focusMission = priorities.includes("study");
   const focusRoutine = priorities.includes("productivity") || priorities.includes("fitness");
