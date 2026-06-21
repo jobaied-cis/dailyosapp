@@ -402,6 +402,17 @@ function Dashboard() {
                 ))}
               </ul>
             )}
+            {memoryInsight && (
+              <p
+                key={`m-${memoryInsight.message}`}
+                className="text-[11px] font-medium text-white/65 leading-[1.4] mt-1 flex items-start gap-1.5 animate-fade-in"
+              >
+                <span aria-hidden className="text-[12px] leading-[1.4]">
+                  {memoryIcon(memoryInsight.type)}
+                </span>
+                <span>{memoryInsight.message}</span>
+              </p>
+            )}
             <p className="text-[12px] font-medium text-white/75 leading-[1.4] mt-1">
               {done} done · {eventCount} events · {formatTaka(todayExpense, takaSym)} spent
             </p>
