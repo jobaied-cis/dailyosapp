@@ -61,6 +61,134 @@ const CATEGORY_COLOR: Record<ExpenseCategory, string> = {
 
 const CATEGORIES: ExpenseCategory[] = ["Food", "Transport", "Study", "Others"];
 
+type FilterScope = "month" | "today" | "week";
+type Filter = { scope: FilterScope; category: ExpenseCategory | null };
+
+function getLimitTone(pct: number) {
+  if (pct < 80) {
+    return {
+      barClass: "bg-primary",
+      textClass: "text-primary",
+      chipClass: "bg-primary/10 text-primary",
+      cardClass: "border-border/60",
+      dot: "🟢",
+    };
+  }
+  if (pct <= 100) {
+    return {
+      barClass: "bg-amber-500",
+      textClass: "text-amber-600",
+      chipClass: "bg-amber-500/15 text-amber-700",
+      cardClass: "border-amber-500/30",
+      dot: "🟡",
+    };
+  }
+  return {
+    barClass: "bg-red-500/80",
+    textClass: "text-red-600",
+    chipClass: "bg-red-500/15 text-red-600",
+    cardClass: "border-red-500/30",
+    dot: "🔴",
+  };
+}
+
+function startOfWeekMonday() {
+  const now = new Date();
+  const dayIdx = (now.getDay() + 6) % 7;
+  const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - dayIdx);
+  return d.getTime();
+}
+
+function getNoSpendStreak(entries: Expense[]): number {
+  const monday = startOfWeekMonday();
+  const today = new Date();
+  const daysSoFar = Math.floor((today.getTime() - monday) / 86400000) + 1;
+  let count = 0;
+  for (let i = 0; i < daysSoFar; i++) {
+    const d = new Date(monday + i * 86400000);
+    const k = dayKey(d.getTime());
+    const total = entries
+      .filter((e) => e.type === "expense" && dayKey(e.createdAt) === k)
+      .reduce((s, e) => s + e.amount, 0);
+    if (total === 0) count++;
+  }
+  return count;
+}
+
+function getTopWeekday(entries: Expense[]): { name: string; total: number } | null {
+  const totals = [0, 0, 0, 0, 0, 0, 0];
+  for (const e of entries) {
+    if (e.type !== "expense") continue;
+    totals[new Date(e.createdAt).getDay()] += e.amount;
+  }
+  let maxIdx = -1;
+  let max = 0;
+  totals.forEach((v, i) => {
+    if (v > max) {
+      max = v;
+      maxIdx = i;
+    }
+  });
+  if (maxIdx < 0) return null;
+  const fullNames = ["Sundays", "Mondays", "Tuesdays", "Wednesdays", "Thursdays", "Fridays", "Saturdays"];
+  return { name: fullNames[maxIdx], total: max };
+}
+
+function getRecurringGroup(
+  entries: Expense[],
+): { title: string; amount: number; count: number; category: ExpenseCategory } | null {
+  const last30 = Date.now() - 30 * 86400000;
+  const recent = entries.filter((e) => e.type === "expense" && e.createdAt >= last30);
+  type G = { title: string; amount: number; category: ExpenseCategory; dates: Set<string> };
+  const groups: G[] = [];
+  for (const e of recent) {
+    const placed = groups.find(
+      (g) => g.category === e.category && Math.abs(e.amount - g.amount) / g.amount <= 0.1,
+    );
+    if (placed) {
+      placed.dates.add(dayKey(e.createdAt));
+      const n = placed.dates.size;
+      placed.amount = (placed.amount * (n - 1) + e.amount) / n;
+      if (e.title.trim()) placed.title = e.title;
+    } else {
+      groups.push({
+        title: e.title || e.category,
+        amount: e.amount,
+        category: e.category,
+        dates: new Set([dayKey(e.createdAt)]),
+      });
+    }
+  }
+  const best = groups
+    .filter((g) => g.dates.size >= 3)
+    .sort((a, b) => b.dates.size - a.dates.size)[0];
+  if (!best) return null;
+  return {
+    title: best.title,
+    amount: Math.round(best.amount),
+    count: best.dates.size,
+    category: best.category,
+  };
+}
+
+function getProjection(
+  entries: Expense[],
+  selectedMonth: string,
+): { projected: number; daysPassed: number; totalDays: number; spent: number } | null {
+  const [y, m] = selectedMonth.split("-").map(Number);
+  const totalDays = new Date(y, m, 0).getDate();
+  const now = new Date();
+  const isCurrent = monthKey(now.getTime()) === selectedMonth;
+  const daysPassed = isCurrent ? now.getDate() : totalDays;
+  const spent = entries
+    .filter((e) => e.type === "expense" && monthKey(e.createdAt) === selectedMonth)
+    .reduce((s, e) => s + e.amount, 0);
+  if (daysPassed < 3) return null;
+  const projected = Math.round((spent / daysPassed) * totalDays);
+  return { projected, daysPassed, totalDays, spent };
+}
+
+
 export const Route = createFileRoute("/expenses")({
   head: () => ({
     meta: [
