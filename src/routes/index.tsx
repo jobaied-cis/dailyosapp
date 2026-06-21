@@ -328,6 +328,13 @@ function Dashboard() {
             <p className="text-[11px] font-medium text-white/70 tracking-[0.5px] leading-[1.3] mt-1">{today}</p>
           </div>
           <div className="flex flex-col items-end gap-1.5 shrink-0">
+            <button
+              onClick={() => navigate({ to: "/settings" })}
+              aria-label="Open settings"
+              className="size-7 inline-flex items-center justify-center rounded-full bg-white/15 border border-white/20 text-white active:scale-95 transition-transform"
+            >
+              <SettingsIcon className="size-3.5" />
+            </button>
             {streak > 0 && (
               <span className="inline-flex items-center gap-1 rounded-full bg-white/15 text-white px-2.5 py-1 text-[11px] font-semibold border border-white/20 leading-none">
                 <Flame className="size-3.5" /> {streak}
