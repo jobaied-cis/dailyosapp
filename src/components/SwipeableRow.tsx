@@ -19,6 +19,11 @@ export function SwipeableRow({
   onSwipeLeft,
   thresholdPct = 0.35,
   disabled = false,
+  rightLabel = "Complete",
+  rightIcon = "check",
+  rightBgClass = "bg-emerald-500/90 text-white",
+  leftLabel = "Delete",
+  leftBgClass = "bg-destructive text-destructive-foreground",
   children,
 }: SwipeableRowProps) {
   const containerRef = useRef<HTMLDivElement>(null);
