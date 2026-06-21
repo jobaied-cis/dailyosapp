@@ -8,6 +8,7 @@ import { useMissions, missionProgress, isMissionEnded } from "@/lib/missions-sto
 import { useExpenses, getDailyLimit } from "@/lib/expenses-store";
 import { useTakaSymbol } from "@/lib/currency";
 import { buildAIPrompt, hasAnyContext, type AIContext } from "@/lib/ai-context";
+import { getMemoryInsights } from "@/lib/memory-ai";
 
 function startOfDay(ts: number) {
   const d = new Date(ts);
@@ -56,6 +57,7 @@ export function AIAssistantSheet({ onClose }: { onClose: () => void }) {
       todayExpense,
       dailyLimit: getDailyLimit(),
       currencySymbol: sym,
+      memoryInsights: getMemoryInsights().map((m) => m.message),
     };
   }, [userProfile, tasks, events, missions, expenses, sym]);
 
