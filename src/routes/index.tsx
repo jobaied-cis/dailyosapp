@@ -618,7 +618,7 @@ function Dashboard() {
                 <div className="space-y-1">
                   <div className="h-2 bg-muted rounded-full overflow-hidden">
                     <div
-                      className={`h-full rounded-full transition-all ${barClass}`}
+                      className={`h-full rounded-full transition-all duration-500 ease-out ${barClass}`}
                       style={{ width: `${Math.min(pctNum, 100)}%` }}
                     />
                   </div>
