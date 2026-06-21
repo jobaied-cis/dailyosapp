@@ -294,30 +294,15 @@ function Dashboard() {
     dailyLimit,
     upcomingEventCount,
   });
-  // Rotate which two insights are shown every 5s for a "live" feel.
-  const [insightOffset, setInsightOffset] = useState(0);
-  useEffect(() => {
-    if (aiInsights.length <= 2) return;
-    const id = setInterval(() => setInsightOffset((o) => o + 1), 5000);
-    return () => clearInterval(id);
-  }, [aiInsights.length]);
-  const visibleInsights = aiInsights.length <= 2
-    ? aiInsights.slice(0, 2)
-    : [
-        aiInsights[insightOffset % aiInsights.length],
-        aiInsights[(insightOffset + 1) % aiInsights.length],
-      ];
 
   // ---- Behavior AI: passive pattern detection over last 7 days ----
-  // Uses raw template tasks (not today's filtered view) so weekday rollups work.
   const rawTasks = useAllRawTasks();
   const behaviorInsights = useMemo(
-    () => getBehaviorInsights({ tasks: rawTasks, expenses }).slice(0, 2),
+    () => getBehaviorInsights({ tasks: rawTasks, expenses }),
     [rawTasks, expenses],
   );
 
   // ---- Memory AI: long-term pattern memory (last 14 days) ----
-  // Computed once on mount + when window regains focus (no per-minute churn).
   const [memoryRefresh, setMemoryRefresh] = useState(0);
   useEffect(() => {
     const onFocus = () => setMemoryRefresh((n) => n + 1);
@@ -329,16 +314,80 @@ function Dashboard() {
     };
   }, []);
   const memoryInsights = useMemo(() => getMemoryInsights(), [memoryRefresh]);
-  const [memoryOffset, setMemoryOffset] = useState(0);
+
+  // ---- Unified hero insight feed (prioritized, de-duplicated, single emoji) ----
+  type HeroInsight = { message: string; emoji: string; priority: number };
+  const heroInsights = useMemo<HeroInsight[]>(() => {
+    const stripEmoji = (s: string) =>
+      s
+        .replace(
+          /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{1F1E6}-\u{1F1FF}\u{2300}-\u{23FF}\u{2B00}-\u{2BFF}\uFE0F]/gu,
+          "",
+        )
+        .replace(/\s+/g, " ")
+        .trim();
+    const items: HeroInsight[] = [];
+    const seen = new Set<string>();
+    const push = (raw: string, emoji: string, priority: number) => {
+      const clean = stripEmoji(raw);
+      if (!clean) return;
+      const key = clean.toLowerCase();
+      if (seen.has(key)) return;
+      seen.add(key);
+      items.push({ message: clean, emoji, priority });
+    };
+
+    // 1 — Urgent (time-sensitive, today)
+    if (overLimit) push("Today: you're over budget", "⚠️", 1);
+    if (nextEvent && minsToEvent <= 15)
+      push(`Now: ${nextEvent.title} in ${minsToEvent}m`, "⏰", 1);
+    if (nearLimit && !overLimit) push("Today: close to your budget", "⚠️", 1);
+
+    // 2 — Today status
+    aiInsights.forEach((ins) =>
+      push(`Today: ${ins.message}`, suggestionIcon(ins.type), 2),
+    );
+
+    // 3 — Weekly patterns
+    behaviorInsights.forEach((ins) =>
+      push(`This week: ${ins.message}`, behaviorIcon(ins.type), 3),
+    );
+    memoryInsights.forEach((ins) =>
+      push(`This week: ${ins.message}`, memoryIcon(ins.type), 3),
+    );
+
+    return items.sort((a, b) => a.priority - b.priority).slice(0, 6);
+  }, [
+    aiInsights,
+    behaviorInsights,
+    memoryInsights,
+    overLimit,
+    nearLimit,
+    nextEvent,
+    minsToEvent,
+  ]);
+
+  const [heroIdx, setHeroIdx] = useState(0);
+  const [heroVisible, setHeroVisible] = useState(true);
   useEffect(() => {
-    if (memoryInsights.length <= 1) return;
-    const id = setInterval(() => setMemoryOffset((o) => o + 1), 6000);
+    setHeroIdx(0);
+  }, [heroInsights.length]);
+  useEffect(() => {
+    if (heroInsights.length <= 1) {
+      setHeroVisible(true);
+      return;
+    }
+    const id = setInterval(() => {
+      setHeroVisible(false);
+      const t = setTimeout(() => {
+        setHeroIdx((i) => (i + 1) % heroInsights.length);
+        setHeroVisible(true);
+      }, 300);
+      return () => clearTimeout(t);
+    }, 3500);
     return () => clearInterval(id);
-  }, [memoryInsights.length]);
-  const memoryInsight =
-    memoryInsights.length > 0
-      ? memoryInsights[memoryOffset % memoryInsights.length]
-      : null;
+  }, [heroInsights.length]);
+  const currentHero = heroInsights[heroIdx] ?? null;
 
   // ---- Weekly Report (last 7 days) ----
   const weekStart = Date.now() - 7 * 86400000;
@@ -438,45 +487,26 @@ function Dashboard() {
             <h1 className="text-[22px] font-bold text-white tracking-tight leading-[1.2]">
               {greeting}
             </h1>
-            <ul className="mt-1.5 space-y-1" aria-live="polite" aria-atomic="true">
-              {visibleInsights.map((ins, i) => (
-                <li
-                  key={`${ins.type}-${i}-${ins.message}`}
-                  className="text-[13px] font-medium text-white/90 leading-[1.4] flex items-start gap-1.5 animate-fade-in"
+            <div
+              className="mt-1.5 min-h-[20px]"
+              aria-live="polite"
+              aria-atomic="true"
+            >
+              {currentHero && (
+                <p
+                  key={currentHero.message}
+                  className={`text-[13px] font-medium text-white/90 leading-[1.4] flex items-start gap-1.5 transition-opacity duration-300 ${
+                    heroVisible ? "opacity-100" : "opacity-0"
+                  }`}
                 >
                   <span aria-hidden className="text-[14px] leading-[1.4]">
-                    {suggestionIcon(ins.type)}
+                    {currentHero.emoji}
                   </span>
-                  <span>{ins.message}</span>
-                </li>
-              ))}
-            </ul>
-            {behaviorInsights.length > 0 && (
-              <ul className="mt-1.5 space-y-0.5 border-t border-white/15 pt-1.5">
-                {behaviorInsights.map((ins, i) => (
-                  <li
-                    key={`b-${ins.type}-${i}-${ins.message}`}
-                    className="text-[11px] font-medium text-white/70 leading-[1.4] flex items-start gap-1.5"
-                  >
-                    <span aria-hidden className="text-[12px] leading-[1.4]">
-                      {behaviorIcon(ins.type)}
-                    </span>
-                    <span>{ins.message}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-            {memoryInsight && (
-              <p
-                key={`m-${memoryInsight.message}`}
-                className="text-[11px] font-medium text-white/65 leading-[1.4] mt-1 flex items-start gap-1.5 animate-fade-in"
-              >
-                <span aria-hidden className="text-[12px] leading-[1.4]">
-                  {memoryIcon(memoryInsight.type)}
-                </span>
-                <span>{memoryInsight.message}</span>
-              </p>
-            )}
+                  <span className="truncate">{currentHero.message}</span>
+                </p>
+              )}
+            </div>
+
             <p className="text-[12px] font-medium text-white/75 leading-[1.4] mt-1">
               {done} done · {eventCount} events · {formatTaka(todayExpense, takaSym)} spent
             </p>
