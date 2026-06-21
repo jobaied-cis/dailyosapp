@@ -1,5 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect, useMemo, useState } from "react";
 import { useTasks } from "@/lib/tasks-store";
 import { ProgressRing } from "@/components/ProgressRing";
 import {
@@ -22,7 +22,10 @@ import {
   BookOpen,
   MapPin,
   User,
-  Check,
+  Plus,
+  ListChecks,
+  CalendarPlus,
+  Sparkles,
 } from "lucide-react";
 import { useExpenses, getDailyLimit } from "@/lib/expenses-store";
 import { useStreak } from "@/lib/streak-store";
@@ -69,22 +72,40 @@ function formatDayDate(startDate: number, day: number) {
 }
 
 function getGreeting(hour: number): string {
-  if (hour < 12) return "Good morning, Akash👋";
-  if (hour < 18) return "Good afternoon, Akash👋";
-  return "Good evening, Akash👋";
+  if (hour < 12) return "Good morning, Akash 👋";
+  if (hour < 18) return "Good afternoon, Akash 👋";
+  return "Good evening, Akash 👋";
+}
+
+function formatTime12(hhmm: string) {
+  const [h, m] = hhmm.split(":");
+  const hourNum = parseInt(h, 10);
+  const ampm = hourNum >= 12 ? "PM" : "AM";
+  const displayHour = hourNum % 12 || 12;
+  return `${displayHour}:${m} ${ampm}`;
+}
+
+function minutesSinceMidnight(d: Date) {
+  return d.getHours() * 60 + d.getMinutes();
+}
+
+function hhmmToMin(s: string) {
+  const [h, m] = s.split(":").map(Number);
+  return h * 60 + m;
 }
 
 const CARD = "rounded-2xl p-4 border border-border/60 bg-card shadow-sm";
 const PRESS = "press will-change-transform";
 
 function Dashboard() {
+  const navigate = useNavigate();
   const tasks = useTasks();
   const missions = useMissions();
   const events = useEvents();
+  const takaSym = useTakaSymbol();
   const total = tasks.length;
   const done = tasks.filter((t) => t.completed).length;
   const pct = total ? (done / total) * 100 : 0;
-  const next = tasks.find((t) => !t.completed);
   const today = new Date().toLocaleDateString(undefined, {
     weekday: "long",
     month: "long",
@@ -103,7 +124,7 @@ function Dashboard() {
   }, []);
   const greeting = hour === null ? "Hello, Akash 👋" : getGreeting(hour);
 
-  const nowLocal = new Date();
+  const nowLocal = new Date(nowTick);
   const todayStr = `${nowLocal.getFullYear()}-${String(nowLocal.getMonth() + 1).padStart(2, "0")}-${String(nowLocal.getDate()).padStart(2, "0")}`;
   const todaysEvents = events
     .filter((e) => e.date === todayStr)
@@ -116,6 +137,27 @@ function Dashboard() {
     return new Date(`${e.date}T${e.time}`).getTime() > nowTick;
   });
 
+  // ===== Derived intelligence =====
+  const nowMin = minutesSinceMidnight(nowLocal);
+  const incompleteTasks = useMemo(() => tasks.filter((t) => !t.completed), [tasks]);
+  const routineRemaining = incompleteTasks.length;
+  const nextTask = incompleteTasks[0];
+  const currentTask = useMemo(() => {
+    const inWindow = incompleteTasks.find((t) => {
+      const start = hhmmToMin(t.time);
+      const end = t.endTime ? hhmmToMin(t.endTime) : start + 30;
+      return nowMin >= start && nowMin < end;
+    });
+    return inWindow ?? nextTask;
+  }, [incompleteTasks, nextTask, nowMin]);
+
+  const nextEvent = nextUpcoming;
+  const minsToEvent = nextEvent
+    ? Math.max(
+        0,
+        Math.round((new Date(`${nextEvent.date}T${nextEvent.time}`).getTime() - nowTick) / 60000),
+      )
+    : Infinity;
 
   const mission = pickTodaysMission(missions);
   const currentDay = mission ? currentDayFor(mission) : 0;
@@ -148,36 +190,161 @@ function Dashboard() {
     .reduce((s, e) => s + e.amount, 0);
 
   const dailyLimit = getDailyLimit();
-  const limitExceeded = dailyLimit > 0 && todayExpense > dailyLimit;
+  const limitPct = dailyLimit > 0 ? todayExpense / dailyLimit : 0;
+  const overLimit = dailyLimit > 0 && todayExpense > dailyLimit;
+  const nearLimit = dailyLimit > 0 && limitPct >= 0.8 && limitPct <= 1;
+  const safeToSpend = dailyLimit > 0 ? Math.max(0, dailyLimit - todayExpense) : 0;
+
+  // Status chip
+  const status: "red" | "yellow" | "green" =
+    overLimit || minsToEvent <= 15
+      ? "red"
+      : routineRemaining >= 3 || eventCount >= 3 || nearLimit
+        ? "yellow"
+        : "green";
+  const statusEmoji = status === "red" ? "🔴" : status === "yellow" ? "🟡" : "🟢";
+  const statusLabel = status === "red" ? "Heads up" : status === "yellow" ? "Busy" : "On track";
+
+  // Intel line
+  let intel = "You're on track today — keep going 🚀";
+  if (overLimit) intel = "Spending is high today — stay mindful ⚠️";
+  else if (nextEvent && minsToEvent <= 30) intel = `Next event in ${minsToEvent}m — be ready ⏳`;
+  else if (routineRemaining > 0) intel = `You have ${routineRemaining} task${routineRemaining > 1 ? "s" : ""} left — stay focused 💪`;
+
+  // Priority card
+  type Priority = { label: string; main: string; sub?: string; to: "/routine" | "/events" | "/expenses" } | null;
+  let priority: Priority = null;
+  if (nextEvent && minsToEvent <= 15) {
+    priority = {
+      label: "NOW",
+      main: nextEvent.title,
+      sub: `Starts in ${minsToEvent}m`,
+      to: "/events",
+    };
+  } else if (currentTask && (() => {
+    const start = hhmmToMin(currentTask.time);
+    const end = currentTask.endTime ? hhmmToMin(currentTask.endTime) : start + 30;
+    return nowMin >= start && nowMin < end;
+  })()) {
+    priority = {
+      label: "NOW",
+      main: currentTask.title,
+      sub: `${formatTime12(currentTask.time)}${currentTask.endTime ? ` – ${formatTime12(currentTask.endTime)}` : ""}`,
+      to: "/routine",
+    };
+  } else if (overLimit) {
+    priority = {
+      label: "PRIORITY",
+      main: "Heads up: over daily limit",
+      sub: `Spent ${formatTaka(todayExpense, takaSym)} of ${formatTaka(dailyLimit, takaSym)}`,
+      to: "/expenses",
+    };
+  } else if (nextTask) {
+    priority = {
+      label: "NEXT",
+      main: nextTask.title,
+      sub: `at ${formatTime12(nextTask.time)}`,
+      to: "/routine",
+    };
+  }
 
   const allDone = total > 0 && done === total;
   const endOfDayMissed = !allDone && new Date().getHours() >= 23;
   const reached80 = total > 0 && done / total >= 0.8;
   const { streak } = useStreak(reached80, endOfDayMissed);
-  const taka = useTakaSymbol();
+
+  const routineCtaLabel = done > 0 && !allDone ? "Continue routine" : "Open today's routine";
 
   return (
     <div className="space-y-4 stagger-sections">
-      {/* Greeting */}
-      <div className="relative overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/10 via-card to-card/80 p-4 shadow-lg ring-1 ring-inset ring-white/5">
+      {/* Greeting / Hero */}
+      <div className="relative overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/15 via-card to-card/80 bg-[length:200%_200%] animate-[gradient-shift_8s_ease_infinite] p-4 shadow-lg ring-1 ring-inset ring-white/5">
         <div className="pointer-events-none absolute -top-8 -right-8 size-32 rounded-full bg-primary/15 blur-3xl" />
         <div className="relative flex items-start justify-between gap-3">
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <h1 className="text-[22px] font-bold text-foreground tracking-tight leading-[1.2]">
               {greeting}
             </h1>
-            <p className="text-[13px] font-medium text-muted-foreground leading-[1.4] mt-1">
-              {done} tasks · {eventCount} events · {formatTaka(todayExpense, taka)} spent
+            <p className="text-[13px] font-medium text-foreground/80 leading-[1.4] mt-1.5">
+              {intel}
+            </p>
+            <p className="text-[12px] font-medium text-muted-foreground leading-[1.4] mt-1">
+              {done} done · {eventCount} events · {formatTaka(todayExpense, takaSym)} spent
             </p>
             <p className="text-[11px] font-medium text-muted-foreground tracking-[0.5px] leading-[1.3] mt-1">{today}</p>
           </div>
-          {streak > 0 && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 text-amber-600 px-2.5 py-1 text-[11px] font-semibold border border-amber-500/20 shrink-0 leading-none">
-              <Flame className="size-3.5" /> {streak}
+          <div className="flex flex-col items-end gap-1.5 shrink-0">
+            {streak > 0 && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 text-amber-600 px-2.5 py-1 text-[11px] font-semibold border border-amber-500/20 leading-none">
+                <Flame className="size-3.5" /> {streak}
+              </span>
+            )}
+            <span
+              aria-label={`Status: ${statusLabel}`}
+              className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-bold uppercase tracking-wider border leading-none ${
+                status === "red"
+                  ? "bg-red-500/15 text-red-600 border-red-500/30"
+                  : status === "yellow"
+                    ? "bg-amber-500/15 text-amber-700 border-amber-500/30"
+                    : "bg-emerald-500/15 text-emerald-600 border-emerald-500/30"
+              }`}
+            >
+              <span className="text-[11px] leading-none">{statusEmoji}</span>
+              {statusLabel}
             </span>
-          )}
+          </div>
         </div>
       </div>
+
+      {/* Quick Action Row */}
+      <div className="grid grid-cols-3 gap-2">
+        <button
+          onClick={() => navigate({ to: "/routine" })}
+          className="press flex items-center justify-center gap-1.5 rounded-xl border border-border/60 bg-card py-3 text-[13px] font-semibold text-foreground shadow-sm active:scale-95 transition-all duration-200"
+        >
+          <ListChecks className="size-4 text-primary" /> Task
+        </button>
+        <button
+          onClick={() => navigate({ to: "/events" })}
+          className="press flex items-center justify-center gap-1.5 rounded-xl border border-border/60 bg-card py-3 text-[13px] font-semibold text-foreground shadow-sm active:scale-95 transition-all duration-200"
+        >
+          <CalendarPlus className="size-4 text-primary" /> Event
+        </button>
+        <button
+          onClick={() => navigate({ to: "/expenses" })}
+          className="press flex items-center justify-center gap-1.5 rounded-xl border border-border/60 bg-card py-3 text-[13px] font-semibold text-foreground shadow-sm active:scale-95 transition-all duration-200"
+        >
+          <Plus className="size-4 text-primary" /> Expense
+        </button>
+      </div>
+
+      {/* Priority Card */}
+      {priority && (
+        <button
+          onClick={() => navigate({ to: priority!.to })}
+          className="press animate-fade-in w-full text-left rounded-2xl p-4 border border-primary/30 bg-primary/10 shadow-[0_0_24px_-6px_hsl(var(--primary)/0.45)] transition-all duration-200"
+        >
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5 mb-1">
+                <Sparkles className="size-3.5 text-primary" />
+                <span className="text-[10px] font-bold uppercase tracking-[0.5px] text-primary leading-none">
+                  {priority.label}
+                </span>
+              </div>
+              <h3 className="text-[16px] font-semibold text-foreground leading-[1.3] truncate">
+                {priority.main}
+              </h3>
+              {priority.sub && (
+                <p className="text-[12px] font-medium text-muted-foreground leading-[1.4] mt-0.5 truncate">
+                  {priority.sub}
+                </p>
+              )}
+            </div>
+            <ArrowRight className="size-4 text-primary shrink-0" />
+          </div>
+        </button>
+      )}
 
       {/* Today's Routine */}
       <Link to="/routine" className={`block ${CARD} shadow-md ${PRESS}`}>
@@ -205,35 +372,25 @@ function Dashboard() {
                 </div>
               </ProgressRing>
             </div>
-            <ul className="flex-1 min-w-0 space-y-1.5">
-              {tasks.slice(0, 4).map((t) => {
-                const isCurrent = next && t.id === next.id;
-                return (
-                  <li key={t.id} className="flex items-center gap-2 min-w-0">
-                    <span className="text-[10px] font-mono text-muted-foreground w-10 shrink-0">{t.time}</span>
-                    {t.completed ? (
-                      <Check className="size-3 text-primary/60 shrink-0" />
-                    ) : null}
-                    <span
-                      className={`text-[14px] truncate flex-1 leading-[1.5] ${
-                        t.completed
-                          ? "font-normal line-through text-[#9CA3AF]"
-                          : isCurrent
-                          ? "font-semibold text-[#1F2D50] dark:text-foreground"
-                          : "font-medium text-[#6B7280] dark:text-foreground/75"
-                      }`}
-                    >
-                      {t.title}
-                    </span>
-                    {isCurrent && (
-                      <span className="text-[9px] font-bold uppercase tracking-wider text-primary bg-primary/10 px-1.5 py-0.5 rounded-full shrink-0">
-                        Now
-                      </span>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
+            <div className="flex-1 min-w-0 space-y-1.5">
+              {currentTask && (
+                <div className="text-[12px] leading-[1.4]">
+                  <span className="text-[9px] font-bold uppercase tracking-wider text-primary mr-1.5">NOW</span>
+                  <span className="font-semibold text-foreground truncate">{currentTask.title}</span>
+                </div>
+              )}
+              {nextTask && nextTask.id !== currentTask?.id && (
+                <div className="text-[12px] leading-[1.4]">
+                  <span className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground mr-1.5">NEXT</span>
+                  <span className="font-medium text-foreground/80 truncate">
+                    {nextTask.title} · {formatTime12(nextTask.time)}
+                  </span>
+                </div>
+              )}
+              {!currentTask && !nextTask && (
+                <p className="text-[13px] font-medium text-emerald-600">All done — great work 👏</p>
+              )}
+            </div>
           </div>
         )}
       </Link>
@@ -242,7 +399,7 @@ function Dashboard() {
         to="/routine"
         className="press flex items-center justify-center gap-2.5 w-full bg-gradient-to-br from-primary to-primary/85 text-primary-foreground rounded-xl py-3.5 text-[14px] font-semibold leading-[1.2] shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 active:scale-[0.97] transition-all duration-150"
       >
-        Open today's routine <ArrowRight className="size-4" />
+        {routineCtaLabel} <ArrowRight className="size-4" />
       </Link>
 
       {/* Today's Mission */}
@@ -277,6 +434,9 @@ function Dashboard() {
                     <span className="text-[16px] font-semibold text-foreground leading-[1.3]">{clamped}%</span>
                     <span className="text-[12px] font-medium text-muted-foreground leading-[1.4]">{daysLeft} days left</span>
                   </div>
+                  <p className="text-[12px] font-semibold text-primary leading-[1.4] mt-1">
+                    You're on Day {currentDay} — keep going 🔥
+                  </p>
                 </div>
               );
             })()}
@@ -406,7 +566,7 @@ function Dashboard() {
               <Wallet className="size-3.5 text-primary/70" /> Balance
             </span>
             <span className={`text-[16px] font-semibold leading-[1.3] ${balance < 0 ? "text-destructive" : "text-foreground"}`}>
-              {formatTaka(balance, taka)}
+              {formatTaka(balance, takaSym)}
             </span>
           </div>
           <div>
@@ -415,38 +575,37 @@ function Dashboard() {
                 <TrendingDown className="size-3.5 text-primary/70" /> Today
                 {dailyLimit > 0 && (
                   <span aria-label="status" className="text-[12px] leading-none">
-                    {(todayExpense / dailyLimit) * 100 > 100
-                      ? "🔴"
-                      : (todayExpense / dailyLimit) * 100 >= 80
-                        ? "🟡"
-                        : "🟢"}
+                    {limitPct * 100 > 100 ? "🔴" : limitPct * 100 >= 80 ? "🟡" : "🟢"}
                   </span>
                 )}
               </span>
               <span className="text-[16px] font-semibold text-foreground leading-[1.3] flex items-center gap-1.5">
                 {dailyLimit > 0 ? (
-                  <span>{todayExpense.toLocaleString()} / {formatTaka(dailyLimit, taka)}</span>
+                  <span>{todayExpense.toLocaleString()} / {formatTaka(dailyLimit, takaSym)}</span>
                 ) : (
-                  <span>{formatTaka(todayExpense, taka)}</span>
+                  <span>{formatTaka(todayExpense, takaSym)}</span>
                 )}
               </span>
-
             </div>
             {dailyLimit > 0 && (
               <div className="space-y-1">
                 <div className="h-2 bg-muted rounded-full overflow-hidden">
                   <div
-                    className={`h-full rounded-full transition-all ${limitExceeded ? "bg-red-500" : "bg-primary"}`}
-                    style={{ width: `${Math.min((todayExpense / dailyLimit) * 100, 100)}%` }}
+                    className={`h-full rounded-full transition-all ${overLimit ? "bg-red-500" : "bg-primary"}`}
+                    style={{ width: `${Math.min(limitPct * 100, 100)}%` }}
                   />
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className={`text-[11px] font-semibold leading-[1.3] ${limitExceeded ? "text-red-500" : "text-muted-foreground"}`}>
-                    {Math.round((todayExpense / dailyLimit) * 100)}%
+                  <span className={`text-[11px] font-semibold leading-[1.3] ${overLimit ? "text-red-500" : "text-muted-foreground"}`}>
+                    {Math.round(limitPct * 100)}%
                   </span>
-                  {limitExceeded && (
+                  {overLimit ? (
                     <span className="text-[11px] font-semibold text-red-500 leading-[1.3] flex items-center gap-1">
-                      <AlertTriangle className="size-3" /> Over limit
+                      <AlertTriangle className="size-3" /> You're over today — adjust tomorrow 💡
+                    </span>
+                  ) : (
+                    <span className="text-[11px] font-semibold text-emerald-600 leading-[1.3]">
+                      Safe to spend: {formatTaka(safeToSpend, takaSym)}
                     </span>
                   )}
                 </div>
@@ -457,14 +616,14 @@ function Dashboard() {
             <span className="text-[12px] font-medium text-muted-foreground leading-[1.4] flex items-center gap-1.5">
               <CalendarDays className="size-3.5 text-primary/70" /> This Month
             </span>
-            <span className="text-[16px] font-semibold text-foreground leading-[1.3]">{formatTaka(monthExpense, taka)}</span>
+            <span className="text-[16px] font-semibold text-foreground leading-[1.3]">{formatTaka(monthExpense, takaSym)}</span>
           </div>
           <div className="flex items-center justify-between">
             <span className="text-[12px] font-medium text-muted-foreground leading-[1.4] flex items-center gap-1.5">
               <Target className="size-3.5 text-primary/70" /> Remaining
             </span>
             <span className={`text-[16px] font-semibold leading-[1.3] ${dailyLimit > 0 && dailyLimit - todayExpense < 0 ? "text-destructive" : "text-foreground"}`}>
-              {dailyLimit > 0 ? formatTaka(dailyLimit - todayExpense, taka) : "—"}
+              {dailyLimit > 0 ? formatTaka(dailyLimit - todayExpense, takaSym) : "—"}
             </span>
           </div>
         </div>
