@@ -1,11 +1,16 @@
 import { useRef, useState, type ReactNode, type PointerEvent } from "react";
-import { Check, Trash2 } from "lucide-react";
+import { Check, Trash2, Pencil } from "lucide-react";
 
 interface SwipeableRowProps {
   onSwipeRight?: () => void;
   onSwipeLeft?: () => void;
   thresholdPct?: number;
   disabled?: boolean;
+  rightLabel?: string;
+  rightIcon?: "check" | "edit";
+  rightBgClass?: string;
+  leftLabel?: string;
+  leftBgClass?: string;
   children: ReactNode;
 }
 
