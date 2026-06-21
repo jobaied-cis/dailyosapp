@@ -236,7 +236,7 @@ function Dashboard() {
     priority = {
       label: "PRIORITY",
       main: "Heads up: over daily limit",
-      sub: `Spent ${formatTaka(todayExpense, taka())} of ${formatTaka(dailyLimit, taka())}`,
+      sub: `Spent ${formatTaka(todayExpense, takaSym)} of ${formatTaka(dailyLimit, takaSym)}`,
       to: "/expenses",
     };
   } else if (nextTask) {
@@ -248,15 +248,10 @@ function Dashboard() {
     };
   }
 
-  function taka() {
-    return takaSym;
-  }
-
   const allDone = total > 0 && done === total;
   const endOfDayMissed = !allDone && new Date().getHours() >= 23;
   const reached80 = total > 0 && done / total >= 0.8;
   const { streak } = useStreak(reached80, endOfDayMissed);
-  const takaSym = useTakaSymbol();
 
   const routineCtaLabel = done > 0 && !allDone ? "Continue routine" : "Open today's routine";
 
