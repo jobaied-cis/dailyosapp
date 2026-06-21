@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { Eye, EyeOff, Mail, Lock, User } from "lucide-react";
 import { ListChecks, Target, CalendarDays, Wallet, ChevronRight } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 
@@ -220,45 +221,275 @@ function IntroSlides({ go }: GoProp) {
 }
 
 /* -------------------------------------------------------------------------- */
-/*  Placeholders (unchanged)                                                  */
+/*  Auth form primitives                                                      */
+/* -------------------------------------------------------------------------- */
+
+function Field({
+  icon: Icon,
+  type = "text",
+  placeholder,
+  value,
+  onChange,
+  trailing,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  type?: string;
+  placeholder: string;
+  value: string;
+  onChange: (v: string) => void;
+  trailing?: React.ReactNode;
+}) {
+  const [focused, setFocused] = useState(false);
+  return (
+    <label
+      className="flex items-center gap-3 px-4 py-3 transition-all duration-200"
+      style={{
+        background: "#131B2E",
+        border: `1px solid ${focused ? "#378ADD" : "rgba(255,255,255,0.08)"}`,
+        borderRadius: 14,
+        boxShadow: focused ? "0 0 0 4px rgba(55,138,221,0.18)" : "none",
+      }}
+    >
+      <Icon className="w-4 h-4 text-white/40 shrink-0" />
+      <input
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        placeholder={placeholder}
+        className="flex-1 bg-transparent text-sm text-white placeholder:text-white/35 outline-none"
+      />
+      {trailing}
+    </label>
+  );
+}
+
+function PrimaryButton({
+  children,
+  onClick,
+  disabled,
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  disabled?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className="w-full py-3.5 text-sm font-medium transition-all duration-200 active:scale-95 disabled:opacity-50"
+      style={{
+        background: "#378ADD",
+        color: "white",
+        borderRadius: 14,
+        boxShadow: "0 10px 30px -12px rgba(55,138,221,0.6)",
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
+function GoogleButton() {
+  return (
+    <button
+      type="button"
+      disabled
+      className="w-full py-3 text-sm font-medium flex items-center justify-center gap-2 cursor-not-allowed opacity-60"
+      style={{
+        background: "transparent",
+        color: "white",
+        border: "1px solid rgba(255,255,255,0.12)",
+        borderRadius: 14,
+      }}
+    >
+      <span
+        className="w-4 h-4 rounded-full"
+        style={{ background: "conic-gradient(#EA4335, #FBBC05, #34A853, #4285F4, #EA4335)" }}
+        aria-hidden
+      />
+      Continue with Google
+    </button>
+  );
+}
+
+function Divider() {
+  return (
+    <div className="flex items-center gap-3 py-1">
+      <span className="flex-1 h-px bg-white/10" />
+      <span className="text-[10px] uppercase tracking-widest text-white/40">or</span>
+      <span className="flex-1 h-px bg-white/10" />
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/*  Login                                                                     */
 /* -------------------------------------------------------------------------- */
 
 function LoginScreen({ go }: GoProp) {
   const { login } = useAuth();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [show, setShow] = useState(false);
+
   return (
     <Stage>
-      <div className="flex-1 flex flex-col items-center justify-center gap-4 text-center">
-        <h1 className="text-xl font-semibold">Login Screen</h1>
-        <button
-          onClick={() => login({ name: "Guest" })}
-          className="w-full py-3 text-sm font-medium active:scale-95 transition-transform"
-          style={{ background: "#378ADD", color: "white", borderRadius: 14 }}
-        >
-          Login
-        </button>
-        <button onClick={() => go("welcome")} className="text-xs text-white/50 underline">
-          Back
-        </button>
+      <div className="flex-1 flex flex-col animate-fade-in">
+        <div className="pt-6 pb-8">
+          <h1 className="text-2xl font-semibold tracking-tight">Welcome back 🔥</h1>
+          <p className="mt-1.5 text-sm text-white/55">Continue your system</p>
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <Field icon={Mail} type="email" placeholder="Email" value={email} onChange={setEmail} />
+          <Field
+            icon={Lock}
+            type={show ? "text" : "password"}
+            placeholder="Password"
+            value={password}
+            onChange={setPassword}
+            trailing={
+              <button
+                type="button"
+                onClick={() => setShow((s) => !s)}
+                className="text-white/40 hover:text-white/80 transition-colors"
+                aria-label={show ? "Hide password" : "Show password"}
+              >
+                {show ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            }
+          />
+
+          <button className="self-end text-xs text-white/55 hover:text-white/80 transition-colors">
+            Forgot password?
+          </button>
+        </div>
+
+        <div className="mt-6 flex flex-col gap-3">
+          <PrimaryButton onClick={() => login({ name: email.split("@")[0] || "Guest" })}>
+            Continue your system →
+          </PrimaryButton>
+          <Divider />
+          <GoogleButton />
+        </div>
+
+        <div className="mt-auto pt-8 text-center text-sm text-white/55">
+          Don't have an account?{" "}
+          <button
+            onClick={() => go("signup")}
+            className="text-white font-medium hover:underline"
+          >
+            Sign up
+          </button>
+        </div>
       </div>
     </Stage>
   );
 }
 
+/* -------------------------------------------------------------------------- */
+/*  Signup                                                                    */
+/* -------------------------------------------------------------------------- */
+
+function passwordScore(pw: string): 0 | 1 | 2 | 3 {
+  if (!pw) return 0;
+  let score = 0;
+  if (pw.length >= 8) score++;
+  if (/[A-Z]/.test(pw)) score++;
+  if (/[0-9]/.test(pw)) score++;
+  return Math.min(score, 3) as 0 | 1 | 2 | 3;
+}
+
 function SignupScreen({ go }: GoProp) {
+  const { setUserProfile } = useAuth();
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [show, setShow] = useState(false);
+
+  const score = useMemo(() => passwordScore(password), [password]);
+  const meter = [
+    { label: "Weak", color: "#EF4444", emoji: "🔴" },
+    { label: "Weak", color: "#EF4444", emoji: "🔴" },
+    { label: "Good", color: "#F59E0B", emoji: "🟡" },
+    { label: "Strong 💪", color: "#22C55E", emoji: "🟢" },
+  ][score];
+
+  const next = () => {
+    // Carry partial profile into ProfileSetup; logic unchanged.
+    setUserProfile({ name: name || undefined });
+    go("profile");
+  };
+
   return (
     <Stage>
-      <div className="flex-1 flex flex-col items-center justify-center gap-4 text-center">
-        <h1 className="text-xl font-semibold">Signup Screen</h1>
-        <button
-          onClick={() => go("profile")}
-          className="w-full py-3 text-sm font-medium active:scale-95 transition-transform"
-          style={{ background: "#378ADD", color: "white", borderRadius: 14 }}
-        >
-          Next
-        </button>
-        <button onClick={() => go("welcome")} className="text-xs text-white/50 underline">
-          Back
-        </button>
+      <div className="flex-1 flex flex-col animate-fade-in">
+        <div className="pt-6 pb-8">
+          <h1 className="text-2xl font-semibold tracking-tight">Create your system 🚀</h1>
+          <p className="mt-1.5 text-sm text-white/55">A few seconds to set things up</p>
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <Field icon={User} placeholder="Name" value={name} onChange={setName} />
+          <Field icon={Mail} type="email" placeholder="Email" value={email} onChange={setEmail} />
+          <Field
+            icon={Lock}
+            type={show ? "text" : "password"}
+            placeholder="Password"
+            value={password}
+            onChange={setPassword}
+            trailing={
+              <button
+                type="button"
+                onClick={() => setShow((s) => !s)}
+                className="text-white/40 hover:text-white/80 transition-colors"
+                aria-label={show ? "Hide password" : "Show password"}
+              >
+                {show ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            }
+          />
+
+          {/* Strength meter */}
+          <div className="px-1 pt-1">
+            <div className="flex gap-1.5">
+              {[0, 1, 2].map((i) => (
+                <span
+                  key={i}
+                  className="flex-1 h-1 rounded-full transition-colors duration-200"
+                  style={{
+                    background:
+                      score > i ? meter.color : "rgba(255,255,255,0.08)",
+                  }}
+                />
+              ))}
+            </div>
+            <p className="mt-1.5 text-[11px] text-white/50">
+              {password
+                ? `${meter.emoji} ${meter.label}`
+                : "Use 8+ chars with a number & uppercase"}
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-6 flex flex-col gap-3">
+          <PrimaryButton onClick={next}>Create your system 🚀</PrimaryButton>
+          <Divider />
+          <GoogleButton />
+        </div>
+
+        <div className="mt-auto pt-8 text-center text-sm text-white/55">
+          Already have an account?{" "}
+          <button
+            onClick={() => go("login")}
+            className="text-white font-medium hover:underline"
+          >
+            Login
+          </button>
+        </div>
       </div>
     </Stage>
   );
