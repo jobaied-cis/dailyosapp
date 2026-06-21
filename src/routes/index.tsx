@@ -380,7 +380,7 @@ function Dashboard() {
               </ProgressRing>
             </div>
             <div className="flex-1 min-w-0 space-y-1.5">
-              {currentTask && (
+              {currentTask && !priorityShowsRoutineTask && (
                 <div className="text-[12px] leading-[1.4]">
                   <span className="text-[9px] font-bold uppercase tracking-wider text-primary mr-1.5">NOW</span>
                   <span className="font-semibold text-foreground truncate">{currentTask.title}</span>
@@ -388,11 +388,14 @@ function Dashboard() {
               )}
               {nextTask && nextTask.id !== currentTask?.id && (
                 <div className="text-[12px] leading-[1.4]">
-                  <span className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground mr-1.5">NEXT</span>
+                  <span className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground mr-1.5">✨ Up next</span>
                   <span className="font-medium text-foreground/80 truncate">
                     {nextTask.title} · {formatTime12(nextTask.time)}
                   </span>
                 </div>
+              )}
+              {priorityShowsRoutineTask && (!nextTask || nextTask.id === currentTask?.id) && (
+                <p className="text-[12px] font-medium text-muted-foreground">{done}/{total} done today</p>
               )}
               {!currentTask && !nextTask && (
                 <p className="text-[13px] font-medium text-emerald-600">All done — great work 👏</p>
