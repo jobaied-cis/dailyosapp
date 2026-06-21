@@ -36,8 +36,9 @@ import { X } from "lucide-react";
 import { getDailyInsights, suggestionIcon } from "@/lib/ai-helper";
 import { getBehaviorInsights, behaviorIcon } from "@/lib/behavior-ai";
 import { getMemoryInsights, memoryIcon } from "@/lib/memory-ai";
+import { getWeeklyReport } from "@/lib/weekly-report";
 import { AIAssistantSheet } from "@/components/AIAssistantSheet";
-import { Bot } from "lucide-react";
+import { Bot, BarChart3 } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
