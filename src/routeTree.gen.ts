@@ -14,6 +14,7 @@ import { Route as RoutineRouteImport } from './routes/routine'
 import { Route as MissionsRouteImport } from './routes/missions'
 import { Route as ExpensesRouteImport } from './routes/expenses'
 import { Route as EventsRouteImport } from './routes/events'
+import { Route as EditProfileRouteImport } from './routes/edit-profile'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as MissionsMissionIdRouteImport } from './routes/missions.$missionId'
 
@@ -42,6 +43,11 @@ const EventsRoute = EventsRouteImport.update({
   path: '/events',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EditProfileRoute = EditProfileRouteImport.update({
+  id: '/edit-profile',
+  path: '/edit-profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -55,6 +61,7 @@ const MissionsMissionIdRoute = MissionsMissionIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/edit-profile': typeof EditProfileRoute
   '/events': typeof EventsRoute
   '/expenses': typeof ExpensesRoute
   '/missions': typeof MissionsRouteWithChildren
@@ -64,6 +71,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/edit-profile': typeof EditProfileRoute
   '/events': typeof EventsRoute
   '/expenses': typeof ExpensesRoute
   '/missions': typeof MissionsRouteWithChildren
@@ -74,6 +82,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/edit-profile': typeof EditProfileRoute
   '/events': typeof EventsRoute
   '/expenses': typeof ExpensesRoute
   '/missions': typeof MissionsRouteWithChildren
@@ -85,6 +94,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/edit-profile'
     | '/events'
     | '/expenses'
     | '/missions'
@@ -94,6 +104,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/edit-profile'
     | '/events'
     | '/expenses'
     | '/missions'
@@ -103,6 +114,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/edit-profile'
     | '/events'
     | '/expenses'
     | '/missions'
@@ -113,6 +125,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  EditProfileRoute: typeof EditProfileRoute
   EventsRoute: typeof EventsRoute
   ExpensesRoute: typeof ExpensesRoute
   MissionsRoute: typeof MissionsRouteWithChildren
@@ -157,6 +170,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EventsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/edit-profile': {
+      id: '/edit-profile'
+      path: '/edit-profile'
+      fullPath: '/edit-profile'
+      preLoaderRoute: typeof EditProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -188,6 +208,7 @@ const MissionsRouteWithChildren = MissionsRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  EditProfileRoute: EditProfileRoute,
   EventsRoute: EventsRoute,
   ExpensesRoute: ExpensesRoute,
   MissionsRoute: MissionsRouteWithChildren,
