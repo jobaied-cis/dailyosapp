@@ -94,7 +94,7 @@ function hhmmToMin(s: string) {
   return h * 60 + m;
 }
 
-const CARD = "rounded-2xl p-4 border border-border/60 bg-card shadow-sm";
+const CARD = "rounded-2xl p-4 border border-border/60 bg-card shadow-sm transition-all duration-200 hover:shadow-md active:scale-[0.98]";
 const PRESS = "press will-change-transform";
 
 function Dashboard() {
