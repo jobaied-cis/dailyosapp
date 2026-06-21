@@ -9,27 +9,26 @@ import {
 } from "react";
 
 /**
- * DailyOS Auth foundation.
+ * DailyOS Auth + Onboarding state.
  *
- * Spec mapping (React Native → Web):
- *  - AsyncStorage     → localStorage
- *  - createStackNavigator → TanStack Router file-based routes + a root switch
- *    (Onboarding | AuthStack | AppStack) driven by this context.
+ * Web version of the RN spec:
+ *   AsyncStorage → localStorage
  *
- * No UI logic lives here — only state, persistence, and actions.
+ * No UI, no routing — just state, persistence, and actions.
  */
 
 export type UserProfile = {
-  id: string;
   name?: string;
-  email?: string;
   avatar?: string;
+  currency?: string;
+  priorities?: string[];
 } | null;
 
 type AuthState = {
   isFirstTime: boolean;
   isLoggedIn: boolean;
   userProfile: UserProfile;
+  introProgress: number;
   loading: boolean;
 };
 
@@ -37,20 +36,27 @@ type AuthContextValue = AuthState & {
   login: (profile?: NonNullable<UserProfile>) => void;
   logout: () => void;
   completeOnboarding: () => void;
-  setUserProfile: (profile: UserProfile) => void;
+  setUserProfile: (profile: NonNullable<UserProfile>) => void;
+  setIntroProgress: (index: number) => void;
 };
 
 const STORAGE_KEYS = {
   isFirstTime: "dailyos.auth.isFirstTime",
   isLoggedIn: "dailyos.auth.isLoggedIn",
   userProfile: "dailyos.auth.userProfile",
+  introProgress: "dailyos.auth.introProgress",
 } as const;
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+function hasWindow(): boolean {
+  return typeof window !== "undefined" && typeof window.localStorage !== "undefined";
+}
+
 function readBool(key: string, fallback: boolean): boolean {
+  if (!hasWindow()) return fallback;
   try {
-    const raw = localStorage.getItem(key);
+    const raw = window.localStorage.getItem(key);
     if (raw === null) return fallback;
     return raw === "true";
   } catch {
@@ -58,9 +64,22 @@ function readBool(key: string, fallback: boolean): boolean {
   }
 }
 
-function readJSON<T>(key: string, fallback: T): T {
+function readNumber(key: string, fallback: number): number {
+  if (!hasWindow()) return fallback;
   try {
-    const raw = localStorage.getItem(key);
+    const raw = window.localStorage.getItem(key);
+    if (raw === null) return fallback;
+    const n = Number(raw);
+    return Number.isFinite(n) ? n : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function readJSON<T>(key: string, fallback: T): T {
+  if (!hasWindow()) return fallback;
+  try {
+    const raw = window.localStorage.getItem(key);
     if (!raw) return fallback;
     return JSON.parse(raw) as T;
   } catch {
@@ -69,36 +88,63 @@ function readJSON<T>(key: string, fallback: T): T {
 }
 
 function safeSet(key: string, value: string) {
+  if (!hasWindow()) return;
   try {
-    localStorage.setItem(key, value);
+    window.localStorage.setItem(key, value);
   } catch {
     /* noop */
   }
 }
 
 function safeRemove(key: string) {
+  if (!hasWindow()) return;
   try {
-    localStorage.removeItem(key);
+    window.localStorage.removeItem(key);
   } catch {
     /* noop */
   }
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  // Start in loading state; hydrate from storage on mount (SSR-safe).
   const [state, setState] = useState<AuthState>({
     isFirstTime: true,
     isLoggedIn: false,
     userProfile: null,
+    introProgress: 0,
     loading: true,
   });
 
-  // Hydrate on app start (mirrors AsyncStorage load in RN spec).
+  // Hydrate from localStorage on mount (SSR-safe).
   useEffect(() => {
     const isFirstTime = readBool(STORAGE_KEYS.isFirstTime, true);
     const isLoggedIn = readBool(STORAGE_KEYS.isLoggedIn, false);
     const userProfile = readJSON<UserProfile>(STORAGE_KEYS.userProfile, null);
-    setState({ isFirstTime, isLoggedIn, userProfile, loading: false });
+    const introProgress = readNumber(STORAGE_KEYS.introProgress, 0);
+    setState({
+      isFirstTime,
+      isLoggedIn,
+      userProfile,
+      introProgress,
+      loading: false,
+    });
+  }, []);
+
+  const login = useCallback((profile?: NonNullable<UserProfile>) => {
+    setState((s) => {
+      const nextProfile: UserProfile = profile
+        ? { ...(s.userProfile ?? {}), ...profile }
+        : s.userProfile;
+      safeSet(STORAGE_KEYS.isLoggedIn, "true");
+      if (nextProfile) {
+        safeSet(STORAGE_KEYS.userProfile, JSON.stringify(nextProfile));
+      }
+      return { ...s, isLoggedIn: true, userProfile: nextProfile };
+    });
+  }, []);
+
+  const logout = useCallback(() => {
+    safeSet(STORAGE_KEYS.isLoggedIn, "false");
+    setState((s) => ({ ...s, isLoggedIn: false }));
   }, []);
 
   const completeOnboarding = useCallback(() => {
@@ -106,37 +152,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setState((s) => ({ ...s, isFirstTime: false }));
   }, []);
 
-  const login = useCallback((profile?: NonNullable<UserProfile>) => {
-    const nextProfile: UserProfile = profile ?? {
-      id: `local-${Date.now()}`,
-      name: "Guest",
-    };
-    safeSet(STORAGE_KEYS.isLoggedIn, "true");
-    safeSet(STORAGE_KEYS.userProfile, JSON.stringify(nextProfile));
-    // Logging in also implies onboarding has been seen.
-    safeSet(STORAGE_KEYS.isFirstTime, "false");
-    setState((s) => ({
-      ...s,
-      isLoggedIn: true,
-      userProfile: nextProfile,
-      isFirstTime: false,
-    }));
+  const setUserProfile = useCallback((profile: NonNullable<UserProfile>) => {
+    setState((s) => {
+      const merged: UserProfile = { ...(s.userProfile ?? {}), ...profile };
+      safeSet(STORAGE_KEYS.userProfile, JSON.stringify(merged));
+      return { ...s, userProfile: merged };
+    });
   }, []);
 
-  const logout = useCallback(() => {
-    safeSet(STORAGE_KEYS.isLoggedIn, "false");
-    safeRemove(STORAGE_KEYS.userProfile);
-    setState((s) => ({ ...s, isLoggedIn: false, userProfile: null }));
+  const setIntroProgress = useCallback((index: number) => {
+    const safe = Number.isFinite(index) && index >= 0 ? Math.floor(index) : 0;
+    safeSet(STORAGE_KEYS.introProgress, String(safe));
+    setState((s) => ({ ...s, introProgress: safe }));
   }, []);
 
-  const setUserProfile = useCallback((profile: UserProfile) => {
-    if (profile) {
-      safeSet(STORAGE_KEYS.userProfile, JSON.stringify(profile));
-    } else {
-      safeRemove(STORAGE_KEYS.userProfile);
-    }
-    setState((s) => ({ ...s, userProfile: profile }));
-  }, []);
+  // Silence unused-var lint for safeRemove (kept for future logout-purge flows).
+  void safeRemove;
 
   const value = useMemo<AuthContextValue>(
     () => ({
@@ -145,8 +176,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       logout,
       completeOnboarding,
       setUserProfile,
+      setIntroProgress,
     }),
-    [state, login, logout, completeOnboarding, setUserProfile],
+    [state, login, logout, completeOnboarding, setUserProfile, setIntroProgress],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
