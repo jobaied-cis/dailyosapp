@@ -81,18 +81,20 @@ function formatDayDate(startDate: number, day: number) {
   return d.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
 }
 
-function getGreeting(hour: number): string {
-  if (hour < 12) return "Good morning, Akash 👋";
-  if (hour < 18) return "Good afternoon, Akash 👋";
-  return "Good evening, Akash 👋";
+function getGreeting(hour: number, name: string): string {
+  if (hour < 12) return `Good morning, ${name} 👋`;
+  if (hour < 18) return `Good afternoon, ${name} 👋`;
+  return `Good evening, ${name} 👋`;
 }
 
 function formatTime12(hhmm: string) {
+  if (!hhmm || typeof hhmm !== "string" || !hhmm.includes(":")) return "";
   const [h, m] = hhmm.split(":");
   const hourNum = parseInt(h, 10);
+  if (!Number.isFinite(hourNum)) return "";
   const ampm = hourNum >= 12 ? "PM" : "AM";
   const displayHour = hourNum % 12 || 12;
-  return `${displayHour}:${m} ${ampm}`;
+  return `${displayHour}:${m ?? "00"} ${ampm}`;
 }
 
 function minutesSinceMidnight(d: Date) {
@@ -109,6 +111,7 @@ const PRESS = "press will-change-transform";
 
 function Dashboard() {
   const navigate = useNavigate();
+  const { userProfile } = useAuth();
   const tasks = useTasks();
   const missions = useMissions();
   const events = useEvents();
@@ -132,7 +135,8 @@ function Dashboard() {
     }, 60_000);
     return () => clearInterval(id);
   }, []);
-  const greeting = hour === null ? "Hello, Akash 👋" : getGreeting(hour);
+  const displayName = userProfile?.name?.trim() || "there";
+  const greeting = hour === null ? `Hello, ${displayName} 👋` : getGreeting(hour, displayName);
 
   const nowLocal = new Date(nowTick);
   const todayStr = `${nowLocal.getFullYear()}-${String(nowLocal.getMonth() + 1).padStart(2, "0")}-${String(nowLocal.getDate()).padStart(2, "0")}`;
