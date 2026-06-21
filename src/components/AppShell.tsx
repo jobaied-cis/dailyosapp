@@ -16,8 +16,8 @@ export function AppShell() {
     <div className="min-h-screen bg-background flex justify-center">
       <div className="w-full max-w-md flex flex-col min-h-screen relative">
         <header className="px-6 pt-8 pb-4">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex-1 min-w-0 flex items-center gap-3 rounded-xl px-4 py-3 border transition-all duration-200 active:scale-[0.98] bg-gradient-to-r from-white via-slate-50 to-white border-slate-200 shadow-sm text-slate-900 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 dark:border-white/10 dark:shadow-md dark:text-white">
+          <div className="flex items-center justify-between gap-3 rounded-xl px-4 py-3 mb-3 border transition-all duration-200 bg-gradient-to-r from-white via-slate-50 to-white border-slate-200 shadow-sm text-slate-900 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 dark:border-white/10 dark:shadow-md dark:text-white">
+            <div className="flex items-center gap-3 min-w-0">
               <span
                 className="w-9 h-9 rounded-lg flex items-center justify-center bg-gradient-to-br from-blue-500 to-emerald-400 shrink-0"
                 style={{ boxShadow: "0 0 0 6px rgba(55,138,221,0.12)" }}
@@ -29,7 +29,7 @@ export function AppShell() {
                 </svg>
               </span>
               <div className="flex flex-col min-w-0 leading-tight">
-                <span className="font-semibold text-[15px] leading-none">
+                <span className="font-semibold text-sm leading-none">
                   <span>Daily</span>
                   <span className="text-primary">OS</span>
                 </span>
@@ -40,6 +40,7 @@ export function AppShell() {
             </div>
             <div className="flex items-center gap-2 shrink-0">
               <CurrencyToggle />
+              <span aria-hidden className="w-px h-5 mx-1 bg-slate-200 dark:bg-white/10" />
               <ThemeToggle />
             </div>
           </div>
@@ -69,12 +70,12 @@ function ThemeToggle() {
     <button
       onClick={toggle}
       aria-label="Toggle theme"
-      className="press inline-flex items-center justify-center size-10 rounded-full bg-secondary text-foreground hover:bg-secondary/80"
+      className="inline-flex items-center justify-center w-8 h-8 rounded-full transition-all duration-150 active:scale-95 bg-slate-900/5 text-slate-600 dark:bg-white/10 dark:text-white/80"
     >
       {mounted ? (
-        theme === "dark" ? <Sun className="size-5" /> : <Moon className="size-5" />
+        theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />
       ) : (
-        <span className="size-5" />
+        <span className="w-4 h-4" />
       )}
     </button>
   );
@@ -86,7 +87,7 @@ function CurrencyToggle() {
   return (
     <CurrencyTrigger
       ariaLabel="Change currency"
-      className="press inline-flex items-center justify-center size-10 rounded-full bg-secondary text-foreground hover:bg-secondary/80 font-bold text-base leading-none"
+      className="inline-flex items-center justify-center w-8 h-8 rounded-full transition-all duration-150 active:scale-95 bg-blue-500/10 text-blue-600 dark:bg-emerald-400/15 dark:text-emerald-400 font-bold text-sm leading-none"
     >
       {label}
     </CurrencyTrigger>
