@@ -1,11 +1,16 @@
 import { useRef, useState, type ReactNode, type PointerEvent } from "react";
-import { Check, Trash2 } from "lucide-react";
+import { Check, Trash2, Pencil } from "lucide-react";
 
 interface SwipeableRowProps {
   onSwipeRight?: () => void;
   onSwipeLeft?: () => void;
   thresholdPct?: number;
   disabled?: boolean;
+  rightLabel?: string;
+  rightIcon?: "check" | "edit";
+  rightBgClass?: string;
+  leftLabel?: string;
+  leftBgClass?: string;
   children: ReactNode;
 }
 
@@ -14,6 +19,11 @@ export function SwipeableRow({
   onSwipeLeft,
   thresholdPct = 0.35,
   disabled = false,
+  rightLabel = "Complete",
+  rightIcon = "check",
+  rightBgClass = "bg-emerald-500/90 text-white",
+  leftLabel = "Delete",
+  leftBgClass = "bg-destructive text-destructive-foreground",
   children,
 }: SwipeableRowProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -75,25 +85,25 @@ export function SwipeableRow({
 
   return (
     <div ref={containerRef} className="relative overflow-hidden rounded-[1.25rem] touch-pan-y select-none">
-      {/* Right action background (swipe right → complete) */}
+      {/* Right action background (swipe right) */}
       <div
-        className="absolute inset-0 flex items-center justify-start pl-6 rounded-[1.25rem] bg-emerald-500/90 text-white"
+        className={`absolute inset-0 flex items-center justify-start pl-6 rounded-[1.25rem] ${rightBgClass}`}
         style={{ opacity: showRight ? 0.4 + 0.6 * progress : 0 }}
         aria-hidden
       >
         <div className="flex items-center gap-2">
-          <Check className="size-5" />
-          <span className="text-sm font-semibold">Complete</span>
+          {rightIcon === "edit" ? <Pencil className="size-5" /> : <Check className="size-5" />}
+          <span className="text-sm font-semibold">{rightLabel}</span>
         </div>
       </div>
-      {/* Left action background (swipe left → delete) */}
+      {/* Left action background (swipe left) */}
       <div
-        className="absolute inset-0 flex items-center justify-end pr-6 rounded-[1.25rem] bg-destructive text-destructive-foreground"
+        className={`absolute inset-0 flex items-center justify-end pr-6 rounded-[1.25rem] ${leftBgClass}`}
         style={{ opacity: showLeft ? 0.4 + 0.6 * progress : 0 }}
         aria-hidden
       >
         <div className="flex items-center gap-2">
-          <span className="text-sm font-semibold">Delete</span>
+          <span className="text-sm font-semibold">{leftLabel}</span>
           <Trash2 className="size-5" />
         </div>
       </div>

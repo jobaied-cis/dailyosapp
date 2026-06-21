@@ -413,6 +413,15 @@ function Dashboard() {
             <div className="flex items-center justify-between mb-1.5">
               <span className="text-[12px] font-medium text-muted-foreground leading-[1.4] flex items-center gap-1.5">
                 <TrendingDown className="size-3.5 text-primary/70" /> Today
+                {dailyLimit > 0 && (
+                  <span aria-label="status" className="text-[12px] leading-none">
+                    {(todayExpense / dailyLimit) * 100 > 100
+                      ? "🔴"
+                      : (todayExpense / dailyLimit) * 100 >= 80
+                        ? "🟡"
+                        : "🟢"}
+                  </span>
+                )}
               </span>
               <span className="text-[16px] font-semibold text-foreground leading-[1.3] flex items-center gap-1.5">
                 {dailyLimit > 0 ? (
@@ -420,8 +429,8 @@ function Dashboard() {
                 ) : (
                   <span>{formatTaka(todayExpense, taka)}</span>
                 )}
-                {limitExceeded && <AlertTriangle className="size-3.5 text-red-500" />}
               </span>
+
             </div>
             {dailyLimit > 0 && (
               <div className="space-y-1">
