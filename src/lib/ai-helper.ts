@@ -17,6 +17,7 @@ export type SuggestionInput = {
   totalTaskCount?: number;
   todayExpense?: number;
   dailyLimit?: number;
+  upcomingEventCount?: number;
 };
 
 export function suggestionIcon(type: SuggestionType): string {
@@ -26,11 +27,10 @@ export function suggestionIcon(type: SuggestionType): string {
 }
 
 /**
- * Returns a personalized daily message based on user state.
- * If multiple rules match, rotates between them based on the day-of-year
- * so the same situation can surface different copy across days.
+ * Returns multiple personalized insights based on the user's current state.
+ * Always includes at least one positive/motivational message.
  */
-export function getDailySuggestion(data: SuggestionInput): DailySuggestion {
+export function getDailyInsights(data: SuggestionInput): DailySuggestion[] {
   const {
     priorities = [],
     hasMission = false,
@@ -38,48 +38,58 @@ export function getDailySuggestion(data: SuggestionInput): DailySuggestion {
     totalTaskCount = 0,
     todayExpense = 0,
     dailyLimit = 0,
+    upcomingEventCount = 0,
   } = data;
 
-  const matches: DailySuggestion[] = [];
+  const insights: DailySuggestion[] = [];
 
   if (dailyLimit > 0 && todayExpense > dailyLimit) {
-    matches.push({
+    insights.push({
       message: "You're over your budget today ⚠️",
       type: "warning",
     });
   }
 
   if (priorities.includes("study") && hasMission) {
-    matches.push({
+    insights.push({
       message: "Focus on your mission today 📚",
       type: "focus",
     });
   }
 
-  if (incompleteTaskCount > 2) {
-    matches.push({
-      message: "You still have tasks left — keep going 💪",
+  if (incompleteTaskCount > 0) {
+    insights.push({
+      message: `You still have ${incompleteTaskCount} task${incompleteTaskCount > 1 ? "s" : ""} left 💪`,
       type: "motivation",
     });
   }
 
-  if (totalTaskCount === 0) {
-    matches.push({
-      message: "Start your day by planning something 🚀",
+  if (upcomingEventCount > 0) {
+    insights.push({
+      message: "You have an event coming up ⏳",
       type: "focus",
     });
   }
 
-  if (matches.length === 0) {
-    return {
-      message: "You're doing great today — keep it up 🔥",
-      type: "motivation",
-    };
+  if (totalTaskCount === 0 && upcomingEventCount === 0) {
+    insights.push({
+      message: "Start planning your day 🚀",
+      type: "focus",
+    });
   }
 
-  // Rotate suggestions across days when several match.
-  const now = new Date();
-  const start = new Date(now.getFullYear(), 0, 0).getTime();
-  const dayOfYear = Math.floor((now.getTime() - start) / 86400000);
-  return matches[dayOfYear % matches.length];
+  // Always include at least one positive note.
+  insights.push({
+    message: "You're doing great — keep going 🔥",
+    type: "motivation",
+  });
+
+  return insights;
+}
+
+/**
+ * Back-compat: returns the first insight as a single suggestion.
+ */
+export function getDailySuggestion(data: SuggestionInput): DailySuggestion {
+  return getDailyInsights(data)[0];
 }
