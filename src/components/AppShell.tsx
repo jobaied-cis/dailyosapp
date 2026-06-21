@@ -70,12 +70,12 @@ function ThemeToggle() {
     <button
       onClick={toggle}
       aria-label="Toggle theme"
-      className="press inline-flex items-center justify-center size-10 rounded-full bg-secondary text-foreground hover:bg-secondary/80"
+      className="inline-flex items-center justify-center w-8 h-8 rounded-full transition-all duration-150 active:scale-95 bg-slate-900/5 text-slate-600 dark:bg-white/10 dark:text-white/80"
     >
       {mounted ? (
-        theme === "dark" ? <Sun className="size-5" /> : <Moon className="size-5" />
+        theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />
       ) : (
-        <span className="size-5" />
+        <span className="w-4 h-4" />
       )}
     </button>
   );
