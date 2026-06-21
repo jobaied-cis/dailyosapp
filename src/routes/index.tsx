@@ -323,6 +323,24 @@ function Dashboard() {
       ? memoryInsights[memoryOffset % memoryInsights.length]
       : null;
 
+  // ---- Weekly Report (last 7 days) ----
+  const weekStart = Date.now() - 7 * 86400000;
+  const eventsThisWeek = events.filter((e) => {
+    const t = new Date(`${e.date}T${e.time || "00:00"}`).getTime();
+    return t >= weekStart && t <= Date.now();
+  }).length;
+  const weeklyReport = useMemo(
+    () =>
+      getWeeklyReport({
+        expenses,
+        dailyLimit,
+        eventsThisWeek,
+        currencySymbol: takaSym,
+      }),
+    [expenses, dailyLimit, eventsThisWeek, takaSym, nowTick],
+  );
+
+
 
 
   
