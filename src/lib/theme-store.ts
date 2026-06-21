@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 
 const STORAGE_KEY = "dailyos.theme";
 
-type Theme = "light" | "dark";
+export type Theme = "light" | "dark";
 
 function getSavedTheme(): Theme {
   if (typeof window === "undefined") return "light";
@@ -13,27 +13,31 @@ function getSavedTheme(): Theme {
   return "light";
 }
 
+function applyTheme(theme: Theme) {
+  if (typeof document === "undefined") return;
+  document.documentElement.classList.toggle("dark", theme === "dark");
+}
+
 export function useTheme() {
-  const [theme, setTheme] = useState<Theme>("light");
+  const [theme, setThemeState] = useState<Theme>("light");
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
     const saved = getSavedTheme();
-    setTheme(saved);
-    document.documentElement.classList.toggle("dark", saved === "dark");
+    setThemeState(saved);
+    applyTheme(saved);
   }, []);
 
-  const toggle = () => {
-    setTheme((prev) => {
-      const next = prev === "light" ? "dark" : "light";
-      document.documentElement.classList.toggle("dark", next === "dark");
-      try {
-        localStorage.setItem(STORAGE_KEY, next);
-      } catch {}
-      return next;
-    });
+  const setTheme = (next: Theme) => {
+    setThemeState(next);
+    applyTheme(next);
+    try {
+      localStorage.setItem(STORAGE_KEY, next);
+    } catch {}
   };
 
-  return { theme, toggle, mounted };
+  const toggle = () => setTheme(theme === "light" ? "dark" : "light");
+
+  return { theme, setTheme, toggle, mounted };
 }
