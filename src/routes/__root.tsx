@@ -110,7 +110,10 @@ function RootShell({ children }: { children: React.ReactNode }) {
               (function() {
                 try {
                   var t = localStorage.getItem('dailyos.theme');
-                  if (t === 'dark') document.documentElement.classList.add('dark');
+                  var isDark = t === 'dark' ||
+                    ((t === 'system' || !t) && window.matchMedia &&
+                      window.matchMedia('(prefers-color-scheme: dark)').matches);
+                  if (isDark) document.documentElement.classList.add('dark');
                 } catch (e) {}
               })();
             `,
