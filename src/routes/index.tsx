@@ -474,7 +474,7 @@ function Dashboard() {
 
 
       {/* Today's Events */}
-      <Link to="/events" className={`block ${CARD} ${PRESS}`}>
+      <Link to="/events" className={`block ${CARD} ${PRESS} ${showEvents.length > 0 ? "bg-green-50 dark:bg-emerald-500/10 border-emerald-500/20" : ""}`}>
         <div className="flex items-center justify-between mb-3">
           <span className="text-[11px] font-medium uppercase tracking-[0.5px] leading-[1.3] text-muted-foreground flex items-center gap-1.5">
             <CalendarDays className="size-3.5" /> Today's Events
