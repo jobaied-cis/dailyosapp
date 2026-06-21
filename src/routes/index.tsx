@@ -35,6 +35,8 @@ import { useAuth } from "@/lib/auth-context";
 import { X } from "lucide-react";
 import { getDailyInsights, suggestionIcon } from "@/lib/ai-helper";
 import { getBehaviorInsights, behaviorIcon } from "@/lib/behavior-ai";
+import { AIAssistantSheet } from "@/components/AIAssistantSheet";
+import { Bot } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -308,6 +310,9 @@ function Dashboard() {
 
 
   
+
+  // ---- AI Assistant sheet ----
+  const [aiOpen, setAiOpen] = useState(false);
 
   // ---- First-app-load welcome banner (set by ProfileSetup finish) ----
   const [showWelcome, setShowWelcome] = useState(false);
@@ -783,6 +788,15 @@ function Dashboard() {
         </div>
       </section>
       <DevResetButton />
+
+      <button
+        onClick={() => setAiOpen(true)}
+        aria-label="Open AI Assistant"
+        className="fixed bottom-20 right-4 z-40 size-12 rounded-full bg-gradient-to-br from-blue-500 to-indigo-500 text-white shadow-lg shadow-indigo-500/30 flex items-center justify-center active:scale-95 transition-transform"
+      >
+        <Bot className="size-5" />
+      </button>
+      {aiOpen && <AIAssistantSheet onClose={() => setAiOpen(false)} />}
     </div>
   );
 }

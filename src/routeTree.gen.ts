@@ -17,6 +17,7 @@ import { Route as EventsRouteImport } from './routes/events'
 import { Route as EditProfileRouteImport } from './routes/edit-profile'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as MissionsMissionIdRouteImport } from './routes/missions.$missionId'
+import { Route as ApiAiRouteImport } from './routes/api/ai'
 
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
@@ -58,6 +59,11 @@ const MissionsMissionIdRoute = MissionsMissionIdRouteImport.update({
   path: '/$missionId',
   getParentRoute: () => MissionsRoute,
 } as any)
+const ApiAiRoute = ApiAiRouteImport.update({
+  id: '/api/ai',
+  path: '/api/ai',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -67,6 +73,7 @@ export interface FileRoutesByFullPath {
   '/missions': typeof MissionsRouteWithChildren
   '/routine': typeof RoutineRoute
   '/settings': typeof SettingsRoute
+  '/api/ai': typeof ApiAiRoute
   '/missions/$missionId': typeof MissionsMissionIdRoute
 }
 export interface FileRoutesByTo {
@@ -77,6 +84,7 @@ export interface FileRoutesByTo {
   '/missions': typeof MissionsRouteWithChildren
   '/routine': typeof RoutineRoute
   '/settings': typeof SettingsRoute
+  '/api/ai': typeof ApiAiRoute
   '/missions/$missionId': typeof MissionsMissionIdRoute
 }
 export interface FileRoutesById {
@@ -88,6 +96,7 @@ export interface FileRoutesById {
   '/missions': typeof MissionsRouteWithChildren
   '/routine': typeof RoutineRoute
   '/settings': typeof SettingsRoute
+  '/api/ai': typeof ApiAiRoute
   '/missions/$missionId': typeof MissionsMissionIdRoute
 }
 export interface FileRouteTypes {
@@ -100,6 +109,7 @@ export interface FileRouteTypes {
     | '/missions'
     | '/routine'
     | '/settings'
+    | '/api/ai'
     | '/missions/$missionId'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -110,6 +120,7 @@ export interface FileRouteTypes {
     | '/missions'
     | '/routine'
     | '/settings'
+    | '/api/ai'
     | '/missions/$missionId'
   id:
     | '__root__'
@@ -120,6 +131,7 @@ export interface FileRouteTypes {
     | '/missions'
     | '/routine'
     | '/settings'
+    | '/api/ai'
     | '/missions/$missionId'
   fileRoutesById: FileRoutesById
 }
@@ -131,6 +143,7 @@ export interface RootRouteChildren {
   MissionsRoute: typeof MissionsRouteWithChildren
   RoutineRoute: typeof RoutineRoute
   SettingsRoute: typeof SettingsRoute
+  ApiAiRoute: typeof ApiAiRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -191,6 +204,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MissionsMissionIdRouteImport
       parentRoute: typeof MissionsRoute
     }
+    '/api/ai': {
+      id: '/api/ai'
+      path: '/api/ai'
+      fullPath: '/api/ai'
+      preLoaderRoute: typeof ApiAiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -214,6 +234,7 @@ const rootRouteChildren: RootRouteChildren = {
   MissionsRoute: MissionsRouteWithChildren,
   RoutineRoute: RoutineRoute,
   SettingsRoute: SettingsRoute,
+  ApiAiRoute: ApiAiRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
