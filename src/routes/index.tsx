@@ -557,7 +557,7 @@ function Dashboard() {
             )}
           </div>
         ) : (
-          <p className="text-sm text-muted-foreground py-1">You're all clear today ✨</p>
+          <p className="text-sm text-muted-foreground py-1">You're all clear today <span className="inline-block animate-float-y">✨</span></p>
         )}
       </Link>
 
