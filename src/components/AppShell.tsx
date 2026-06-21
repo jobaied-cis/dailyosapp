@@ -16,22 +16,29 @@ export function AppShell() {
     <div className="min-h-screen bg-background flex justify-center">
       <div className="w-full max-w-md flex flex-col min-h-screen relative">
         <header className="px-6 pt-8 pb-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <div className="relative">
-                <div className="absolute -left-1 top-1/2 -translate-y-1/2 w-1.5 h-6 rounded-full bg-primary" />
-                <h1 className="pl-2 text-[1.75rem] font-extrabold tracking-tight text-foreground leading-none">
-                  <span className="bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-                    Daily
-                  </span>
-                  <span className="text-foreground">OS</span>
-                </h1>
-              </div>
-              <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground leading-none">
-                Your Life Operating System
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex-1 min-w-0 flex items-center gap-3 rounded-xl px-4 py-3 border transition-all duration-200 active:scale-[0.98] bg-gradient-to-r from-white via-slate-50 to-white border-slate-200 shadow-sm text-slate-900 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 dark:border-white/10 dark:shadow-md dark:text-white">
+              <span
+                className="w-9 h-9 rounded-lg flex items-center justify-center bg-gradient-to-br from-blue-500 to-emerald-400 shrink-0"
+                style={{ boxShadow: "0 0 0 6px rgba(55,138,221,0.12)" }}
+                aria-hidden
+              >
+                <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="7" />
+                  <path d="M12 12 L16 9" />
+                </svg>
               </span>
+              <div className="flex flex-col min-w-0 leading-tight">
+                <span className="font-semibold text-[15px] leading-none">
+                  <span>Daily</span>
+                  <span className="text-primary">OS</span>
+                </span>
+                <span className="text-[9px] uppercase tracking-wide mt-1 text-slate-500 dark:text-white/60">
+                  Your Life Operating System
+                </span>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 shrink-0">
               <CurrencyToggle />
               <ThemeToggle />
             </div>
