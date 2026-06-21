@@ -223,6 +223,25 @@ function SettingsPage() {
           <span>Logout</span>
         </button>
       </section>
+
+      {/* About */}
+      <section className="rounded-[14px] border border-border/60 bg-card p-4 space-y-2 shadow-sm">
+        <h2 className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+          About
+        </h2>
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-[14px] font-semibold text-foreground">DailyOS</p>
+            <p className="text-[12px] text-muted-foreground">Your Life Operating System</p>
+          </div>
+          <span className="text-[11px] font-semibold text-muted-foreground px-2 py-1 rounded-full border border-border/60 bg-background/50">
+            v1.0
+          </span>
+        </div>
+        <p className="text-[11px] text-muted-foreground/80 pt-1">
+          Made with ❤️ to help you stay organized.
+        </p>
+      </section>
     </div>
   );
 }
