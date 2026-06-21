@@ -323,7 +323,7 @@ function Dashboard() {
       {priority && (
         <button
           onClick={() => navigate({ to: priority!.to })}
-          className="press animate-fade-in w-full text-left rounded-2xl p-4 border border-primary/30 bg-primary/10 shadow-[0_0_24px_-6px_hsl(var(--primary)/0.45)] transition-all duration-200"
+          className="press animate-fade-in w-full text-left rounded-2xl p-5 border border-primary/30 bg-primary/10 shadow-[0_0_24px_-6px_hsl(var(--primary)/0.45)] transition-all duration-200"
         >
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0 flex-1">
