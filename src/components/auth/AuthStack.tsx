@@ -495,25 +495,170 @@ function SignupScreen({ go }: GoProp) {
   );
 }
 
+/* -------------------------------------------------------------------------- */
+/*  Profile setup                                                             */
+/* -------------------------------------------------------------------------- */
+
+const AVATARS = ["🦊", "🐼", "🐯", "🦁", "🐸", "🐵", "🐙", "🦄", "🌟", "🔥", "🚀", "🌈", "⚡", "🌙", "🍀", "🎯"];
+const CURRENCIES: { code: string; symbol: string }[] = [
+  { code: "BDT", symbol: "৳" },
+  { code: "USD", symbol: "$" },
+  { code: "EUR", symbol: "€" },
+  { code: "GBP", symbol: "£" },
+];
+const PRIORITIES: { id: string; label: string; emoji: string }[] = [
+  { id: "study", label: "Study", emoji: "📚" },
+  { id: "productivity", label: "Productivity", emoji: "⚡" },
+  { id: "fitness", label: "Fitness", emoji: "💪" },
+  { id: "finance", label: "Finance", emoji: "💰" },
+];
+
 function ProfileSetupScreen() {
-  const { setUserProfile, login, completeOnboarding } = useAuth();
+  const { userProfile, setUserProfile, login, completeOnboarding } = useAuth();
+
+  const [avatar, setAvatar] = useState<string>(userProfile?.avatar || AVATARS[0]);
+  const [name, setName] = useState<string>(userProfile?.name || "");
+  const [currency, setCurrency] = useState<string>(userProfile?.currency || "BDT");
+  const [priorities, setPriorities] = useState<string[]>(userProfile?.priorities || []);
+
+  const togglePriority = (id: string) =>
+    setPriorities((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
+
   const finish = () => {
-    setUserProfile({ name: "Guest", currency: "BDT", priorities: [] });
+    setUserProfile({ name: name || "Guest", avatar, currency, priorities });
     login();
     completeOnboarding();
   };
+
   return (
     <Stage>
-      <div className="flex-1 flex flex-col items-center justify-center gap-4 text-center">
-        <h1 className="text-xl font-semibold">Profile Setup</h1>
-        <button
-          onClick={finish}
-          className="w-full py-3 text-sm font-medium active:scale-95 transition-transform"
-          style={{ background: "#378ADD", color: "white", borderRadius: 14 }}
-        >
-          Finish
-        </button>
+      <div className="flex-1 flex flex-col gap-7 pb-4 animate-fade-in">
+        {/* Header */}
+        <div className="pt-4">
+          <h1 className="text-2xl font-semibold tracking-tight">Set up your system 🚀</h1>
+          <p className="mt-1.5 text-sm text-white/55">Let's personalize your experience</p>
+        </div>
+
+        {/* Avatar picker */}
+        <Section title="Choose your avatar">
+          <div className="grid grid-cols-4 gap-3">
+            {AVATARS.map((emoji) => {
+              const active = avatar === emoji;
+              return (
+                <button
+                  key={emoji}
+                  onClick={() => setAvatar(emoji)}
+                  className="aspect-square rounded-full flex items-center justify-center text-2xl transition-all duration-200 active:scale-95"
+                  style={{
+                    background: "#131B2E",
+                    border: `2px solid ${active ? "#378ADD" : "rgba(255,255,255,0.06)"}`,
+                    boxShadow: active ? "0 0 0 4px rgba(55,138,221,0.18)" : "none",
+                  }}
+                  aria-pressed={active}
+                >
+                  {emoji}
+                </button>
+              );
+            })}
+          </div>
+        </Section>
+
+        {/* Name */}
+        <Section title="Your name">
+          <Field icon={User} placeholder="Your name" value={name} onChange={setName} />
+        </Section>
+
+        {/* Currency */}
+        <Section title="Currency">
+          <div className="grid grid-cols-4 gap-2">
+            {CURRENCIES.map((c) => {
+              const active = currency === c.code;
+              return (
+                <button
+                  key={c.code}
+                  onClick={() => setCurrency(c.code)}
+                  className="py-2.5 text-sm font-medium transition-all duration-200 active:scale-95"
+                  style={{
+                    background: active ? "#378ADD" : "#131B2E",
+                    color: "white",
+                    border: `1px solid ${active ? "#378ADD" : "rgba(255,255,255,0.08)"}`,
+                    borderRadius: 12,
+                  }}
+                  aria-pressed={active}
+                >
+                  <span className="mr-1">{c.symbol}</span>
+                  <span className="text-white/70 text-xs">{c.code}</span>
+                </button>
+              );
+            })}
+          </div>
+        </Section>
+
+        {/* Priorities */}
+        <Section title="What matters most to you?">
+          <div className="grid grid-cols-2 gap-2.5">
+            {PRIORITIES.map((p) => {
+              const active = priorities.includes(p.id);
+              return (
+                <button
+                  key={p.id}
+                  onClick={() => togglePriority(p.id)}
+                  className="flex items-center gap-2.5 px-4 py-3 text-sm font-medium transition-all duration-200 active:scale-95"
+                  style={{
+                    background: active ? "rgba(55,138,221,0.18)" : "#131B2E",
+                    color: "white",
+                    border: `1px solid ${active ? "#378ADD" : "rgba(255,255,255,0.06)"}`,
+                    borderRadius: 14,
+                  }}
+                  aria-pressed={active}
+                >
+                  <span className="text-lg">{p.emoji}</span>
+                  <span>{p.label}</span>
+                </button>
+              );
+            })}
+          </div>
+          {priorities.length > 0 && (
+            <p className="mt-3 text-xs text-white/65 animate-fade-in">
+              Great! We'll personalize your experience 💪
+            </p>
+          )}
+        </Section>
+
+        {/* CTA */}
+        <div className="pt-2">
+          <button
+            onClick={finish}
+            className="profile-cta w-full py-3.5 text-sm font-semibold transition-all duration-200 active:scale-95"
+            style={{
+              background: "#378ADD",
+              color: "white",
+              borderRadius: 14,
+              boxShadow: "0 10px 30px -10px rgba(55,138,221,0.7), 0 0 0 0 rgba(55,138,221,0.5)",
+            }}
+          >
+            Start using DailyOS 🚀
+          </button>
+        </div>
       </div>
+
+      <style>{`
+        @keyframes cta-glow {
+          0%, 100% { box-shadow: 0 10px 30px -10px rgba(55,138,221,0.7), 0 0 0 0 rgba(55,138,221,0.0); }
+          50%      { box-shadow: 0 10px 30px -10px rgba(55,138,221,0.9), 0 0 0 8px rgba(55,138,221,0.12); }
+        }
+        .profile-cta { animation: cta-glow 2.6s ease-in-out infinite; }
+      `}</style>
     </Stage>
   );
 }
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="animate-fade-in">
+      <h2 className="text-xs font-medium uppercase tracking-wider text-white/45 mb-3">{title}</h2>
+      {children}
+    </div>
+  );
+}
+
