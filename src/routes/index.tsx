@@ -181,9 +181,11 @@ function Dashboard() {
     .reduce((s, e) => s + e.amount, 0);
   const balance = totalIncome - totalExpenseAll;
 
-  const todayExpense = expenses
-    .filter((e) => e.type === "expense" && e.createdAt >= todayStart && e.createdAt < todayEnd)
-    .reduce((s, e) => s + e.amount, 0);
+  const todayExpenseEntries = expenses.filter(
+    (e) => e.type === "expense" && e.createdAt >= todayStart && e.createdAt < todayEnd,
+  );
+  const todayExpense = todayExpenseEntries.reduce((s, e) => s + e.amount, 0);
+  const hasExpenseToday = todayExpenseEntries.length > 0;
 
   const monthExpense = expenses
     .filter((e) => e.type === "expense" && e.createdAt >= monthStart && e.createdAt < monthEnd)
@@ -307,21 +309,27 @@ function Dashboard() {
       <div className="grid grid-cols-3 gap-2">
         <button
           onClick={() => navigate({ to: "/routine" })}
-          className="press flex items-center justify-center gap-1.5 rounded-xl border border-border/60 bg-card py-3 text-[13px] font-semibold text-foreground shadow-sm active:scale-95 transition-all duration-200"
+          className="quick-add-btn group flex items-center justify-center gap-1.5 rounded-xl border border-border/60 bg-card py-3 text-[13px] font-semibold text-foreground shadow-sm transition-all duration-150 ease-out active:scale-[0.96] active:border-[#378ADD]/60"
         >
-          <ListChecks className="size-4 text-primary" /> Task
+          <ListChecks className="size-4 text-[#378ADD] transition-transform duration-150 group-active:scale-110" /> Task
         </button>
         <button
           onClick={() => navigate({ to: "/events" })}
-          className="press flex items-center justify-center gap-1.5 rounded-xl border border-border/60 bg-card py-3 text-[13px] font-semibold text-foreground shadow-sm active:scale-95 transition-all duration-200"
+          className="quick-add-btn group flex items-center justify-center gap-1.5 rounded-xl border border-border/60 bg-card py-3 text-[13px] font-semibold text-foreground shadow-sm transition-all duration-150 ease-out active:scale-[0.96] active:border-[#7F77DD]/60"
         >
-          <CalendarPlus className="size-4 text-primary" /> Event
+          <CalendarPlus className="size-4 text-[#7F77DD] transition-transform duration-150 group-active:scale-110" /> Event
         </button>
         <button
           onClick={() => navigate({ to: "/expenses" })}
-          className="press flex items-center justify-center gap-1.5 rounded-xl border border-border/60 bg-card py-3 text-[13px] font-semibold text-foreground shadow-sm active:scale-95 transition-all duration-200"
+          className="quick-add-btn group relative flex items-center justify-center gap-1.5 rounded-xl border border-border/60 bg-card py-3 text-[13px] font-semibold text-foreground shadow-sm transition-all duration-150 ease-out active:scale-[0.96] active:border-[#1D9E75]/60"
         >
-          <Plus className="size-4 text-primary" /> Expense
+          <Plus className="size-4 text-[#1D9E75] transition-transform duration-150 group-active:scale-110" /> Expense
+          {!hasExpenseToday && (
+            <span className="pointer-events-none absolute top-1.5 right-1.5 flex size-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#1D9E75] opacity-60" />
+              <span className="relative inline-flex size-2 rounded-full bg-[#1D9E75] ring-2 ring-card" />
+            </span>
+          )}
         </button>
       </div>
 
