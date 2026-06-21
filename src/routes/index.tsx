@@ -259,7 +259,7 @@ function Dashboard() {
   return (
     <div className="space-y-4 stagger-sections">
       {/* Greeting / Hero */}
-      <div className="relative overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/15 via-card to-card/80 bg-[length:200%_200%] animate-[gradient-shift_8s_ease_infinite] p-4 shadow-lg ring-1 ring-inset ring-white/5">
+      <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 bg-[length:200%_200%] animate-[gradient-shift_8s_ease_infinite] p-4 shadow-lg ring-1 ring-inset ring-white/10 text-white">
         <div className="pointer-events-none absolute -top-8 -right-8 size-32 rounded-full bg-primary/15 blur-3xl" />
         <div className="relative flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
