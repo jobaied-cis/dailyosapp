@@ -11,7 +11,7 @@ import { AppShell } from "@/components/AppShell";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider, useAuth } from "@/lib/auth-context";
 import { AuthStack } from "@/components/auth/AuthStack";
-import { OnboardingScreen } from "@/components/auth/OnboardingScreen";
+import { SplashScreen } from "@/components/auth/SplashScreen";
 
 import appCss from "../styles.css?url";
 
@@ -139,18 +139,17 @@ function RootComponent() {
 }
 
 /**
- * Root navigation switch (mirrors RN spec):
- *   isFirstTime  → Onboarding (Intro)
- *   !isLoggedIn  → AuthStack
- *   else         → AppStack (AppShell with routed Outlet)
+ * Root navigation switch:
+ *   loading      → Splash
+ *   isFirstTime  → AuthStack (intro)
+ *   !isLoggedIn  → AuthStack (welcome)
+ *   else         → AppShell (routed Outlet)
  */
 function RootSwitch() {
   const { loading, isFirstTime, isLoggedIn } = useAuth();
 
-  if (loading) {
-    return <div className="min-h-dvh bg-background" aria-hidden />;
-  }
-  if (isFirstTime) return <OnboardingScreen />;
-  if (!isLoggedIn) return <AuthStack />;
+  if (loading) return <SplashScreen />;
+  if (isFirstTime) return <AuthStack initial="intro" />;
+  if (!isLoggedIn) return <AuthStack initial="welcome" />;
   return <AppShell />;
 }
