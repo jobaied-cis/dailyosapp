@@ -38,7 +38,8 @@ import { getBehaviorInsights, behaviorIcon } from "@/lib/behavior-ai";
 import { getMemoryInsights, memoryIcon } from "@/lib/memory-ai";
 import { getWeeklyReport } from "@/lib/weekly-report";
 import { AIAssistantSheet } from "@/components/AIAssistantSheet";
-import { Bot, BarChart3 } from "lucide-react";
+import { Bot, BarChart3, Share2 } from "lucide-react";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/")({
   head: () => ({
