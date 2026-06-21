@@ -714,7 +714,32 @@ function Dashboard() {
           </div>
         </div>
       </section>
+      <DevResetButton />
     </div>
+  );
+}
+
+function DevResetButton() {
+  const handleReset = () => {
+    if (!window.confirm("Reset app and restart onboarding?")) return;
+    try {
+      localStorage.removeItem("dailyos.auth.isFirstTime");
+      localStorage.removeItem("dailyos.auth.isLoggedIn");
+      localStorage.removeItem("dailyos.auth.userProfile");
+      localStorage.removeItem("dailyos.auth.introProgress");
+    } catch {
+      /* noop */
+    }
+    window.location.reload();
+  };
+  return (
+    <button
+      type="button"
+      onClick={handleReset}
+      className="fixed bottom-20 right-4 z-[9999] rounded-xl bg-red-600 px-3 py-2 text-xs font-semibold text-white shadow-lg shadow-red-600/40 active:scale-95 transition-transform"
+    >
+      Reset App
+    </button>
   );
 }
 
