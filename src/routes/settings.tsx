@@ -130,13 +130,18 @@ function SettingsPage() {
           </div>
         )}
 
-        <div className="pt-2">
-          <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-2">
-            Currency
-          </p>
+        <div className="pt-4 mt-2 border-t border-border/50">
+          <div className="flex items-center justify-between mb-2.5">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+              Currency
+            </p>
+            <span className="text-[11px] text-muted-foreground/80">
+              {currencySymbol} {currency}
+            </span>
+          </div>
           <CurrencyTrigger
             ariaLabel="Change currency"
-            className="w-full h-11 rounded-[12px] border border-border/60 bg-background hover:bg-secondary/40 text-[13px] font-semibold text-foreground flex items-center justify-between px-3 active:scale-[0.96] transition-all"
+            className="w-full h-12 rounded-[12px] border border-border/60 bg-background hover:bg-secondary/40 text-[13px] font-semibold text-foreground flex items-center justify-between px-4 active:scale-[0.96] transition-all"
           >
             <span className="inline-flex items-center gap-2">
               <User className="size-4 text-primary" />
@@ -150,7 +155,7 @@ function SettingsPage() {
       </section>
 
       {/* Actions */}
-      <section className="rounded-[14px] border border-border/60 bg-card p-4 space-y-3 shadow-sm">
+      <section className="rounded-[14px] border border-border/60 bg-card p-4 space-y-3 shadow-md">
         <h2 className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
           Actions
         </h2>
@@ -170,10 +175,10 @@ function SettingsPage() {
 
         <button
           onClick={handleLogout}
-          className="w-full h-11 rounded-[12px] bg-red-600 hover:bg-red-600/90 text-white text-[13px] font-semibold flex items-center justify-center gap-2 shadow-md shadow-red-600/20 active:scale-[0.96] transition-all"
+          className="w-full h-11 rounded-[12px] bg-red-500/90 hover:bg-red-500 text-white text-[13px] font-semibold flex items-center justify-center gap-2.5 shadow-sm shadow-red-500/15 active:scale-[0.96] transition-all"
         >
           <LogOut className="size-4" />
-          Logout
+          <span>Logout</span>
         </button>
       </section>
     </div>
