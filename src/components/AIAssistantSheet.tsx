@@ -98,6 +98,10 @@ export function AIAssistantSheet({ onClose }: { onClose: () => void }) {
       toast.error("Type your question first");
       return;
     }
+    if (text.length > 500) {
+      toast.error("Keep it under 500 characters");
+      return;
+    }
     if (!hasAnyContext(context)) {
       setReply("Start adding tasks and events to get personalized insights 🚀");
       return;
@@ -118,7 +122,12 @@ export function AIAssistantSheet({ onClose }: { onClose: () => void }) {
     } catch (err) {
       console.error(err);
       if (!mountedRef.current) return;
-      setReply("AI is not available right now");
+      const offline = typeof navigator !== "undefined" && navigator.onLine === false;
+      setReply(
+        offline
+          ? "You're offline — reconnect to chat with AI 🌐"
+          : "AI is not available right now",
+      );
     } finally {
       if (mountedRef.current) setLoading(false);
     }
@@ -142,7 +151,7 @@ export function AIAssistantSheet({ onClose }: { onClose: () => void }) {
               <Bot className="size-4" />
             </div>
             <div>
-              <h2 className="text-[15px] font-bold leading-tight">AI Assistant</h2>
+              <h2 className="text-[15px] font-bold leading-tight">DailyOS Assistant</h2>
               <p className="text-[11px] text-muted-foreground leading-tight flex items-center gap-1">
                 <Sparkles className="size-3 text-primary" />
                 AI powered by your data 🤖
