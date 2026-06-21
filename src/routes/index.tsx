@@ -406,10 +406,14 @@ function Dashboard() {
       )}
 
       {/* Today's Routine */}
-      <Link to="/routine" className={`block ${CARD} shadow-md ${PRESS}`}>
+      <Link
+        to="/routine"
+        className={`block ${CARD} shadow-md ${PRESS} ${focusRoutine ? "border-primary/40 shadow-primary/10 ring-1 ring-primary/15" : ""}`}
+      >
         <div className="flex items-center justify-between mb-3">
           <span className="text-[11px] font-medium uppercase tracking-[0.5px] leading-[1.3] text-muted-foreground flex items-center gap-1.5">
             Today's Routine
+            {focusRoutine && <FocusBadge />}
             {streak > 0 && (
               <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-600 normal-case tracking-normal">
                 · {streak}-day streak 🔥
