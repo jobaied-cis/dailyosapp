@@ -209,6 +209,7 @@ function ExpensesPage() {
   const [showHistory, setShowHistory] = useState(false);
   const [dailyLimit, setDailyLimitState] = useState<number>(() => getDailyLimit());
   const [editingLimit, setEditingLimit] = useState(false);
+  const [filter, setFilter] = useState<Filter>({ scope: "month", category: null });
 
   // Today's expense calculation (all entries, not just selected month)
   const todayKeyStr = dayKey(Date.now());
@@ -218,10 +219,11 @@ function ExpensesPage() {
   const todayExpense = entries
     .filter((e) => e.type === "expense" && dayKey(e.createdAt) === todayKeyStr)
     .reduce((s, e) => s + e.amount, 0);
-  const limitExceeded = dailyLimit > 0 && todayExpense > dailyLimit;
-  const limitPercent = dailyLimit > 0 ? Math.min((todayExpense / dailyLimit) * 100, 100) : 0;
+  const limitPct = dailyLimit > 0 ? (todayExpense / dailyLimit) * 100 : 0;
+  const limitTone = getLimitTone(limitPct);
   const remaining = dailyLimit > 0 ? dailyLimit - todayExpense : 0;
-  const displayPercent = dailyLimit > 0 ? Math.round((todayExpense / dailyLimit) * 100) : 0;
+  const displayPercent = dailyLimit > 0 ? Math.round(limitPct) : 0;
+  const limitExceeded = dailyLimit > 0 && todayExpense > dailyLimit;
 
   // Available months (always include current month even if empty)
   const availableMonths = (() => {
@@ -232,6 +234,15 @@ function ExpensesPage() {
   })();
 
   const monthEntries = entries.filter((e) => monthKey(e.createdAt) === selectedMonth);
+
+  // Filtered entries (category + scope applied to month entries)
+  const weekStart = startOfWeekMonday();
+  const filteredMonthEntries = monthEntries.filter((e) => {
+    if (filter.category && e.category !== filter.category) return false;
+    if (filter.scope === "today" && dayKey(e.createdAt) !== todayKeyStr) return false;
+    if (filter.scope === "week" && e.createdAt < weekStart) return false;
+    return true;
+  });
 
   const totalIncome = monthEntries
     .filter((e) => e.type === "income")
@@ -244,6 +255,14 @@ function ExpensesPage() {
   const currentIdx = availableMonths.indexOf(selectedMonth);
   const canPrev = currentIdx < availableMonths.length - 1;
   const canNext = currentIdx > 0;
+
+  // Scroll helpers
+  const scrollToId = (id: string) => {
+    if (typeof document === "undefined") return;
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+
 
 
   return (
