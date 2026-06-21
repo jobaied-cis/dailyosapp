@@ -379,7 +379,7 @@ function ExpensesPage() {
       </div>
 
       {/* Daily spending limit */}
-      <section className="bg-card border border-border/60 rounded-[1.25rem] p-4 shadow-[0_2px_12px_-4px_rgba(15,23,42,0.06)]">
+      <section className={`bg-card border rounded-[1.25rem] p-4 shadow-[0_2px_12px_-4px_rgba(15,23,42,0.06)] ${limitTone.cardClass}`}>
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <Settings2 className="size-4 text-muted-foreground" />
@@ -387,10 +387,9 @@ function ExpensesPage() {
               Daily Limit
             </p>
           </div>
-          {limitExceeded && (
-            <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-destructive/10 text-destructive">
-              <AlertTriangle className="size-3" />
-              Exceeded
+          {dailyLimit > 0 && (
+            <span className={`inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${limitTone.chipClass}`}>
+              {limitTone.dot} {displayPercent}%
             </span>
           )}
         </div>
@@ -445,16 +444,14 @@ function ExpensesPage() {
                   <p className="text-sm text-muted-foreground">
                     Today's spend
                   </p>
-                  <p className={`text-sm font-extrabold ${limitExceeded ? "text-destructive" : "text-emerald-600"}`}>
+                  <p className={`text-sm font-extrabold ${limitTone.textClass}`}>
                     {formatTaka(todayExpense, taka)} / {formatTaka(dailyLimit, taka)}
                   </p>
                 </div>
                 <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
                   <div
-                    className={`h-full rounded-full transition-all duration-500 ${
-                      limitExceeded ? "bg-destructive" : "bg-emerald-500"
-                    }`}
-                    style={{ width: `${limitPercent}%` }}
+                    className={`h-full rounded-full transition-all duration-500 ${limitTone.barClass}`}
+                    style={{ width: `${Math.min(limitPct, 100)}%` }}
                   />
                 </div>
                 <div className="flex items-center justify-between">
@@ -462,11 +459,6 @@ function ExpensesPage() {
                     {remaining >= 0
                       ? `${formatTaka(remaining, taka)} left today`
                       : `${formatTaka(Math.abs(remaining), taka)} over limit`}
-                  </p>
-                  <p className={`text-xs font-semibold ${limitExceeded ? "text-destructive" : "text-emerald-600"}`}>
-                    {limitExceeded
-                      ? `Exceeded ❌`
-                      : `On track ${displayPercent > 0 ? `• ${displayPercent}%` : "✅"}`}
                   </p>
                 </div>
               </div>
@@ -478,34 +470,76 @@ function ExpensesPage() {
           </button>
         )}
 
-        {limitExceeded && !editingLimit && (
-          <div className="mt-3 flex items-center gap-2 bg-destructive/10 rounded-xl px-3 py-2.5">
-            <AlertTriangle className="size-4 text-destructive shrink-0" />
-            <p className="text-xs font-semibold text-destructive">
-              You exceeded today's limit!
+        {dailyLimit > 0 && !editingLimit && (
+          <div className={`mt-3 flex items-center gap-2 rounded-xl px-3 py-2.5 ${
+            limitPct > 100
+              ? "bg-red-500/10"
+              : limitPct >= 80
+                ? "bg-amber-500/10"
+                : limitPct < 50
+                  ? "bg-emerald-500/10"
+                  : "bg-primary/5"
+          }`}>
+            <span className="text-sm">
+              {limitPct > 100 ? "💡" : limitPct >= 80 ? "⚠️" : limitPct < 50 ? "💪" : "👍"}
+            </span>
+            <p className={`text-xs font-semibold ${limitTone.textClass}`}>
+              {limitPct > 100
+                ? `You're ${formatTaka(Math.abs(remaining), taka)} over today — tomorrow's a fresh start 💡`
+                : limitPct >= 80
+                  ? `You're ${displayPercent}% through today's budget — ${formatTaka(remaining, taka)} left`
+                  : limitPct < 50
+                    ? "Great control today 💪"
+                    : `On track — ${formatTaka(remaining, taka)} left today`}
             </p>
           </div>
         )}
       </section>
 
-      {/* Today */}
-      <DayCard
-        dayKey={todayKeyStr}
-        items={monthEntries.filter((e) => dayKey(e.createdAt) === todayKeyStr)}
-        onEdit={setEditing}
-        defaultOpen
-        isToday
+      {/* Guidance Layer */}
+      <GuidanceCard
+        entries={entries}
+        monthEntries={monthEntries}
+        selectedMonth={selectedMonth}
+        dailyLimit={dailyLimit}
+        todayExpense={todayExpense}
       />
+
+      {/* Filter bar */}
+      <FilterBar filter={filter} onChange={setFilter} />
+
+      {/* Today */}
+      <div id="section-today">
+        <DayCard
+          dayKey={todayKeyStr}
+          items={filteredMonthEntries.filter((e) => dayKey(e.createdAt) === todayKeyStr)}
+          onEdit={setEditing}
+          defaultOpen
+          isToday
+          hideWhenEmptyAndFiltered={!!filter.category || filter.scope !== "month"}
+        />
+      </div>
 
       {/* Yesterday */}
-      <DayCard
-        dayKey={yesterdayKeyStr}
-        items={monthEntries.filter((e) => dayKey(e.createdAt) === yesterdayKeyStr)}
-        onEdit={setEditing}
-      />
+      {filter.scope !== "today" && (
+        <div id="section-yesterday">
+          <DayCard
+            dayKey={yesterdayKeyStr}
+            items={filteredMonthEntries.filter((e) => dayKey(e.createdAt) === yesterdayKeyStr)}
+            onEdit={setEditing}
+          />
+        </div>
+      )}
 
       {/* Category Breakdown */}
-      <CategoryBreakdown entries={monthEntries} />
+      <CategoryBreakdown
+        entries={monthEntries}
+        prevMonthEntries={entries.filter((e) => monthKey(e.createdAt) === shiftMonth(selectedMonth, -1))}
+        activeCategory={filter.category}
+        onSelectCategory={(c) =>
+          setFilter((f) => ({ ...f, category: f.category === c ? null : c }))
+        }
+      />
 
       {/* Weekly spending chart */}
       <WeeklyChart entries={entries} dailyLimit={dailyLimit} />
@@ -513,11 +547,18 @@ function ExpensesPage() {
       {/* Smart Insights */}
       <SmartInsights
         todayExpense={todayExpense}
+        yesterdayExpense={entries
+          .filter((e) => e.type === "expense" && dayKey(e.createdAt) === yesterdayKeyStr)
+          .reduce((s, e) => s + e.amount, 0)}
         dailyLimit={dailyLimit}
         entries={entries}
+        monthEntries={monthEntries}
+        onFilterCategory={(c) => setFilter((f) => ({ ...f, category: c }))}
+        onScrollTo={scrollToId}
       />
 
       {/* Remaining day history */}
+
       <DayGroupedHistory
         entries={monthEntries}
         onEdit={setEditing}
