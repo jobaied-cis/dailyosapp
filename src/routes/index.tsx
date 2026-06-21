@@ -211,11 +211,17 @@ function Dashboard() {
   const statusEmoji = status === "red" ? "🔴" : status === "yellow" ? "🟡" : "🟢";
   const statusLabel = status === "red" ? "Heads up" : status === "yellow" ? "Busy" : "On track";
 
-  // Intel line
-  let intel = "You're on track today — keep going 🚀";
-  if (overLimit) intel = "Spending is high today — stay mindful ⚠️";
-  else if (nextEvent && minsToEvent <= 30) intel = `Next event in ${minsToEvent}m — be ready ⏳`;
-  else if (routineRemaining > 0) intel = `You have ${routineRemaining} task${routineRemaining > 1 ? "s" : ""} left — stay focused 💪`;
+  // Intel line — AI personalization engine (frontend-only, rule-based)
+  const aiSuggestion = getDailySuggestion({
+    priorities: userProfile?.priorities,
+    hasMission: !!mission,
+    incompleteTaskCount: routineRemaining,
+    totalTaskCount: total,
+    todayExpense,
+    dailyLimit,
+  });
+  const intel = aiSuggestion.message;
+  const intelIcon = suggestionIcon(aiSuggestion.type);
 
   // Priority card — strict order: overLimit → nextEvent(≤15) → currentTask → nextTask
   type Priority = { label: string; main: string; sub?: string; to: "/routine" | "/events" | "/expenses" } | null;
