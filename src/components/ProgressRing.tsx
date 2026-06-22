@@ -9,11 +9,18 @@ interface Props {
 }
 
 export function ProgressRing({ value, size = 140, stroke = 12, color, children }: Props) {
+  // Initialize at 0 only on first mount to animate in; subsequent renders use real value.
   const [displayValue, setDisplayValue] = useState(0);
+  const firstRef = useRef(true);
 
   useEffect(() => {
-    const t = setTimeout(() => setDisplayValue(value), 80);
-    return () => clearTimeout(t);
+    if (firstRef.current) {
+      const t = setTimeout(() => setDisplayValue(value), 80);
+      firstRef.current = false;
+      return () => clearTimeout(t);
+    }
+    // Subsequent updates: snap to new value, CSS transitions the stroke smoothly.
+    setDisplayValue(value);
   }, [value]);
 
 
