@@ -157,7 +157,7 @@ export function AIAssistantSheet({ onClose }: { onClose: () => void }) {
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 animate-fade-in" onClick={onClose}>
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-md bg-card rounded-t-3xl border-t border-border shadow-2xl p-5 space-y-4 animate-slide-up"
+        className="w-full max-w-md bg-card rounded-t-3xl border-t border-border shadow-2xl p-5 space-y-4 animate-slide-up max-h-[85dvh] overflow-y-auto overscroll-contain"
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
