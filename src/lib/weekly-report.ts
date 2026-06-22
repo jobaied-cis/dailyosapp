@@ -126,17 +126,17 @@ export function getWeeklyReport(data: WeeklyReportInput): WeeklyReport {
     const diff = completedCount - previousCompletedCount;
     if (previousCompletedCount > 0 && diff > 0) {
       positives.push({
-        message: `${completedCount} tasks done — up from ${previousCompletedCount} last week 📈`,
+        message: `${completedCount} tasks done — up from ${previousCompletedCount} last week`,
         tone: "positive",
       });
     } else if (previousCompletedCount > 0 && diff < 0) {
       suggestions.push({
-        message: `${completedCount} tasks done — a little less than last week, you've got this 💪`,
+        message: `${completedCount} tasks done — a little less than last week, you've got this`,
         tone: "warning",
       });
     } else {
       positives.push({
-        message: `You completed ${completedCount} task${completedCount > 1 ? "s" : ""} this week 💪`,
+        message: `You completed ${completedCount} task${completedCount > 1 ? "s" : ""} this week`,
         tone: "positive",
       });
     }
@@ -144,13 +144,13 @@ export function getWeeklyReport(data: WeeklyReportInput): WeeklyReport {
 
   if (bestDay && bestDayCount > 0) {
     positives.push({
-      message: `Your best day: ${bestDay} — ${bestDayCount} action${bestDayCount > 1 ? "s" : ""} 🌟`,
+      message: `Your best day: ${bestDay} — ${bestDayCount} action${bestDayCount > 1 ? "s" : ""}`,
       tone: "positive",
     });
   }
 
   if (activeDays >= 6) {
-    positives.push({ message: "Great consistency this week 🔥", tone: "positive" });
+    positives.push({ message: "Great consistency this week", tone: "positive" });
   } else if (
     activeDays > 0 &&
     activeDays <= 3 &&
@@ -159,14 +159,14 @@ export function getWeeklyReport(data: WeeklyReportInput): WeeklyReport {
   ) {
     // Only nudge when there's an actual regression vs prior week.
     suggestions.push({
-      message: `You were active ${activeDays} day${activeDays > 1 ? "s" : ""} this week — a small bump tomorrow goes a long way 💡`,
+      message: `You were active ${activeDays} day${activeDays > 1 ? "s" : ""} this week — a small bump tomorrow goes a long way`,
       tone: "warning",
     });
   }
 
   if (overBudget) {
     suggestions.push({
-      message: "Spending edged above your weekly target — small tweaks go a long way 💡",
+      message: "Spending edged above your weekly target — small tweaks go a long way",
       tone: "warning",
     });
   }
