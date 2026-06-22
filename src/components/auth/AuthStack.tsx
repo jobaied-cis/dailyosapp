@@ -304,8 +304,8 @@ function GoogleButton() {
   return (
     <button
       type="button"
-      disabled
-      className="w-full py-3 text-sm font-medium flex items-center justify-center gap-2 cursor-not-allowed opacity-60"
+      onClick={() => toast("Google sign-in is coming soon 🚀")}
+      className="w-full py-3 text-sm font-medium flex items-center justify-center gap-2 active:scale-95 transition-transform"
       style={{
         background: "transparent",
         color: "white",
