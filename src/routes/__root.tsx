@@ -12,6 +12,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider, useAuth } from "@/lib/auth-context";
 import { AuthStack } from "@/components/auth/AuthStack";
 import { SplashScreen } from "@/components/auth/SplashScreen";
+import { InstallPrompt } from "@/components/InstallPrompt";
 
 import appCss from "../styles.css?url";
 
@@ -76,10 +77,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
       { title: "DailyOS — Your Life Operating System" },
       { name: "description", content: "A clean daily routine and life management dashboard." },
       { name: "author", content: "DailyOS" },
+      { name: "theme-color", content: "#378ADD" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
+      { name: "apple-mobile-web-app-title", content: "DailyOS" },
+      { name: "mobile-web-app-capable", content: "yes" },
       { property: "og:title", content: "DailyOS" },
       { property: "og:description", content: "Your Life Operating System. A clean daily routine and life management dashboard." },
       { property: "og:site_name", content: "DailyOS" },
@@ -88,10 +94,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:description", content: "A clean daily routine and life management dashboard." },
     ],
     links: [
-      {
-        rel: "stylesheet",
-        href: appCss,
-      },
+      { rel: "stylesheet", href: appCss },
+      { rel: "manifest", href: "/manifest.webmanifest" },
+      { rel: "icon", type: "image/png", sizes: "192x192", href: "/icon-192.png" },
+      { rel: "icon", type: "image/png", sizes: "512x512", href: "/icon-512.png" },
+      { rel: "apple-touch-icon", href: "/icon-192.png" },
     ],
   }),
   shellComponent: RootShell,
@@ -136,6 +143,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <RootSwitch />
+        <InstallPrompt />
         <Toaster position="top-center" />
       </AuthProvider>
     </QueryClientProvider>
