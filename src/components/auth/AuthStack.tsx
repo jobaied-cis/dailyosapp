@@ -301,11 +301,22 @@ function PrimaryButton({
 }
 
 function GoogleButton() {
+  const { signInWithGoogle } = useAuth();
+  const [busy, setBusy] = useState(false);
   return (
     <button
       type="button"
-      onClick={() => toast("Google sign-in is coming soon 🚀")}
-      className="w-full py-3 text-sm font-medium flex items-center justify-center gap-2 active:scale-95 transition-transform"
+      disabled={busy}
+      onClick={async () => {
+        setBusy(true);
+        const { error } = await signInWithGoogle();
+        if (error) {
+          toast.error(error);
+          setBusy(false);
+        }
+        // On success, browser redirects to Google → back to app
+      }}
+      className="w-full py-3 text-sm font-medium flex items-center justify-center gap-2 active:scale-95 transition-transform disabled:opacity-60"
       style={{
         background: "transparent",
         color: "white",
@@ -318,7 +329,7 @@ function GoogleButton() {
         style={{ background: "conic-gradient(#EA4335, #FBBC05, #34A853, #4285F4, #EA4335)" }}
         aria-hidden
       />
-      Continue with Google
+      {busy ? "Connecting…" : "Continue with Google"}
     </button>
   );
 }
@@ -338,22 +349,30 @@ function Divider() {
 /* -------------------------------------------------------------------------- */
 
 function LoginScreen({ go }: GoProp) {
-  const { login, completeOnboarding } = useAuth();
+  const { signInWithEmail, completeOnboarding } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [show, setShow] = useState(false);
+  const [busy, setBusy] = useState(false);
 
   const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
   const passwordValid = password.length >= 6;
-  const canSubmit = emailValid && passwordValid;
+  const canSubmit = emailValid && passwordValid && !busy;
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (!canSubmit) {
       toast.error(!emailValid ? "Enter a valid email" : "Password must be 6+ characters");
       return;
     }
-    login({ name: email.split("@")[0] || "Guest" });
+    setBusy(true);
+    const { error } = await signInWithEmail(email, password);
+    setBusy(false);
+    if (error) {
+      toast.error(error);
+      return;
+    }
     completeOnboarding();
+    // RootSwitch will swap to AppShell once session lands
   };
 
   return (
@@ -362,9 +381,6 @@ function LoginScreen({ go }: GoProp) {
         <div className="pt-6 pb-8">
           <h1 className="text-2xl font-semibold tracking-tight">Welcome back 🔥</h1>
           <p className="mt-1.5 text-sm text-white/55">Continue your system</p>
-          <p className="mt-2 text-[11px] text-amber-300/80">
-            Demo / Guest mode — no real authentication
-          </p>
         </div>
 
         <div className="flex flex-col gap-3">
@@ -398,7 +414,7 @@ function LoginScreen({ go }: GoProp) {
 
         <div className="mt-6 flex flex-col gap-3">
           <PrimaryButton onClick={handleLogin} disabled={!canSubmit}>
-            Continue your system →
+            {busy ? "Signing in…" : "Continue your system →"}
           </PrimaryButton>
           <Divider />
           <GoogleButton />
