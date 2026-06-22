@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Eye, EyeOff, Mail, Lock, User } from "lucide-react";
 import { ListChecks, Target, CalendarDays, Wallet, ChevronRight } from "lucide-react";
+import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-context";
 
 type Screen = "welcome" | "intro" | "login" | "signup" | "profile";
@@ -286,7 +287,7 @@ function PrimaryButton({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="w-full py-3.5 text-sm font-medium transition-all duration-200 active:scale-95 disabled:opacity-50"
+      className="w-full py-3.5 text-sm font-medium transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
       style={{
         background: "#378ADD",
         color: "white",
@@ -303,8 +304,8 @@ function GoogleButton() {
   return (
     <button
       type="button"
-      disabled
-      className="w-full py-3 text-sm font-medium flex items-center justify-center gap-2 cursor-not-allowed opacity-60"
+      onClick={() => toast("Google sign-in is coming soon 🚀")}
+      className="w-full py-3 text-sm font-medium flex items-center justify-center gap-2 active:scale-95 transition-transform"
       style={{
         background: "transparent",
         color: "white",
@@ -337,10 +338,23 @@ function Divider() {
 /* -------------------------------------------------------------------------- */
 
 function LoginScreen({ go }: GoProp) {
-  const { login } = useAuth();
+  const { login, completeOnboarding } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [show, setShow] = useState(false);
+
+  const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+  const passwordValid = password.length >= 6;
+  const canSubmit = emailValid && passwordValid;
+
+  const handleLogin = () => {
+    if (!canSubmit) {
+      toast.error(!emailValid ? "Enter a valid email" : "Password must be 6+ characters");
+      return;
+    }
+    login({ name: email.split("@")[0] || "Guest" });
+    completeOnboarding();
+  };
 
   return (
     <Stage>
@@ -373,13 +387,17 @@ function LoginScreen({ go }: GoProp) {
             }
           />
 
-          <button className="self-end text-xs text-white/55 hover:text-white/80 transition-colors">
+          <button
+            type="button"
+            onClick={() => toast("Password reset is coming soon 🔐")}
+            className="self-end text-xs text-white/55 hover:text-white/80 transition-colors"
+          >
             Forgot password?
           </button>
         </div>
 
         <div className="mt-6 flex flex-col gap-3">
-          <PrimaryButton onClick={() => login({ name: email.split("@")[0] || "Guest" })}>
+          <PrimaryButton onClick={handleLogin} disabled={!canSubmit}>
             Continue your system →
           </PrimaryButton>
           <Divider />
@@ -524,7 +542,7 @@ const PRIORITIES: { id: string; label: string; emoji: string }[] = [
 ];
 
 function ProfileSetupScreen() {
-  const { userProfile, setUserProfile, login, completeOnboarding } = useAuth();
+  const { userProfile, finishOnboarding } = useAuth();
 
   const [avatar, setAvatar] = useState<string>(userProfile?.avatar || AVATARS[0]);
   const [name, setName] = useState<string>(userProfile?.name || "");
@@ -535,14 +553,12 @@ function ProfileSetupScreen() {
     setPriorities((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
 
   const finish = () => {
-    setUserProfile({ name: name || "Guest", avatar, currency, priorities });
     try {
       sessionStorage.setItem("dailyos.welcomeBanner", "1");
     } catch {
       /* noop */
     }
-    login();
-    completeOnboarding();
+    finishOnboarding({ name: name || "Guest", avatar, currency, priorities });
   };
 
   return (

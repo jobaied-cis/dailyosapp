@@ -1,6 +1,7 @@
 /**
  * DailyOS — lightweight Memory store (localStorage only).
  * Tracks last 14 days of user activity for the Memory AI.
+ * In-memory cache avoids repeated JSON.parse on every read.
  */
 
 export type MemoryType = "task" | "expense" | "event";
@@ -21,6 +22,10 @@ const STORAGE_KEY = "dailyos.memory";
 const MAX_DAYS = 14;
 const MAX_ENTRIES_PER_LIST = 300;
 
+let _cache: MemoryShape | null = null;
+let _cacheAt = 0;
+const CACHE_TTL = 30_000;
+
 function hasWindow() {
   return typeof window !== "undefined";
 }
@@ -37,7 +42,7 @@ function pruneList(list: MemoryEntry[], cutoff: number): MemoryEntry[] {
   return recent;
 }
 
-export function readMemory(): MemoryShape {
+function loadFromStorage(): MemoryShape {
   if (!hasWindow()) return emptyShape();
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
@@ -54,10 +59,25 @@ export function readMemory(): MemoryShape {
   }
 }
 
+export function readMemory(): MemoryShape {
+  const now = Date.now();
+  if (_cache && now - _cacheAt < CACHE_TTL) return _cache;
+  _cache = loadFromStorage();
+  _cacheAt = now;
+  return _cache;
+}
+
+export function invalidateMemoryCache() {
+  _cache = null;
+  _cacheAt = 0;
+}
+
 function writeMemory(mem: MemoryShape) {
   if (!hasWindow()) return;
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(mem));
+    _cache = mem;
+    _cacheAt = Date.now();
   } catch {
     /* noop */
   }

@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ChevronLeft, ChevronRight, LogOut, Moon, RefreshCcw, Sun, User } from "lucide-react";
+import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-context";
 import { CurrencyTrigger } from "@/components/CurrencySheet";
 import { useCurrency, TAKA } from "@/lib/currency";
@@ -42,21 +43,33 @@ function SettingsPage() {
   const currencySymbol = currency === "USD" ? "$" : TAKA;
 
   const handleResetOnboarding = () => {
-    if (!window.confirm("Restart onboarding from beginning?")) return;
-    try {
-      localStorage.setItem(STORAGE_KEYS.isFirstTime, "true");
-      localStorage.setItem(STORAGE_KEYS.isLoggedIn, "false");
-      localStorage.setItem(STORAGE_KEYS.introProgress, "0");
-    } catch {
-      /* noop */
-    }
-    window.location.reload();
+    toast("Restart onboarding from beginning?", {
+      action: {
+        label: "Restart",
+        onClick: () => {
+          try {
+            localStorage.setItem(STORAGE_KEYS.isFirstTime, "true");
+            localStorage.setItem(STORAGE_KEYS.isLoggedIn, "false");
+            localStorage.setItem(STORAGE_KEYS.introProgress, "0");
+          } catch {
+            /* noop */
+          }
+          window.location.reload();
+        },
+      },
+    });
   };
 
   const handleLogout = () => {
-    if (!window.confirm("Are you sure you want to logout?")) return;
-    logout();
-    window.location.reload();
+    toast("Logout from DailyOS?", {
+      action: {
+        label: "Logout",
+        onClick: () => {
+          logout();
+          window.location.reload();
+        },
+      },
+    });
   };
 
   return (

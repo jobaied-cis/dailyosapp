@@ -14,11 +14,18 @@ export const Route = createFileRoute("/api/ai")({
     handlers: {
       POST: async ({ request }) => {
         try {
-          // ---- Origin guard: only accept calls from the same host ----
-          const origin = request.headers.get("origin") || request.headers.get("referer") || "";
+          // ---- Origin guard: parse and compare hostnames exactly ----
+          const originRaw = request.headers.get("origin") || request.headers.get("referer") || "";
           const host = request.headers.get("host") || "";
-          if (origin && host && !origin.includes(host)) {
-            return Response.json({ error: "Forbidden" }, { status: 403 });
+          if (originRaw && host) {
+            try {
+              const originHost = new URL(originRaw).host;
+              if (originHost !== host) {
+                return Response.json({ error: "Forbidden" }, { status: 403 });
+              }
+            } catch {
+              return Response.json({ error: "Forbidden" }, { status: 403 });
+            }
           }
 
           // ---- Size guard: reject oversized payloads (>8KB) ----

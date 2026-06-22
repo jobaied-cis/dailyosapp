@@ -36,6 +36,20 @@ export function AIAssistantSheet({ onClose }: { onClose: () => void }) {
     };
   }, []);
 
+  // ESC to close + body scroll lock
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [onClose]);
+
   const context: AIContext = useMemo(() => {
     const now = new Date();
     const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
@@ -143,7 +157,7 @@ export function AIAssistantSheet({ onClose }: { onClose: () => void }) {
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 animate-fade-in" onClick={onClose}>
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-md bg-card rounded-t-3xl border-t border-border shadow-2xl p-5 space-y-4 animate-slide-up"
+        className="w-full max-w-md bg-card rounded-t-3xl border-t border-border shadow-2xl p-5 space-y-4 animate-slide-up max-h-[85dvh] overflow-y-auto overscroll-contain"
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">

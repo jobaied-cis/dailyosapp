@@ -220,7 +220,7 @@ function Dashboard() {
       : routineRemaining >= 3 || eventCount >= 3 || nearLimit
         ? "yellow"
         : "green";
-  const statusEmoji = status === "red" ? "🔴" : status === "yellow" ? "🟡" : "🟢";
+  
   const statusLabel = status === "red" ? "Heads up" : status === "yellow" ? "Busy" : "On track";
 
   // Intel line is computed below after userProfile is read.
@@ -307,13 +307,16 @@ function Dashboard() {
   // ---- Memory AI: long-term pattern memory (last 14 days) ----
   const [memoryRefresh, setMemoryRefresh] = useState(0);
   useEffect(() => {
-    const onFocus = () => setMemoryRefresh((n) => n + 1);
-    window.addEventListener("focus", onFocus);
-    document.addEventListener("visibilitychange", onFocus);
-    return () => {
-      window.removeEventListener("focus", onFocus);
-      document.removeEventListener("visibilitychange", onFocus);
+    let last = 0;
+    const onVisibility = () => {
+      if (document.visibilityState !== "visible") return;
+      const now = Date.now();
+      if (now - last < 30_000) return;
+      last = now;
+      setMemoryRefresh((n) => n + 1);
     };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
   }, []);
   const memoryInsights = useMemo(() => getMemoryInsights(), [memoryRefresh]);
 
@@ -369,27 +372,41 @@ function Dashboard() {
     minsToEvent,
   ]);
 
+  // Pin urgent (priority 1) — no rotation; rotate the rest.
+  const pinnedHero = useMemo(
+    () => heroInsights.find((h) => h.priority === 1) ?? null,
+    [heroInsights],
+  );
+  const rotatingHero = useMemo(
+    () => (pinnedHero ? heroInsights.filter((h) => h !== pinnedHero) : heroInsights),
+    [heroInsights, pinnedHero],
+  );
+
   const [heroIdx, setHeroIdx] = useState(0);
   const [heroVisible, setHeroVisible] = useState(true);
   useEffect(() => {
-    setHeroIdx(0);
-  }, [heroInsights.length]);
+    // Only reset when current index is out of range.
+    setHeroIdx((i) => (i >= rotatingHero.length ? 0 : i));
+  }, [rotatingHero.length]);
   useEffect(() => {
-    if (heroInsights.length <= 1) {
+    if (pinnedHero || rotatingHero.length <= 1) {
       setHeroVisible(true);
       return;
     }
+    let fadeTimer: ReturnType<typeof setTimeout> | undefined;
     const id = setInterval(() => {
       setHeroVisible(false);
-      const t = setTimeout(() => {
-        setHeroIdx((i) => (i + 1) % heroInsights.length);
+      fadeTimer = setTimeout(() => {
+        setHeroIdx((i) => (i + 1) % rotatingHero.length);
         setHeroVisible(true);
       }, 300);
-      return () => clearTimeout(t);
     }, 3500);
-    return () => clearInterval(id);
-  }, [heroInsights.length]);
-  const currentHero = heroInsights[heroIdx] ?? null;
+    return () => {
+      clearInterval(id);
+      if (fadeTimer) clearTimeout(fadeTimer);
+    };
+  }, [pinnedHero, rotatingHero.length]);
+  const currentHero = pinnedHero ?? rotatingHero[heroIdx] ?? null;
 
   // ---- Weekly Report (last 7 days) ----
   const weekStart = Date.now() - 7 * 86400000;
@@ -412,7 +429,7 @@ function Dashboard() {
         currencySymbol: takaSym,
         previousCompletedCount,
       }),
-    [expenses, dailyLimit, eventsThisWeek, takaSym, previousCompletedCount, nowTick],
+    [expenses, dailyLimit, eventsThisWeek, takaSym, previousCompletedCount],
   );
 
   // ---- Weekly Report collapse (auto-collapse after first 3 days of use) ----
@@ -599,15 +616,14 @@ function Dashboard() {
             )}
             <span
               aria-label={`Status: ${statusLabel}`}
-              className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-bold uppercase tracking-wider border leading-none ${
+              className={`inline-flex items-center rounded-full px-2 py-1 text-[10px] font-bold uppercase tracking-wider border leading-none ${
                 status === "red"
-                  ? "bg-amber-100 text-amber-700 border-amber-200"
+                  ? "bg-red-100 text-red-700 border-red-200"
                   : status === "yellow"
                     ? "bg-amber-100 text-amber-700 border-amber-200"
                     : "bg-emerald-100 text-emerald-700 border-emerald-200"
               }`}
             >
-              <span className="text-[11px] leading-none">{statusEmoji}</span>
               {statusLabel}
             </span>
           </div>
@@ -620,19 +636,19 @@ function Dashboard() {
           onClick={() => navigate({ to: "/routine" })}
           className="quick-add-btn group flex items-center justify-center gap-1.5 rounded-xl border border-border/60 bg-card py-3 text-[13px] font-semibold text-foreground shadow-sm transition-all duration-150 ease-out active:scale-[0.96] active:border-[#378ADD]/60"
         >
-          <ListChecks className="size-4 text-[#378ADD] transition-transform duration-150 group-active:scale-110" /> Task
+          <ListChecks className="size-4 text-[#378ADD] transition-transform duration-150 group-active:scale-110" /> Routine
         </button>
         <button
           onClick={() => navigate({ to: "/events" })}
           className="quick-add-btn group flex items-center justify-center gap-1.5 rounded-xl border border-border/60 bg-card py-3 text-[13px] font-semibold text-foreground shadow-sm transition-all duration-150 ease-out active:scale-[0.96] active:border-[#7F77DD]/60"
         >
-          <CalendarPlus className="size-4 text-[#7F77DD] transition-transform duration-150 group-active:scale-110" /> Event
+          <CalendarPlus className="size-4 text-[#7F77DD] transition-transform duration-150 group-active:scale-110" /> Events
         </button>
         <button
           onClick={() => navigate({ to: "/expenses" })}
           className="quick-add-btn group relative flex items-center justify-center gap-1.5 rounded-xl border border-border/60 bg-card py-3 text-[13px] font-semibold text-foreground shadow-sm transition-all duration-150 ease-out active:scale-[0.96] active:border-[#1D9E75]/60"
         >
-          <Plus className="size-4 text-[#1D9E75] transition-transform duration-150 group-active:scale-110" /> Expense
+          <Plus className="size-4 text-[#1D9E75] transition-transform duration-150 group-active:scale-110" /> Expenses
           {!hasExpenseToday && (
             <span className="pointer-events-none absolute top-1.5 right-1.5 flex size-2">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#1D9E75] opacity-60" />
@@ -734,12 +750,14 @@ function Dashboard() {
 
       </Link>
 
-      <Link
-        to="/routine"
-        className="press flex items-center justify-center gap-2.5 w-full bg-gradient-to-br from-primary to-primary/85 text-primary-foreground rounded-xl py-3.5 text-[14px] font-semibold leading-[1.2] shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 active:scale-[0.97] transition-all duration-150"
-      >
-        {routineCtaLabel} <ArrowRight className="size-4" />
-      </Link>
+      {done > 0 && !allDone && (
+        <Link
+          to="/routine"
+          className="press flex items-center justify-center gap-2.5 w-full bg-gradient-to-br from-primary to-primary/85 text-primary-foreground rounded-xl py-3.5 text-[14px] font-semibold leading-[1.2] shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 active:scale-[0.97] transition-all duration-150"
+        >
+          {routineCtaLabel} <ArrowRight className="size-4" />
+        </Link>
+      )}
 
       {/* Today's Mission */}
       <div className={`rounded-2xl p-[1px] bg-gradient-to-r from-blue-500/40 via-indigo-400/30 to-emerald-400/40 transition-all duration-200 hover:shadow-md active:scale-[0.98] ${focusMission ? "shadow-primary/15 ring-1 ring-primary/25" : ""}`}>

@@ -82,9 +82,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "author", content: "DailyOS" },
       { property: "og:title", content: "DailyOS" },
       { property: "og:description", content: "Your Life Operating System. A clean daily routine and life management dashboard." },
-      { property: "og:type", content: "website" },
+      { property: "og:site_name", content: "DailyOS" },
       { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "DailyOS — Your Life Operating System" },
+      { name: "twitter:description", content: "A clean daily routine and life management dashboard." },
     ],
     links: [
       {
