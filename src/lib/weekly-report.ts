@@ -151,9 +151,15 @@ export function getWeeklyReport(data: WeeklyReportInput): WeeklyReport {
 
   if (activeDays >= 6) {
     positives.push({ message: "Great consistency this week 🔥", tone: "positive" });
-  } else if (activeDays > 0 && activeDays <= 3) {
+  } else if (
+    activeDays > 0 &&
+    activeDays <= 3 &&
+    previousCompletedCount > 0 &&
+    completedCount < previousCompletedCount
+  ) {
+    // Only nudge when there's an actual regression vs prior week.
     suggestions.push({
-      message: `You were active ${activeDays} day${activeDays > 1 ? "s" : ""} this week — try spreading tasks across more days next week 💡`,
+      message: `You were active ${activeDays} day${activeDays > 1 ? "s" : ""} this week — a small bump tomorrow goes a long way 💡`,
       tone: "warning",
     });
   }

@@ -305,20 +305,8 @@ function Dashboard() {
   );
 
   // ---- Memory AI: long-term pattern memory (last 14 days) ----
-  const [memoryRefresh, setMemoryRefresh] = useState(0);
-  useEffect(() => {
-    let last = 0;
-    const onVisibility = () => {
-      if (document.visibilityState !== "visible") return;
-      const now = Date.now();
-      if (now - last < 30_000) return;
-      last = now;
-      setMemoryRefresh((n) => n + 1);
-    };
-    document.addEventListener("visibilitychange", onVisibility);
-    return () => document.removeEventListener("visibilitychange", onVisibility);
-  }, []);
-  const memoryInsights = useMemo(() => getMemoryInsights(), [memoryRefresh]);
+  // Computed once per mount — do NOT recompute on every focus/visibility event.
+  const memoryInsights = useMemo(() => getMemoryInsights(), []);
 
   // ---- Unified hero insight feed (prioritized, de-duplicated, single emoji) ----
   type HeroInsight = { message: string; emoji: string; priority: number };
@@ -616,14 +604,15 @@ function Dashboard() {
             )}
             <span
               aria-label={`Status: ${statusLabel}`}
-              className={`inline-flex items-center rounded-full px-2 py-1 text-[10px] font-bold uppercase tracking-wider border leading-none ${
+              className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-bold uppercase tracking-wider border leading-none ${
                 status === "red"
-                  ? "bg-red-100 text-red-700 border-red-200"
+                  ? "bg-red-600 text-white border-red-700 shadow-sm shadow-red-900/30 animate-soft-pulse"
                   : status === "yellow"
-                    ? "bg-amber-100 text-amber-700 border-amber-200"
+                    ? "bg-amber-100 text-amber-800 border-amber-300"
                     : "bg-emerald-100 text-emerald-700 border-emerald-200"
               }`}
             >
+              {status === "red" && <AlertTriangle className="size-3" aria-hidden />}
               {statusLabel}
             </span>
           </div>
@@ -750,14 +739,7 @@ function Dashboard() {
 
       </Link>
 
-      {done > 0 && !allDone && (
-        <Link
-          to="/routine"
-          className="press flex items-center justify-center gap-2.5 w-full bg-gradient-to-br from-primary to-primary/85 text-primary-foreground rounded-xl py-3.5 text-[14px] font-semibold leading-[1.2] shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 active:scale-[0.97] transition-all duration-150"
-        >
-          {routineCtaLabel} <ArrowRight className="size-4" />
-        </Link>
-      )}
+      {/* Duplicate Continue-routine CTA removed — the Routine card above already navigates. */}
 
       {/* Today's Mission */}
       <div className={`rounded-2xl p-[1px] bg-gradient-to-r from-blue-500/40 via-indigo-400/30 to-emerald-400/40 transition-all duration-200 hover:shadow-md active:scale-[0.98] ${focusMission ? "shadow-primary/15 ring-1 ring-primary/25" : ""}`}>
