@@ -220,7 +220,7 @@ function Dashboard() {
       : routineRemaining >= 3 || eventCount >= 3 || nearLimit
         ? "yellow"
         : "green";
-  const statusEmoji = status === "red" ? "🔴" : status === "yellow" ? "🟡" : "🟢";
+  void status;
   const statusLabel = status === "red" ? "Heads up" : status === "yellow" ? "Busy" : "On track";
 
   // Intel line is computed below after userProfile is read.
