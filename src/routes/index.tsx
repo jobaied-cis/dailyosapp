@@ -372,27 +372,41 @@ function Dashboard() {
     minsToEvent,
   ]);
 
+  // Pin urgent (priority 1) — no rotation; rotate the rest.
+  const pinnedHero = useMemo(
+    () => heroInsights.find((h) => h.priority === 1) ?? null,
+    [heroInsights],
+  );
+  const rotatingHero = useMemo(
+    () => (pinnedHero ? heroInsights.filter((h) => h !== pinnedHero) : heroInsights),
+    [heroInsights, pinnedHero],
+  );
+
   const [heroIdx, setHeroIdx] = useState(0);
   const [heroVisible, setHeroVisible] = useState(true);
   useEffect(() => {
-    setHeroIdx(0);
-  }, [heroInsights.length]);
+    // Only reset when current index is out of range.
+    setHeroIdx((i) => (i >= rotatingHero.length ? 0 : i));
+  }, [rotatingHero.length]);
   useEffect(() => {
-    if (heroInsights.length <= 1) {
+    if (pinnedHero || rotatingHero.length <= 1) {
       setHeroVisible(true);
       return;
     }
+    let fadeTimer: ReturnType<typeof setTimeout> | undefined;
     const id = setInterval(() => {
       setHeroVisible(false);
-      const t = setTimeout(() => {
-        setHeroIdx((i) => (i + 1) % heroInsights.length);
+      fadeTimer = setTimeout(() => {
+        setHeroIdx((i) => (i + 1) % rotatingHero.length);
         setHeroVisible(true);
       }, 300);
-      return () => clearTimeout(t);
     }, 3500);
-    return () => clearInterval(id);
-  }, [heroInsights.length]);
-  const currentHero = heroInsights[heroIdx] ?? null;
+    return () => {
+      clearInterval(id);
+      if (fadeTimer) clearTimeout(fadeTimer);
+    };
+  }, [pinnedHero, rotatingHero.length]);
+  const currentHero = pinnedHero ?? rotatingHero[heroIdx] ?? null;
 
   // ---- Weekly Report (last 7 days) ----
   const weekStart = Date.now() - 7 * 86400000;
