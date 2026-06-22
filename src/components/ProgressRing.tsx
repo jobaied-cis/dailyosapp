@@ -35,13 +35,14 @@ export function ProgressRing({ value, size = 140, stroke = 12, color, children }
           cx={size / 2}
           cy={size / 2}
           r={r}
-          stroke="var(--color-primary)"
+          stroke={color ?? "var(--color-primary)"}
           strokeWidth={stroke}
           strokeLinecap="round"
           fill="none"
           strokeDasharray={c}
           strokeDashoffset={offset}
-          style={{ transition: "stroke-dashoffset 900ms cubic-bezier(0.4,0,0.2,1)" }}
+          style={{ transition: "stroke-dashoffset 800ms cubic-bezier(0.4,0,0.2,1), stroke 400ms ease" }}
+
         />
       </svg>
       <div className="absolute inset-0 flex items-center justify-center">{children}</div>
