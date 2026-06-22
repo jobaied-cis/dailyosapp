@@ -616,15 +616,14 @@ function Dashboard() {
             )}
             <span
               aria-label={`Status: ${statusLabel}`}
-              className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-bold uppercase tracking-wider border leading-none ${
+              className={`inline-flex items-center rounded-full px-2 py-1 text-[10px] font-bold uppercase tracking-wider border leading-none ${
                 status === "red"
-                  ? "bg-amber-100 text-amber-700 border-amber-200"
+                  ? "bg-red-100 text-red-700 border-red-200"
                   : status === "yellow"
                     ? "bg-amber-100 text-amber-700 border-amber-200"
                     : "bg-emerald-100 text-emerald-700 border-emerald-200"
               }`}
             >
-              <span className="text-[11px] leading-none">{statusEmoji}</span>
               {statusLabel}
             </span>
           </div>
