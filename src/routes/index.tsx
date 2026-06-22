@@ -397,6 +397,12 @@ function Dashboard() {
     const t = new Date(`${e.date}T${e.time || "00:00"}`).getTime();
     return t >= weekStart && t <= Date.now();
   }).length;
+  const previousCompletedCount = useMemo(() => {
+    const mem = readMemory();
+    const prevStart = Date.now() - 14 * 86400000;
+    return mem.taskHistory.filter((e) => e.time >= prevStart && e.time < weekStart).length;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nowTick]);
   const weeklyReport = useMemo(
     () =>
       getWeeklyReport({
@@ -404,9 +410,28 @@ function Dashboard() {
         dailyLimit,
         eventsThisWeek,
         currencySymbol: takaSym,
+        previousCompletedCount,
       }),
-    [expenses, dailyLimit, eventsThisWeek, takaSym, nowTick],
+    [expenses, dailyLimit, eventsThisWeek, takaSym, previousCompletedCount, nowTick],
   );
+
+  // ---- Weekly Report collapse (auto-collapse after first 3 days of use) ----
+  const FIRST_SEEN_KEY = "dailyos.weeklyReport.firstSeen";
+  const [weeklyOpen, setWeeklyOpen] = useState(true);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      let first = Number(localStorage.getItem(FIRST_SEEN_KEY) || 0);
+      if (!first) {
+        first = Date.now();
+        localStorage.setItem(FIRST_SEEN_KEY, String(first));
+      }
+      const days = (Date.now() - first) / 86400000;
+      setWeeklyOpen(days < 3);
+    } catch {
+      setWeeklyOpen(true);
+    }
+  }, []);
 
   const buildShareText = () => {
     const lines = ["My Weekly Report 📊", ""];
@@ -418,12 +443,56 @@ function Dashboard() {
   const handleShareReport = async () => {
     const text = buildShareText();
     const nav = typeof navigator !== "undefined" ? navigator : undefined;
+
+    // Try image share first
+    try {
+      const blob = await renderWeeklyShareCard({
+        name: userProfile?.name,
+        tasksDone: weeklyReport.meta.completedCount,
+        activeDays: weeklyReport.meta.activeDays,
+        spentLabel:
+          weeklyReport.meta.totalSpent > 0
+            ? `${takaSym}${weeklyReport.meta.totalSpent.toLocaleString()}`
+            : "—",
+        bestDay: weeklyReport.meta.bestDay,
+        bestDayCount: weeklyReport.meta.bestDayCount,
+      });
+      if (blob) {
+        const file = new File([blob], "dailyos-weekly.png", { type: "image/png" });
+        const anyNav = nav as Navigator & {
+          canShare?: (d: { files?: File[] }) => boolean;
+          share?: (d: ShareData & { files?: File[] }) => Promise<void>;
+        };
+        if (anyNav?.canShare?.({ files: [file] }) && anyNav.share) {
+          try {
+            await anyNav.share({
+              files: [file],
+              title: "My week with DailyOS 🚀",
+              text,
+            });
+            return;
+          } catch (err) {
+            if ((err as DOMException)?.name === "AbortError") return;
+          }
+        }
+        downloadBlob(blob, "dailyos-weekly.png");
+        try {
+          await nav?.clipboard?.writeText(text);
+          toast.success("Card saved · text copied ✅");
+        } catch {
+          toast.success("Card saved ✅");
+        }
+        return;
+      }
+    } catch {
+      /* fall through to text share */
+    }
+
     if (nav?.share) {
       try {
         await nav.share({ title: "My Weekly Report", text });
         return;
       } catch (err) {
-        // user cancelled or share failed — fall through to clipboard
         if ((err as DOMException)?.name === "AbortError") return;
       }
     }
@@ -434,6 +503,7 @@ function Dashboard() {
       toast.error("Couldn't share — try again");
     }
   };
+
 
 
 
