@@ -4,16 +4,18 @@ interface Props {
   value: number; // 0..1
   size?: number;
   stroke?: number;
+  color?: string;
   children?: React.ReactNode;
 }
 
-export function ProgressRing({ value, size = 140, stroke = 12, children }: Props) {
+export function ProgressRing({ value, size = 140, stroke = 12, color, children }: Props) {
   const [displayValue, setDisplayValue] = useState(0);
 
   useEffect(() => {
     const t = setTimeout(() => setDisplayValue(value), 80);
     return () => clearTimeout(t);
   }, [value]);
+
 
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;
