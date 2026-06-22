@@ -338,10 +338,23 @@ function Divider() {
 /* -------------------------------------------------------------------------- */
 
 function LoginScreen({ go }: GoProp) {
-  const { login } = useAuth();
+  const { login, completeOnboarding } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [show, setShow] = useState(false);
+
+  const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+  const passwordValid = password.length >= 6;
+  const canSubmit = emailValid && passwordValid;
+
+  const handleLogin = () => {
+    if (!canSubmit) {
+      toast.error(!emailValid ? "Enter a valid email" : "Password must be 6+ characters");
+      return;
+    }
+    login({ name: email.split("@")[0] || "Guest" });
+    completeOnboarding();
+  };
 
   return (
     <Stage>
@@ -374,13 +387,17 @@ function LoginScreen({ go }: GoProp) {
             }
           />
 
-          <button className="self-end text-xs text-white/55 hover:text-white/80 transition-colors">
+          <button
+            type="button"
+            onClick={() => toast("Password reset is coming soon 🔐")}
+            className="self-end text-xs text-white/55 hover:text-white/80 transition-colors"
+          >
             Forgot password?
           </button>
         </div>
 
         <div className="mt-6 flex flex-col gap-3">
-          <PrimaryButton onClick={() => login({ name: email.split("@")[0] || "Guest" })}>
+          <PrimaryButton onClick={handleLogin} disabled={!canSubmit}>
             Continue your system →
           </PrimaryButton>
           <Divider />
