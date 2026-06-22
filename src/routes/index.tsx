@@ -981,83 +981,114 @@ function Dashboard() {
       </section>
       {/* Weekly Report */}
       <section className={`${CARD} bg-gradient-to-br from-indigo-500/5 to-blue-500/5 border-indigo-500/20`}>
-        <div className="flex items-center justify-between mb-3">
+        <button
+          type="button"
+          onClick={() => setWeeklyOpen((v) => !v)}
+          aria-expanded={weeklyOpen}
+          className="w-full flex items-center justify-between mb-3 active:scale-[0.99] transition-transform"
+        >
           <span className="text-[11px] font-medium uppercase tracking-[0.5px] leading-[1.3] text-muted-foreground flex items-center gap-1.5">
             <BarChart3 className="size-3.5" /> Weekly Report 📊
           </span>
-          <span className="text-[10px] font-semibold text-muted-foreground/80">Last 7 days</span>
-        </div>
-        {(() => {
-          const hasActivity = weeklyReport.stats.some(
-            (s) => s.value && s.value !== "0" && s.value !== "0/7",
-          );
-          if (!hasActivity) {
-            return (
-              <p className="text-[13px] font-medium text-muted-foreground leading-[1.5]">
-                Not enough activity yet — start tracking 🚀
-              </p>
-            );
-          }
-          return (
-            <>
-              <p className="text-[13px] font-semibold text-foreground leading-[1.4]">
-                {weeklyReport.summary}
-              </p>
-              {weeklyReport.stats.length > 0 && (
-                <div className="grid grid-cols-3 gap-2 mt-3">
-                  {weeklyReport.stats.slice(0, 3).map((s) => (
-                    <div
-                      key={s.label}
-                      className="rounded-xl border border-border/60 bg-background/60 px-2 py-2 text-center"
-                    >
-                      <div className="text-[14px] leading-none">{s.icon}</div>
-                      <div className="text-[13px] font-bold text-foreground leading-[1.2] mt-1">{s.value}</div>
-                      <div className="text-[10px] font-medium text-muted-foreground leading-[1.2] mt-0.5 truncate">
-                        {s.label}
-                      </div>
+          <span className="text-[10px] font-semibold text-muted-foreground/80 inline-flex items-center gap-1">
+            {weeklyOpen ? "Last 7 days" : "Tap to view"}
+            {weeklyOpen ? <ChevronUp className="size-3" /> : <ChevronDown className="size-3" />}
+          </span>
+        </button>
+        {!weeklyOpen ? (
+          <p className="text-[12px] font-medium text-muted-foreground leading-[1.5]">
+            Weekly report ready 📊 — tap to view
+          </p>
+        ) : (
+          <>
+            {(() => {
+              const hasActivity = weeklyReport.stats.some(
+                (s) => s.value && s.value !== "0" && s.value !== "0/7",
+              );
+              if (!hasActivity) {
+                return (
+                  <p className="text-[13px] font-medium text-muted-foreground leading-[1.5]">
+                    Not much activity yet — start building your week 🚀
+                  </p>
+                );
+              }
+              const toneClass = (tone: "good" | "warn" | "neutral") =>
+                tone === "good"
+                  ? "border-emerald-500/30 bg-emerald-500/10"
+                  : tone === "warn"
+                    ? "border-amber-500/30 bg-amber-500/10"
+                    : "border-border/60 bg-background/60";
+              const valueClass = (tone: "good" | "warn" | "neutral") =>
+                tone === "good"
+                  ? "text-emerald-600 dark:text-emerald-400"
+                  : tone === "warn"
+                    ? "text-amber-600 dark:text-amber-400"
+                    : "text-foreground";
+              return (
+                <>
+                  <p className="text-[13px] font-semibold text-foreground leading-[1.4]">
+                    {weeklyReport.summary}
+                  </p>
+                  {weeklyReport.stats.length > 0 && (
+                    <div className="grid grid-cols-3 gap-2 mt-3">
+                      {weeklyReport.stats.slice(0, 3).map((s) => (
+                        <div
+                          key={s.label}
+                          className={`rounded-xl border px-2 py-2 text-center transition-colors ${toneClass(s.tone)}`}
+                        >
+                          <div className="text-[14px] leading-none">{s.icon}</div>
+                          <div className={`text-[13px] font-bold leading-[1.2] mt-1 ${valueClass(s.tone)}`}>
+                            {s.value}
+                          </div>
+                          <div className="text-[10px] font-medium text-muted-foreground leading-[1.2] mt-0.5 truncate">
+                            {s.label}
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              )}
-            </>
-          );
-        })()}
-        {weeklyReport.insights.length > 0 && (
-          <ul className="mt-3 space-y-1.5 border-t border-border/40 pt-3">
-            {weeklyReport.insights.slice(0, 3).map((ins, i) => (
-              <li
-                key={`w-${i}-${ins.message}`}
-                className={`text-[12px] leading-[1.4] flex items-start gap-1.5 ${
-                  ins.tone === "warning"
-                    ? "text-amber-600"
-                    : ins.tone === "positive"
-                      ? "text-emerald-600"
-                      : "text-foreground/80"
-                }`}
+                  )}
+                </>
+              );
+            })()}
+            {weeklyReport.insights.length > 0 && (
+              <ul className="mt-3 space-y-1.5 border-t border-border/40 pt-3">
+                {weeklyReport.insights.slice(0, 3).map((ins, i) => (
+                  <li
+                    key={`w-${i}-${ins.message}`}
+                    className={`text-[12px] leading-[1.4] flex items-start gap-1.5 ${
+                      ins.tone === "warning"
+                        ? "text-amber-600 dark:text-amber-400"
+                        : ins.tone === "positive"
+                          ? "text-emerald-600 dark:text-emerald-400"
+                          : "text-foreground/80"
+                    }`}
+                  >
+                    <span aria-hidden>•</span>
+                    <span>{ins.message}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setAiOpen(true)}
+                className="h-10 rounded-xl border border-primary/30 bg-primary/10 hover:bg-primary/15 text-primary text-[12px] font-semibold active:scale-95 transition-all"
               >
-                <span aria-hidden>•</span>
-                <span>{ins.message}</span>
-              </li>
-            ))}
-          </ul>
+                View full report →
+              </button>
+              <button
+                type="button"
+                onClick={handleShareReport}
+                className="h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-500 text-white text-[12px] font-semibold inline-flex items-center justify-center gap-1.5 shadow-sm hover:shadow-md active:scale-95 transition-all"
+              >
+                <Share2 className="size-3.5" /> Share Report 📤
+              </button>
+            </div>
+          </>
         )}
-        <div className="mt-3 grid grid-cols-2 gap-2">
-          <button
-            type="button"
-            onClick={() => setAiOpen(true)}
-            className="h-10 rounded-xl border border-primary/30 bg-primary/10 hover:bg-primary/15 text-primary text-[12px] font-semibold active:scale-[0.97] transition-all"
-          >
-            View full report →
-          </button>
-          <button
-            type="button"
-            onClick={handleShareReport}
-            className="h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-500 text-white text-[12px] font-semibold inline-flex items-center justify-center gap-1.5 shadow-sm active:scale-[0.97] transition-all"
-          >
-            <Share2 className="size-3.5" /> Share Report 📤
-          </button>
-        </div>
       </section>
+
 
       <button
         onClick={() => setAiOpen(true)}
