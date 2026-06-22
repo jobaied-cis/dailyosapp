@@ -305,20 +305,8 @@ function Dashboard() {
   );
 
   // ---- Memory AI: long-term pattern memory (last 14 days) ----
-  const [memoryRefresh, setMemoryRefresh] = useState(0);
-  useEffect(() => {
-    let last = 0;
-    const onVisibility = () => {
-      if (document.visibilityState !== "visible") return;
-      const now = Date.now();
-      if (now - last < 30_000) return;
-      last = now;
-      setMemoryRefresh((n) => n + 1);
-    };
-    document.addEventListener("visibilitychange", onVisibility);
-    return () => document.removeEventListener("visibilitychange", onVisibility);
-  }, []);
-  const memoryInsights = useMemo(() => getMemoryInsights(), [memoryRefresh]);
+  // Computed once per mount — do NOT recompute on every focus/visibility event.
+  const memoryInsights = useMemo(() => getMemoryInsights(), []);
 
   // ---- Unified hero insight feed (prioritized, de-duplicated, single emoji) ----
   type HeroInsight = { message: string; emoji: string; priority: number };
