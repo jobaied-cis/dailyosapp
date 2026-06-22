@@ -692,38 +692,46 @@ function Dashboard() {
         {total === 0 ? (
           <p className="text-sm text-muted-foreground py-2">No routine today 😌</p>
         ) : (
-          <div className="flex items-center gap-4">
-            <div className="shrink-0">
-              <ProgressRing value={total ? done / total : 0} size={72} stroke={7}>
-                <div className="text-center">
-                  <div className="text-[16px] font-semibold text-foreground leading-[1.3]">{Math.round(pct)}%</div>
+          (() => {
+            const ratio = total ? done / total : 0;
+            const hour = new Date().getHours();
+            const ringColor =
+              ratio >= 0.75
+                ? "#10b981"
+                : hour >= 18 && ratio < 0.5
+                  ? "#f59e0b"
+                  : hour < 12
+                    ? "#3b82f6"
+                    : "var(--color-primary)";
+            const milestone =
+              ratio >= 1
+                ? "All done today! 🎉"
+                : ratio >= 0.75
+                  ? "Almost there 🔥"
+                  : ratio >= 0.5
+                    ? "Halfway there 💪"
+                    : ratio >= 0.25
+                      ? "Good momentum 💪"
+                      : "Just getting started 🚀";
+            return (
+              <div className="flex items-center gap-4">
+                <div className="shrink-0">
+                  <ProgressRing value={ratio} size={72} stroke={7} color={ringColor}>
+                    <div className="text-center">
+                      <div className="text-[16px] font-semibold text-foreground leading-[1.3]">{Math.round(pct)}%</div>
+                    </div>
+                  </ProgressRing>
                 </div>
-              </ProgressRing>
-            </div>
-            <div className="flex-1 min-w-0 space-y-1.5">
-              {currentTask && !priorityShowsRoutineTask && (
-                <div className="text-[12px] leading-[1.4]">
-                  <span className="text-[9px] font-bold uppercase tracking-wider text-primary mr-1.5">NOW</span>
-                  <span className="font-semibold text-foreground truncate">{currentTask.title}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13px] font-medium text-foreground/90 leading-[1.4]">
+                    {done}/{total} done today · {milestone}
+                  </p>
                 </div>
-              )}
-              {nextTask && nextTask.id !== currentTask?.id && (
-                <div className="text-[12px] leading-[1.4]">
-                  <span className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground mr-1.5">✨ Up next</span>
-                  <span className="font-medium text-foreground/80 truncate">
-                    {nextTask.title} · {formatTime12(nextTask.time)}
-                  </span>
-                </div>
-              )}
-              {priorityShowsRoutineTask && (!nextTask || nextTask.id === currentTask?.id) && (
-                <p className="text-[12px] font-medium text-muted-foreground">{done}/{total} done today</p>
-              )}
-              {!currentTask && !nextTask && (
-                <p className="text-[13px] font-medium text-emerald-600">All done — great work 👏</p>
-              )}
-            </div>
-          </div>
+              </div>
+            );
+          })()
         )}
+
       </Link>
 
       <Link
