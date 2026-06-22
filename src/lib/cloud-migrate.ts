@@ -33,6 +33,15 @@ export async function runCloudMigrationOnce(userId: string): Promise<void> {
     return;
   }
 
+  // Set the guard FIRST so a partial failure can never cause a duplicate
+  // re-import on the next sign-in. The legacy localStorage data is kept
+  // intact as an offline fallback regardless.
+  try {
+    window.localStorage.setItem(flagKey, "true");
+  } catch {
+    /* noop */
+  }
+
   try {
     const legacyEvents = readJSON<any[]>(LEGACY_EVENTS_KEY, []);
     if (Array.isArray(legacyEvents) && legacyEvents.length > 0) {
@@ -61,9 +70,6 @@ export async function runCloudMigrationOnce(userId: string): Promise<void> {
       }));
       await bulkInsertExpenses(rows);
     }
-
-    window.localStorage.setItem(flagKey, "true");
-    // Keep legacy keys around as offline fallback; do NOT delete.
   } catch (err) {
     console.error("[cloud-migrate] failed:", err);
   }
