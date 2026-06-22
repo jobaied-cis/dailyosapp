@@ -429,7 +429,7 @@ function Dashboard() {
         currencySymbol: takaSym,
         previousCompletedCount,
       }),
-    [expenses, dailyLimit, eventsThisWeek, takaSym, previousCompletedCount, nowTick],
+    [expenses, dailyLimit, eventsThisWeek, takaSym, previousCompletedCount],
   );
 
   // ---- Weekly Report collapse (auto-collapse after first 3 days of use) ----
