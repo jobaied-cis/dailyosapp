@@ -739,14 +739,7 @@ function Dashboard() {
 
       </Link>
 
-      {done > 0 && !allDone && (
-        <Link
-          to="/routine"
-          className="press flex items-center justify-center gap-2.5 w-full bg-gradient-to-br from-primary to-primary/85 text-primary-foreground rounded-xl py-3.5 text-[14px] font-semibold leading-[1.2] shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 active:scale-[0.97] transition-all duration-150"
-        >
-          {routineCtaLabel} <ArrowRight className="size-4" />
-        </Link>
-      )}
+      {/* Duplicate Continue-routine CTA removed — the Routine card above already navigates. */}
 
       {/* Today's Mission */}
       <div className={`rounded-2xl p-[1px] bg-gradient-to-r from-blue-500/40 via-indigo-400/30 to-emerald-400/40 transition-all duration-200 hover:shadow-md active:scale-[0.98] ${focusMission ? "shadow-primary/15 ring-1 ring-primary/25" : ""}`}>
