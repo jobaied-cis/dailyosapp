@@ -1,4 +1,5 @@
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useSyncExternalStore } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 export type EventType = "Exam" | "Meeting" | "Class" | "Personal" | "Other";
 export type EventPriority = "High" | "Medium" | "Low";
@@ -15,47 +16,26 @@ export interface EventItem {
   notes: string;
 }
 
-const STORAGE_KEY = "dailyos.events.v4";
-
 const listeners = new Set<() => void>();
 let cache: EventItem[] = [];
-let initialized = false;
+let currentUserId: string | null = null;
+let loadPromise: Promise<void> | null = null;
 
-function load(): EventItem[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed.map((e: any) => ({
-      id: String(e.id),
-      title: String(e.title ?? ""),
-      date: String(e.date ?? ""),
-      time: String(e.time ?? ""),
-      type: (e.type as EventType) ?? "Other",
-      priority: (e.priority as EventPriority) ?? "Medium",
-      completed: Boolean(e.completed),
-      notes: String(e.notes ?? ""),
-    }));
-  } catch {
-    return [];
-  }
+function fromRow(row: any): EventItem {
+  return {
+    id: String(row.id),
+    title: String(row.title ?? ""),
+    date: String(row.date ?? ""),
+    time: String(row.time ?? ""),
+    type: (row.type as EventType) ?? "Other",
+    priority: (row.priority as EventPriority) ?? "Medium",
+    completed: Boolean(row.completed),
+    notes: String(row.notes ?? ""),
+  };
 }
 
-function persist(next: EventItem[]) {
-  cache = next;
-  if (typeof window !== "undefined") {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-  }
+function emit() {
   listeners.forEach((l) => l());
-}
-
-function ensureInit() {
-  if (!initialized && typeof window !== "undefined") {
-    cache = load();
-    initialized = true;
-  }
 }
 
 function subscribe(cb: () => void) {
@@ -64,13 +44,40 @@ function subscribe(cb: () => void) {
 }
 
 function getSnapshot() {
-  ensureInit();
   return cache;
 }
 
-const EMPTY_EVENTS: EventItem[] = [];
+const EMPTY: EventItem[] = [];
 function getServerSnapshot(): EventItem[] {
-  return EMPTY_EVENTS;
+  return EMPTY;
+}
+
+async function loadFromCloud(userId: string): Promise<void> {
+  const { data, error } = await supabase
+    .from("events")
+    .select("*")
+    .eq("user_id", userId);
+  if (error) {
+    console.error("[events] load failed:", error.message);
+    return;
+  }
+  cache = (data ?? []).map(fromRow);
+  emit();
+}
+
+/** Wire to current Supabase session — call from a top-level effect. */
+export function useEventsSync(userId: string | null) {
+  useEffect(() => {
+    if (userId === currentUserId) return;
+    currentUserId = userId;
+    cache = [];
+    emit();
+    if (!userId) {
+      loadPromise = null;
+      return;
+    }
+    loadPromise = loadFromCloud(userId);
+  }, [userId]);
 }
 
 function toEventDateTime(item: EventItem): number {
@@ -79,58 +86,45 @@ function toEventDateTime(item: EventItem): number {
   return new Date(dt).getTime();
 }
 
-const priorityWeight: Record<EventPriority, number> = {
-  High: 0,
-  Medium: 1,
-  Low: 2,
-};
+const priorityWeight: Record<EventPriority, number> = { High: 0, Medium: 1, Low: 2 };
+const statusWeight: Record<EventStatus, number> = { upcoming: 0, completed: 1, missed: 2 };
 
 export function getEventStatus(item: EventItem, now: number): EventStatus {
   if (item.completed) return "completed";
-  const t = toEventDateTime(item);
-  if (t < now) return "missed";
-  return "upcoming";
+  return toEventDateTime(item) < now ? "missed" : "upcoming";
 }
-
-const statusWeight: Record<EventStatus, number> = {
-  upcoming: 0,
-  completed: 1,
-  missed: 2,
-};
 
 export function useEvents(): EventItem[] {
   const events = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
-  if (events.length === 0) return EMPTY_EVENTS;
+  if (events.length === 0) return EMPTY;
   const now = Date.now();
   return [...events].sort((a, b) => {
     const sa = getEventStatus(a, now);
     const sb = getEventStatus(b, now);
     if (sa !== sb) return statusWeight[sa] - statusWeight[sb];
-    // Same status
     const ta = toEventDateTime(a);
     const tb = toEventDateTime(b);
     if (sa === "upcoming") {
       const pa = priorityWeight[a.priority];
       const pb = priorityWeight[b.priority];
       if (pa !== pb) return pa - pb;
-      return ta - tb; // nearest upcoming first
+      return ta - tb;
     }
-    // completed or missed: newest first
     return tb - ta;
   });
 }
 
-export function addEvent(input: {
+export async function addEvent(input: {
   title: string;
   date: string;
   time: string;
   type: EventType;
   priority: EventPriority;
   notes: string;
-}) {
-  ensureInit();
-  const event: EventItem = {
-    id: crypto.randomUUID(),
+}): Promise<void> {
+  if (!currentUserId) return;
+  const row = {
+    user_id: currentUserId,
     title: input.title.trim(),
     date: input.date,
     time: input.time,
@@ -139,45 +133,89 @@ export function addEvent(input: {
     completed: false,
     notes: input.notes.trim(),
   };
-  persist([...cache, event]);
+  const { data, error } = await supabase.from("events").insert(row).select().single();
+  if (error || !data) {
+    console.error("[events] add failed:", error?.message);
+    return;
+  }
+  cache = [...cache, fromRow(data)];
+  emit();
 }
 
-export function deleteEvent(id: string) {
-  ensureInit();
-  persist(cache.filter((e) => e.id !== id));
+export async function deleteEvent(id: string): Promise<void> {
+  const prev = cache;
+  cache = cache.filter((e) => e.id !== id);
+  emit();
+  const { error } = await supabase.from("events").delete().eq("id", id);
+  if (error) {
+    console.error("[events] delete failed:", error.message);
+    cache = prev;
+    emit();
+  }
 }
 
-export function toggleEventCompletion(id: string) {
-  ensureInit();
-  persist(
-    cache.map((e) =>
-      e.id === id ? { ...e, completed: !e.completed } : e
-    )
-  );
+export async function toggleEventCompletion(id: string): Promise<void> {
+  const t = cache.find((e) => e.id === id);
+  if (!t) return;
+  const next = !t.completed;
+  cache = cache.map((e) => (e.id === id ? { ...e, completed: next } : e));
+  emit();
+  const { error } = await supabase.from("events").update({ completed: next }).eq("id", id);
+  if (error) {
+    console.error("[events] toggle failed:", error.message);
+    cache = cache.map((e) => (e.id === id ? { ...e, completed: t.completed } : e));
+    emit();
+  }
 }
 
-export function updateEvent(id: string, input: {
-  title: string;
-  date: string;
-  time: string;
-  type: EventType;
-  priority: EventPriority;
-  notes: string;
-}) {
-  ensureInit();
-  persist(
-    cache.map((e) =>
-      e.id === id
-        ? {
-            ...e,
-            title: input.title.trim(),
-            date: input.date,
-            time: input.time,
-            type: input.type,
-            priority: input.priority,
-            notes: input.notes.trim(),
-          }
-        : e
-    )
-  );
+export async function updateEvent(
+  id: string,
+  input: {
+    title: string;
+    date: string;
+    time: string;
+    type: EventType;
+    priority: EventPriority;
+    notes: string;
+  },
+): Promise<void> {
+  const patch = {
+    title: input.title.trim(),
+    date: input.date,
+    time: input.time,
+    type: input.type,
+    priority: input.priority,
+    notes: input.notes.trim(),
+  };
+  const prev = cache;
+  cache = cache.map((e) => (e.id === id ? { ...e, ...patch } : e));
+  emit();
+  const { error } = await supabase.from("events").update(patch).eq("id", id);
+  if (error) {
+    console.error("[events] update failed:", error.message);
+    cache = prev;
+    emit();
+  }
+}
+
+/** Used by cloud-migrate to seed from localStorage. */
+export async function bulkInsertEvents(rows: Omit<EventItem, "id">[]): Promise<void> {
+  if (!currentUserId || rows.length === 0) return;
+  const payload = rows.map((r) => ({
+    user_id: currentUserId!,
+    title: r.title,
+    date: r.date,
+    time: r.time,
+    type: r.type,
+    priority: r.priority,
+    completed: r.completed,
+    notes: r.notes,
+  }));
+  const { data, error } = await supabase.from("events").insert(payload).select();
+  if (error) {
+    console.error("[events] bulk insert failed:", error.message);
+    return;
+  }
+  cache = [...cache, ...(data ?? []).map(fromRow)];
+  emit();
 }

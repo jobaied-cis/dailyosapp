@@ -4,17 +4,21 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
+import type { Session } from "@supabase/supabase-js";
+import { supabase } from "@/integrations/supabase/client";
 
 /**
- * DailyOS Auth + Onboarding state.
- *
- * Web version of the RN spec:
- *   AsyncStorage → localStorage
- *
- * No UI, no routing — just state, persistence, and actions.
+ * DailyOS Auth — backed by Supabase.
+ * Public API kept compatible with previous localStorage version:
+ *   isFirstTime, isLoggedIn, userProfile, introProgress, loading,
+ *   logout, completeOnboarding, setUserProfile, setIntroProgress,
+ *   finishOnboarding, login (legacy no-op)
+ * New async methods:
+ *   signInWithEmail, signUpWithEmail, signInWithGoogle
  */
 
 export type UserProfile = {
@@ -27,24 +31,33 @@ export type UserProfile = {
 type AuthState = {
   isFirstTime: boolean;
   isLoggedIn: boolean;
+  userId: string | null;
   userProfile: UserProfile;
   introProgress: number;
   loading: boolean;
 };
 
 type AuthContextValue = AuthState & {
+  // legacy (kept for API compat — no real effect)
   login: (profile?: NonNullable<UserProfile>) => void;
-  logout: () => void;
+  // real auth
+  signInWithEmail: (email: string, password: string) => Promise<{ error?: string }>;
+  signUpWithEmail: (
+    email: string,
+    password: string,
+    name?: string,
+  ) => Promise<{ error?: string }>;
+  signInWithGoogle: () => Promise<{ error?: string }>;
+  logout: () => Promise<void>;
+  // onboarding / profile
   completeOnboarding: () => void;
-  setUserProfile: (profile: NonNullable<UserProfile>) => void;
+  setUserProfile: (profile: NonNullable<UserProfile>) => Promise<void>;
   setIntroProgress: (index: number) => void;
-  finishOnboarding: (profile: NonNullable<UserProfile>) => void;
+  finishOnboarding: (profile: NonNullable<UserProfile>) => Promise<void>;
 };
 
 const STORAGE_KEYS = {
   isFirstTime: "dailyos.auth.isFirstTime",
-  isLoggedIn: "dailyos.auth.isLoggedIn",
-  userProfile: "dailyos.auth.userProfile",
   introProgress: "dailyos.auth.introProgress",
 } as const;
 
@@ -52,40 +65,6 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 function hasWindow(): boolean {
   return typeof window !== "undefined" && typeof window.localStorage !== "undefined";
-}
-
-function readBool(key: string, fallback: boolean): boolean {
-  if (!hasWindow()) return fallback;
-  try {
-    const raw = window.localStorage.getItem(key);
-    if (raw === null) return fallback;
-    return raw === "true";
-  } catch {
-    return fallback;
-  }
-}
-
-function readNumber(key: string, fallback: number): number {
-  if (!hasWindow()) return fallback;
-  try {
-    const raw = window.localStorage.getItem(key);
-    if (raw === null) return fallback;
-    const n = Number(raw);
-    return Number.isFinite(n) ? n : fallback;
-  } catch {
-    return fallback;
-  }
-}
-
-function readJSON<T>(key: string, fallback: T): T {
-  if (!hasWindow()) return fallback;
-  try {
-    const raw = window.localStorage.getItem(key);
-    if (!raw) return fallback;
-    return JSON.parse(raw) as T;
-  } catch {
-    return fallback;
-  }
 }
 
 function safeSet(key: string, value: string) {
@@ -97,75 +76,172 @@ function safeSet(key: string, value: string) {
   }
 }
 
-function safeRemove(key: string) {
-  if (!hasWindow()) return;
+function readBool(key: string, fallback: boolean): boolean {
+  if (!hasWindow()) return fallback;
   try {
-    window.localStorage.removeItem(key);
+    const raw = window.localStorage.getItem(key);
+    return raw === null ? fallback : raw === "true";
   } catch {
-    /* noop */
+    return fallback;
   }
+}
+
+function readNumber(key: string, fallback: number): number {
+  if (!hasWindow()) return fallback;
+  try {
+    const raw = window.localStorage.getItem(key);
+    const n = raw === null ? fallback : Number(raw);
+    return Number.isFinite(n) ? n : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+async function loadProfile(userId: string): Promise<UserProfile> {
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("name, avatar, currency, priorities")
+    .eq("id", userId)
+    .maybeSingle();
+  if (error || !data) return null;
+  return {
+    name: data.name ?? undefined,
+    avatar: data.avatar ?? undefined,
+    currency: data.currency ?? undefined,
+    priorities: data.priorities ?? [],
+  };
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AuthState>({
     isFirstTime: true,
     isLoggedIn: false,
+    userId: null,
     userProfile: null,
     introProgress: 0,
     loading: true,
   });
 
-  // Hydrate from localStorage on mount (SSR-safe).
+  // Track current session synchronously across handlers
+  const sessionRef = useRef<Session | null>(null);
+
+  // Hydrate local-only fields (isFirstTime, introProgress) immediately
   useEffect(() => {
     const isFirstTime = readBool(STORAGE_KEYS.isFirstTime, true);
-    const isLoggedIn = readBool(STORAGE_KEYS.isLoggedIn, false);
-    const userProfile = readJSON<UserProfile>(STORAGE_KEYS.userProfile, null);
     const introProgress = readNumber(STORAGE_KEYS.introProgress, 0);
-    setState({
-      isFirstTime,
-      isLoggedIn,
-      userProfile,
-      introProgress,
-      loading: false,
-    });
+    setState((s) => ({ ...s, isFirstTime, introProgress }));
   }, []);
 
-  const login = useCallback((profile?: NonNullable<UserProfile>) => {
-    setState((s) => {
-      const nextProfile: UserProfile = profile
-        ? { ...(s.userProfile ?? {}), ...profile }
-        : s.userProfile;
-      safeSet(STORAGE_KEYS.isLoggedIn, "true");
-      if (nextProfile) {
-        safeSet(STORAGE_KEYS.userProfile, JSON.stringify(nextProfile));
+  // Wire Supabase session
+  useEffect(() => {
+    let cancelled = false;
+
+    const applySession = async (session: Session | null) => {
+      sessionRef.current = session;
+      if (!session?.user) {
+        if (!cancelled) {
+          setState((s) => ({
+            ...s,
+            isLoggedIn: false,
+            userId: null,
+            userProfile: null,
+            loading: false,
+          }));
+        }
+        return;
       }
-      return { ...s, isLoggedIn: true, userProfile: nextProfile };
+      const profile = await loadProfile(session.user.id);
+      if (cancelled) return;
+      setState((s) => ({
+        ...s,
+        isLoggedIn: true,
+        userId: session.user.id,
+        userProfile: profile,
+        loading: false,
+      }));
+    };
+
+    // 1. Subscribe FIRST
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      // Only react to identity transitions; ignore TOKEN_REFRESHED / INITIAL_SESSION noise
+      if (
+        event === "SIGNED_IN" ||
+        event === "SIGNED_OUT" ||
+        event === "USER_UPDATED"
+      ) {
+        void applySession(session);
+      }
     });
+
+    // 2. Then load existing session
+    void supabase.auth.getSession().then(({ data }) => applySession(data.session));
+
+    return () => {
+      cancelled = true;
+      sub.subscription.unsubscribe();
+    };
   }, []);
 
-  const logout = useCallback(() => {
-    safeSet(STORAGE_KEYS.isLoggedIn, "false");
-    safeRemove(STORAGE_KEYS.userProfile);
+  /* ----------------------------- legacy ----------------------------- */
+  const login = useCallback((_profile?: NonNullable<UserProfile>) => {
+    // No-op: real auth happens via signInWithEmail / signInWithGoogle.
+    if (typeof console !== "undefined") {
+      console.warn("[auth] login() is deprecated; use signInWithEmail / signInWithGoogle.");
+    }
+  }, []);
+
+  /* ----------------------------- real auth -------------------------- */
+  const signInWithEmail = useCallback(async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({
+      email: email.trim(),
+      password,
+    });
+    return { error: error?.message };
+  }, []);
+
+  const signUpWithEmail = useCallback(
+    async (email: string, password: string, name?: string) => {
+      const redirect = hasWindow() ? window.location.origin : undefined;
+      const { error } = await supabase.auth.signUp({
+        email: email.trim(),
+        password,
+        options: {
+          emailRedirectTo: redirect,
+          data: name ? { name } : undefined,
+        },
+      });
+      return { error: error?.message };
+    },
+    [],
+  );
+
+  const signInWithGoogle = useCallback(async () => {
+    const redirect = hasWindow() ? window.location.origin : undefined;
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: redirect },
+    });
+    return { error: error?.message };
+  }, []);
+
+  const logout = useCallback(async () => {
+    await supabase.auth.signOut();
+    // session-only UI flags
     try {
       if (hasWindow()) {
         window.sessionStorage.removeItem("dailyos.welcomeBanner");
         window.localStorage.removeItem("dailyos.weeklyReport.firstSeen");
       }
-    } catch { /* noop */ }
-    setState((s) => ({ ...s, isLoggedIn: false, userProfile: null }));
+    } catch {
+      /* noop */
+    }
+    // applySession() via onAuthStateChange will clear state
   }, []);
 
+  /* ----------------------------- onboarding ------------------------- */
   const completeOnboarding = useCallback(() => {
     safeSet(STORAGE_KEYS.isFirstTime, "false");
     setState((s) => ({ ...s, isFirstTime: false }));
-  }, []);
-
-  const setUserProfile = useCallback((profile: NonNullable<UserProfile>) => {
-    setState((s) => {
-      const merged: UserProfile = { ...(s.userProfile ?? {}), ...profile };
-      safeSet(STORAGE_KEYS.userProfile, JSON.stringify(merged));
-      return { ...s, userProfile: merged };
-    });
   }, []);
 
   const setIntroProgress = useCallback((index: number) => {
@@ -174,28 +250,63 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setState((s) => ({ ...s, introProgress: safe }));
   }, []);
 
-  /** Atomic: set profile + log in + mark onboarding done in one state update. */
-  const finishOnboarding = useCallback((profile: NonNullable<UserProfile>) => {
-    setState((s) => {
-      const merged: UserProfile = { ...(s.userProfile ?? {}), ...profile };
-      safeSet(STORAGE_KEYS.userProfile, JSON.stringify(merged));
-      safeSet(STORAGE_KEYS.isLoggedIn, "true");
+  const setUserProfile = useCallback(async (profile: NonNullable<UserProfile>) => {
+    const uid = sessionRef.current?.user.id;
+    if (!uid) {
+      // No session yet — stash locally so ProfileSetup can prefill after signup
+      setState((s) => ({ ...s, userProfile: { ...(s.userProfile ?? {}), ...profile } }));
+      return;
+    }
+    const merged: UserProfile = { ...(state.userProfile ?? {}), ...profile };
+    setState((s) => ({ ...s, userProfile: merged }));
+    const { error } = await supabase.from("profiles").upsert(
+      {
+        id: uid,
+        name: merged?.name ?? null,
+        avatar: merged?.avatar ?? null,
+        currency: merged?.currency ?? null,
+        priorities: merged?.priorities ?? [],
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "id" },
+    );
+    if (error) console.error("[auth] profile upsert failed:", error.message);
+  }, [state.userProfile]);
+
+  const finishOnboarding = useCallback(
+    async (profile: NonNullable<UserProfile>) => {
       safeSet(STORAGE_KEYS.isFirstTime, "false");
-      return { ...s, userProfile: merged, isLoggedIn: true, isFirstTime: false };
-    });
-  }, []);
+      setState((s) => ({ ...s, isFirstTime: false }));
+      await setUserProfile(profile);
+    },
+    [setUserProfile],
+  );
 
   const value = useMemo<AuthContextValue>(
     () => ({
       ...state,
       login,
+      signInWithEmail,
+      signUpWithEmail,
+      signInWithGoogle,
       logout,
       completeOnboarding,
       setUserProfile,
       setIntroProgress,
       finishOnboarding,
     }),
-    [state, login, logout, completeOnboarding, setUserProfile, setIntroProgress, finishOnboarding],
+    [
+      state,
+      login,
+      signInWithEmail,
+      signUpWithEmail,
+      signInWithGoogle,
+      logout,
+      completeOnboarding,
+      setUserProfile,
+      setIntroProgress,
+      finishOnboarding,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

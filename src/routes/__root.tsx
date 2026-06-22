@@ -7,12 +7,16 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { AppShell } from "@/components/AppShell";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider, useAuth } from "@/lib/auth-context";
 import { AuthStack } from "@/components/auth/AuthStack";
 import { SplashScreen } from "@/components/auth/SplashScreen";
 import { InstallPrompt } from "@/components/InstallPrompt";
+import { useEventsSync } from "@/lib/events-store";
+import { useExpensesSync } from "@/lib/expenses-store";
+import { runCloudMigrationOnce } from "@/lib/cloud-migrate";
 
 import appCss from "../styles.css?url";
 
@@ -158,7 +162,16 @@ function RootComponent() {
  *   else         → AppShell (routed Outlet)
  */
 function RootSwitch() {
-  const { loading, isFirstTime, isLoggedIn } = useAuth();
+  const { loading, isFirstTime, isLoggedIn, userId } = useAuth();
+
+  // Keep cloud stores in sync with the current session
+  useEventsSync(userId);
+  useExpensesSync(userId);
+
+  // One-time migrate local data to cloud on first sign-in per user
+  useEffect(() => {
+    if (userId) void runCloudMigrationOnce(userId);
+  }, [userId]);
 
   if (loading) return <SplashScreen />;
   if (isFirstTime) return <AuthStack initial="intro" />;
