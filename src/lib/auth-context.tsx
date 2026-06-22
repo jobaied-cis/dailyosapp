@@ -38,6 +38,7 @@ type AuthContextValue = AuthState & {
   completeOnboarding: () => void;
   setUserProfile: (profile: NonNullable<UserProfile>) => void;
   setIntroProgress: (index: number) => void;
+  finishOnboarding: (profile: NonNullable<UserProfile>) => void;
 };
 
 const STORAGE_KEYS = {
