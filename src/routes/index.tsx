@@ -636,7 +636,7 @@ function Dashboard() {
           onClick={() => navigate({ to: "/routine" })}
           className="quick-add-btn group flex items-center justify-center gap-1.5 rounded-xl border border-border/60 bg-card py-3 text-[13px] font-semibold text-foreground shadow-sm transition-all duration-150 ease-out active:scale-[0.96] active:border-[#378ADD]/60"
         >
-          <ListChecks className="size-4 text-[#378ADD] transition-transform duration-150 group-active:scale-110" /> Task
+          <ListChecks className="size-4 text-[#378ADD] transition-transform duration-150 group-active:scale-110" /> Routine
         </button>
         <button
           onClick={() => navigate({ to: "/events" })}
