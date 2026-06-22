@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Eye, EyeOff, Mail, Lock, User } from "lucide-react";
 import { ListChecks, Target, CalendarDays, Wallet, ChevronRight } from "lucide-react";
+import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-context";
 
 type Screen = "welcome" | "intro" | "login" | "signup" | "profile";
