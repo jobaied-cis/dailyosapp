@@ -307,13 +307,16 @@ function Dashboard() {
   // ---- Memory AI: long-term pattern memory (last 14 days) ----
   const [memoryRefresh, setMemoryRefresh] = useState(0);
   useEffect(() => {
-    const onFocus = () => setMemoryRefresh((n) => n + 1);
-    window.addEventListener("focus", onFocus);
-    document.addEventListener("visibilitychange", onFocus);
-    return () => {
-      window.removeEventListener("focus", onFocus);
-      document.removeEventListener("visibilitychange", onFocus);
+    let last = 0;
+    const onVisibility = () => {
+      if (document.visibilityState !== "visible") return;
+      const now = Date.now();
+      if (now - last < 30_000) return;
+      last = now;
+      setMemoryRefresh((n) => n + 1);
     };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => document.removeEventListener("visibilitychange", onVisibility);
   }, []);
   const memoryInsights = useMemo(() => getMemoryInsights(), [memoryRefresh]);
 
