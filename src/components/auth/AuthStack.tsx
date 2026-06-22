@@ -448,11 +448,12 @@ function passwordScore(pw: string): 0 | 1 | 2 | 3 {
 }
 
 function SignupScreen({ go }: GoProp) {
-  const { setUserProfile } = useAuth();
+  const { setUserProfile, signUpWithEmail, signInWithEmail } = useAuth();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [show, setShow] = useState(false);
+  const [busy, setBusy] = useState(false);
 
   const score = useMemo(() => passwordScore(password), [password]);
   const meter = [
@@ -462,11 +463,31 @@ function SignupScreen({ go }: GoProp) {
     { label: "Strong 💪", color: "#22C55E", emoji: "🟢" },
   ][score];
 
-  const next = () => {
-    // Carry partial profile into ProfileSetup; logic unchanged.
-    setUserProfile({ name: name || undefined });
+  const next = async () => {
+    const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
+    if (!emailValid) return toast.error("Enter a valid email");
+    if (password.length < 6) return toast.error("Password must be 6+ characters");
+    setBusy(true);
+    const { error: signUpErr } = await signUpWithEmail(email, password, name || undefined);
+    if (signUpErr) {
+      setBusy(false);
+      toast.error(signUpErr);
+      return;
+    }
+    // Try to grab a session immediately (works when email confirmation is disabled).
+    const { error: signInErr } = await signInWithEmail(email, password);
+    setBusy(false);
+    if (signInErr) {
+      // Email confirmation likely required.
+      toast.success("Check your email to confirm, then sign in.");
+      go("login");
+      return;
+    }
+    // Stash name so ProfileSetup prefills; full profile saved on finish.
+    await setUserProfile({ name: name || undefined });
     go("profile");
   };
+
 
   return (
     <Stage>
@@ -520,7 +541,7 @@ function SignupScreen({ go }: GoProp) {
         </div>
 
         <div className="mt-6 flex flex-col gap-3">
-          <PrimaryButton onClick={next}>Create your system 🚀</PrimaryButton>
+          <PrimaryButton onClick={next} disabled={busy}>{busy ? "Creating…" : "Create your system 🚀"}</PrimaryButton>
           <Divider />
           <GoogleButton />
         </div>
