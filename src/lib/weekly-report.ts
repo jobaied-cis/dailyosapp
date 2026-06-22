@@ -99,7 +99,7 @@ export function getWeeklyReport(data: WeeklyReportInput): WeeklyReport {
       label: "Active days",
       value: `${activeDays}/7`,
       icon: "📅",
-      tone: activeDays >= 4 ? "good" : activeDays > 0 ? "warn" : "neutral",
+      tone: activeDays >= 4 ? "good" : "neutral",
     },
     {
       label: "Spent",
