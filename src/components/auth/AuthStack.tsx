@@ -542,7 +542,7 @@ const PRIORITIES: { id: string; label: string; emoji: string }[] = [
 ];
 
 function ProfileSetupScreen() {
-  const { userProfile, setUserProfile, login, completeOnboarding } = useAuth();
+  const { userProfile, finishOnboarding } = useAuth();
 
   const [avatar, setAvatar] = useState<string>(userProfile?.avatar || AVATARS[0]);
   const [name, setName] = useState<string>(userProfile?.name || "");
@@ -553,14 +553,12 @@ function ProfileSetupScreen() {
     setPriorities((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
 
   const finish = () => {
-    setUserProfile({ name: name || "Guest", avatar, currency, priorities });
     try {
       sessionStorage.setItem("dailyos.welcomeBanner", "1");
     } catch {
       /* noop */
     }
-    login();
-    completeOnboarding();
+    finishOnboarding({ name: name || "Guest", avatar, currency, priorities });
   };
 
   return (
