@@ -710,14 +710,14 @@ function Dashboard() {
                     : "var(--color-primary)";
             const milestone =
               ratio >= 1
-                ? "All done today! 🎉"
+                ? "All done today"
                 : ratio >= 0.75
-                  ? "Almost there 🔥"
+                  ? "Almost there"
                   : ratio >= 0.5
-                    ? "Halfway there 💪"
+                    ? "Halfway there"
                     : ratio >= 0.25
-                      ? "Good momentum 💪"
-                      : "Just getting started 🚀";
+                      ? "Good momentum"
+                      : "Just getting started";
             return (
               <div className="flex items-center gap-4">
                 <div className="shrink-0">
