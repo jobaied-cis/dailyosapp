@@ -162,7 +162,7 @@ function RootComponent() {
  *   else         → AppShell (routed Outlet)
  */
 function RootSwitch() {
-  const { loading, isFirstTime, isLoggedIn, userId } = useAuth();
+  const { loading, isFirstTime, isLoggedIn, userId, completeOnboarding } = useAuth();
 
   // Keep cloud stores in sync with the current session
   useEventsSync(userId);
@@ -173,8 +173,13 @@ function RootSwitch() {
     if (userId) void runCloudMigrationOnce(userId);
   }, [userId]);
 
+  // Defensive: a signed-in user should never loop back to intro on refresh.
+  useEffect(() => {
+    if (isLoggedIn && isFirstTime) completeOnboarding();
+  }, [isLoggedIn, isFirstTime, completeOnboarding]);
+
   if (loading) return <SplashScreen />;
+  if (isLoggedIn) return <AppShell />;
   if (isFirstTime) return <AuthStack initial="intro" />;
-  if (!isLoggedIn) return <AuthStack initial="welcome" />;
-  return <AppShell />;
+  return <AuthStack initial="welcome" />;
 }
