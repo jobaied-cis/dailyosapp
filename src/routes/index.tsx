@@ -648,7 +648,7 @@ function Dashboard() {
           onClick={() => navigate({ to: "/expenses" })}
           className="quick-add-btn group relative flex items-center justify-center gap-1.5 rounded-xl border border-border/60 bg-card py-3 text-[13px] font-semibold text-foreground shadow-sm transition-all duration-150 ease-out active:scale-[0.96] active:border-[#1D9E75]/60"
         >
-          <Plus className="size-4 text-[#1D9E75] transition-transform duration-150 group-active:scale-110" /> Expense
+          <Plus className="size-4 text-[#1D9E75] transition-transform duration-150 group-active:scale-110" /> Expenses
           {!hasExpenseToday && (
             <span className="pointer-events-none absolute top-1.5 right-1.5 flex size-2">
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#1D9E75] opacity-60" />
