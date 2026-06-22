@@ -287,7 +287,7 @@ function PrimaryButton({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="w-full py-3.5 text-sm font-medium transition-all duration-200 active:scale-95 disabled:opacity-50"
+      className="w-full py-3.5 text-sm font-medium transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
       style={{
         background: "#378ADD",
         color: "white",
