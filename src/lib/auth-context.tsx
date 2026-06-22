@@ -145,7 +145,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(() => {
     safeSet(STORAGE_KEYS.isLoggedIn, "false");
-    setState((s) => ({ ...s, isLoggedIn: false }));
+    safeRemove(STORAGE_KEYS.userProfile);
+    try {
+      if (hasWindow()) {
+        window.sessionStorage.removeItem("dailyos.welcomeBanner");
+        window.localStorage.removeItem("dailyos.weeklyReport.firstSeen");
+      }
+    } catch { /* noop */ }
+    setState((s) => ({ ...s, isLoggedIn: false, userProfile: null }));
   }, []);
 
   const completeOnboarding = useCallback(() => {
@@ -167,8 +174,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setState((s) => ({ ...s, introProgress: safe }));
   }, []);
 
-  // Silence unused-var lint for safeRemove (kept for future logout-purge flows).
-  void safeRemove;
+  /** Atomic: set profile + log in + mark onboarding done in one state update. */
+  const finishOnboarding = useCallback((profile: NonNullable<UserProfile>) => {
+    setState((s) => {
+      const merged: UserProfile = { ...(s.userProfile ?? {}), ...profile };
+      safeSet(STORAGE_KEYS.userProfile, JSON.stringify(merged));
+      safeSet(STORAGE_KEYS.isLoggedIn, "true");
+      safeSet(STORAGE_KEYS.isFirstTime, "false");
+      return { ...s, userProfile: merged, isLoggedIn: true, isFirstTime: false };
+    });
+  }, []);
 
   const value = useMemo<AuthContextValue>(
     () => ({
@@ -178,8 +193,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       completeOnboarding,
       setUserProfile,
       setIntroProgress,
+      finishOnboarding,
     }),
-    [state, login, logout, completeOnboarding, setUserProfile, setIntroProgress],
+    [state, login, logout, completeOnboarding, setUserProfile, setIntroProgress, finishOnboarding],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
