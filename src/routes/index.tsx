@@ -616,14 +616,15 @@ function Dashboard() {
             )}
             <span
               aria-label={`Status: ${statusLabel}`}
-              className={`inline-flex items-center rounded-full px-2 py-1 text-[10px] font-bold uppercase tracking-wider border leading-none ${
+              className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10px] font-bold uppercase tracking-wider border leading-none ${
                 status === "red"
-                  ? "bg-red-100 text-red-700 border-red-200"
+                  ? "bg-red-600 text-white border-red-700 shadow-sm shadow-red-900/30 animate-soft-pulse"
                   : status === "yellow"
-                    ? "bg-amber-100 text-amber-700 border-amber-200"
+                    ? "bg-amber-100 text-amber-800 border-amber-300"
                     : "bg-emerald-100 text-emerald-700 border-emerald-200"
               }`}
             >
+              {status === "red" && <AlertTriangle className="size-3" aria-hidden />}
               {statusLabel}
             </span>
           </div>
