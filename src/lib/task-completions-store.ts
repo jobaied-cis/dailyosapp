@@ -69,6 +69,22 @@ export function toggleCompletedOn(taskId: string, date: Date | string = new Date
   return !current;
 }
 
+/** Remove every completion entry for a given routine date (used when starting a new day). */
+export function clearCompletionsForDay(date: Date | string = new Date()): void {
+  const key = typeof date === "string" ? date : dateKey(date);
+  const m = read();
+  if (!m[key]) return;
+  delete m[key];
+  write(m);
+}
+
+/** Read every task-id completed on a given date. */
+export function getCompletionsForDay(date: Date | string = new Date()): string[] {
+  const key = typeof date === "string" ? date : dateKey(date);
+  const m = read();
+  return Object.keys(m[key] ?? {});
+}
+
 /** Remove all completion entries for the given task (used when a series is deleted). */
 export function clearCompletionsForTask(taskId: string): void {
   const m = read();
