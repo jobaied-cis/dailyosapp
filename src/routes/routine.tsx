@@ -23,6 +23,28 @@ function getTaskEndMinutes(t: Task): number {
   return toMinutes(t.time) + 30;
 }
 
+/**
+ * Cutoff for grouping post-midnight tasks under "tomorrow".
+ * Any task starting before 06:00 belongs to the next calendar day's routine.
+ */
+const TOMORROW_CUTOFF_MIN = 360; // 06:00
+
+/** 0 = today, 1 = tomorrow — based on start time. */
+function taskDayOffset(t: Task): 0 | 1 {
+  return toMinutes(t.time) < TOMORROW_CUTOFF_MIN ? 1 : 0;
+}
+
+/** Convert "HH:MM" (24h) to "h:MM AM/PM" (12h). */
+function formatTime12(hhmm: string): string {
+  if (!hhmm || !/^\d{1,2}:\d{2}$/.test(hhmm)) return hhmm;
+  const [hRaw, mRaw] = hhmm.split(":").map(Number);
+  const h = ((hRaw % 24) + 24) % 24;
+  const m = ((mRaw % 60) + 60) % 60;
+  const ampm = h < 12 ? "AM" : "PM";
+  const hr = h % 12 || 12;
+  return `${hr}:${String(m).padStart(2, "0")} ${ampm}`;
+}
+
 function formatGap(minutes: number): string {
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
