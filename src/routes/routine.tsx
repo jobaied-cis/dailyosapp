@@ -23,6 +23,28 @@ function getTaskEndMinutes(t: Task): number {
   return toMinutes(t.time) + 30;
 }
 
+/**
+ * Cutoff for grouping post-midnight tasks under "tomorrow".
+ * Any task starting before 06:00 belongs to the next calendar day's routine.
+ */
+const TOMORROW_CUTOFF_MIN = 360; // 06:00
+
+/** 0 = today, 1 = tomorrow — based on start time. */
+function taskDayOffset(t: Task): 0 | 1 {
+  return toMinutes(t.time) < TOMORROW_CUTOFF_MIN ? 1 : 0;
+}
+
+/** Convert "HH:MM" (24h) to "h:MM AM/PM" (12h). */
+function formatTime12(hhmm: string): string {
+  if (!hhmm || !/^\d{1,2}:\d{2}$/.test(hhmm)) return hhmm;
+  const [hRaw, mRaw] = hhmm.split(":").map(Number);
+  const h = ((hRaw % 24) + 24) % 24;
+  const m = ((mRaw % 60) + 60) % 60;
+  const ampm = h < 12 ? "AM" : "PM";
+  const hr = h % 12 || 12;
+  return `${hr}:${String(m).padStart(2, "0")} ${ampm}`;
+}
+
 function formatGap(minutes: number): string {
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
@@ -53,7 +75,16 @@ export const Route = createFileRoute("/routine")({
 });
 
 function RoutinePage() {
-  const tasks = useTasks();
+  const rawTasks = useTasks();
+  // Re-order so any task starting before 06:00 lands AFTER tonight's tasks
+  // (belongs to tomorrow's routine). Stats/streaks/completions are unaffected
+  // — they key off the raw store, not this rendering order.
+  const tasks = [...rawTasks].sort((a, b) => {
+    const da = taskDayOffset(a);
+    const db = taskDayOffset(b);
+    if (da !== db) return da - db;
+    return toMinutes(a.time) - toMinutes(b.time);
+  });
   const online = useOnline();
   const [open, setOpen] = useState(false);
   const [aiOpen, setAiOpen] = useState(false);
@@ -143,14 +174,15 @@ function RoutinePage() {
   if (now !== null && hereIndex === -1 && tasks.length > 0 && nowMin < toMinutes(tasks[0].time)) hereIndex = 0;
 
 
-  // Group sorted tasks into time sections
-  type SectionItem = { label: string; icon: string; tasks: Task[]; originalIndices: number[] };
+  // Group sorted tasks into time sections, tagged with day offset (0=today, 1=tomorrow)
+  type SectionItem = { day: 0 | 1; label: string; icon: string; tasks: Task[]; originalIndices: number[] };
   const sections: SectionItem[] = [];
   let current: SectionItem | null = null;
 
   for (let i = 0; i < tasks.length; i++) {
     const t = tasks[i];
     const m = toMinutes(t.time);
+    const day = taskDayOffset(t);
     let label: string;
     let icon: string;
     if (m >= 300 && m < 720) { label = "Morning"; icon = "\u{1F305}"; }
@@ -158,8 +190,8 @@ function RoutinePage() {
     else if (m >= 1020 && m < 1260) { label = "Evening"; icon = "\u{1F306}"; }
     else { label = "Night"; icon = "\u{1F319}"; }
 
-    if (!current || current.label !== label) {
-      current = { label, icon, tasks: [], originalIndices: [] };
+    if (!current || current.label !== label || current.day !== day) {
+      current = { day, label, icon, tasks: [], originalIndices: [] };
       sections.push(current);
     }
     current.tasks.push(t);
@@ -347,7 +379,7 @@ function RoutinePage() {
                 </span>
                 <h3 className="text-lg font-bold text-foreground mt-3">{activeTask.title}</h3>
                 <p className="text-sm text-muted-foreground mt-1">
-                  {activeTask.endTime ? `${activeTask.time} – ${activeTask.endTime}` : activeTask.time}
+                  {activeTask.endTime ? `${formatTime12(activeTask.time)} – ${formatTime12(activeTask.endTime)}` : formatTime12(activeTask.time)}
                 </p>
                 <p className="text-2xl font-bold text-primary mt-3">
                   ⏳ {formatDuration(remaining)} left
@@ -373,7 +405,7 @@ function RoutinePage() {
                   {" · next up: "}
                   <span className="text-foreground font-semibold">{nextUp.title}</span>
                   {" "}
-                  <span className="font-mono text-xs">({nextUp.time}{minsUntil > 0 ? ` · ${formatDuration(minsUntil)}` : ""})</span>
+                  <span className="font-mono text-xs">({formatTime12(nextUp.time)}{minsUntil > 0 ? ` · ${formatDuration(minsUntil)}` : ""})</span>
                 </p>
               ) : (
                 <p className="text-sm text-muted-foreground animate-task-bounce">You&apos;re done for today ✨</p>
@@ -568,9 +600,24 @@ function RoutinePage() {
       })()}
 
       <ul className="space-y-3">
-        {sections.map((section) => (
-          <Fragment key={section.label}>
-            <li className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground/80 px-1 select-none pt-4 pb-1 animate-fade-in-soft">
+        {sections.map((section, sIdx) => {
+          const prevDay = sIdx > 0 ? sections[sIdx - 1].day : -1;
+          const showDayHeader = section.day !== prevDay;
+          return (
+          <Fragment key={`${section.day}-${section.label}`}>
+            {showDayHeader && (
+              <li className="flex items-center gap-2 px-1 select-none pt-3 pb-1 animate-fade-in-soft">
+                <span className={`text-[10px] font-bold uppercase tracking-[0.2em] px-2.5 py-1 rounded-full ${
+                  section.day === 0
+                    ? "bg-primary/10 text-primary"
+                    : "bg-secondary text-muted-foreground"
+                }`}>
+                  {section.day === 0 ? "Today" : "Tomorrow"}
+                </span>
+                <span className="flex-1 h-px bg-border/60" />
+              </li>
+            )}
+            <li className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground/80 px-1 select-none pt-2 pb-1 animate-fade-in-soft">
               <span>{section.icon}</span>
               <span>{section.label}</span>
             </li>
@@ -603,14 +650,14 @@ function RoutinePage() {
                       className={`flex items-start gap-3 p-4 w-full ${t.completed ? "animate-task-bounce animate-success-flash rounded-[1.25rem]" : ""}`}
                     >
                       {/* Left time rail */}
-                      <div className="w-14 shrink-0 flex flex-col items-start pt-0.5">
-                        <span className="text-[13px] font-mono font-semibold text-foreground/80 leading-tight">
-                          {t.time}
+                      <div className="w-16 shrink-0 flex flex-col items-start pt-0.5">
+                        <span className="text-[12px] font-mono font-semibold text-foreground/80 leading-tight whitespace-nowrap">
+                          {formatTime12(t.time)}
                         </span>
                         {t.endTime && (
                           <>
-                            <span className="text-[10px] font-mono text-muted-foreground/70 leading-tight mt-0.5">
-                              {t.endTime}
+                            <span className="text-[10px] font-mono text-muted-foreground/70 leading-tight mt-0.5 whitespace-nowrap">
+                              {formatTime12(t.endTime)}
                             </span>
                             <span className="text-[9px] font-medium text-muted-foreground/60 mt-1">
                               {formatDuration(getTaskEndMinutes(t) - toMinutes(t.time))}
@@ -681,8 +728,10 @@ function RoutinePage() {
                     </div>
                   </li>
                 {i < tasks.length - 1 && (() => {
+                  const next = tasks[i + 1];
+                  if (taskDayOffset(next) !== taskDayOffset(t)) return null;
                   const currentEnd = getTaskEndMinutes(t);
-                  const nextStart = toMinutes(tasks[i + 1].time);
+                  const nextStart = toMinutes(next.time);
                   const gapMin = nextStart - currentEnd;
                   if (gapMin <= 15) return null;
                   return (
@@ -697,7 +746,8 @@ function RoutinePage() {
               );
             })}
           </Fragment>
-        ))}
+          );
+        })}
         {hereIndex === -1 && tasks.length > 0 && (
           <li className="flex items-center gap-2.5 px-1 py-1.5 select-none animate-fade-in-soft">
             <span className="relative flex size-3 shrink-0">
