@@ -610,22 +610,9 @@ function RoutinePage() {
 
       <ul className="space-y-3">
         {sections.map((section, sIdx) => {
-          const prevDay = sIdx > 0 ? sections[sIdx - 1].day : -1;
-          const showDayHeader = section.day !== prevDay;
           return (
-          <Fragment key={`${section.day}-${section.label}`}>
-            {showDayHeader && (
-              <li className="flex items-center gap-2 px-1 select-none pt-3 pb-1 animate-fade-in-soft">
-                <span className={`text-[10px] font-bold uppercase tracking-[0.2em] px-2.5 py-1 rounded-full ${
-                  section.day === 0
-                    ? "bg-primary/10 text-primary"
-                    : "bg-secondary text-muted-foreground"
-                }`}>
-                  {section.day === 0 ? "Today" : "Tomorrow"}
-                </span>
-                <span className="flex-1 h-px bg-border/60" />
-              </li>
-            )}
+          <Fragment key={`${sIdx}-${section.label}`}>
+
             <li className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground/80 px-1 select-none pt-2 pb-1 animate-fade-in-soft">
               <span>{section.icon}</span>
               <span>{section.label}</span>
