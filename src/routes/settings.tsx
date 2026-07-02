@@ -46,6 +46,7 @@ function SettingsPage() {
   const { userProfile, logout } = useAuth();
   const currency = useCurrency();
   const { theme, setTheme, mounted } = useTheme();
+  const { dayEndsAtMin, setDayEndsAtMin, mounted: dayEndsMounted } = useDayEndsAt();
 
 
   const name = userProfile?.name || "Your name";
