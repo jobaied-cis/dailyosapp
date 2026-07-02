@@ -5,6 +5,17 @@ import { useAuth } from "@/lib/auth-context";
 import { CurrencyTrigger } from "@/components/CurrencySheet";
 import { useCurrency, TAKA } from "@/lib/currency";
 import { useTheme } from "@/lib/theme-store";
+import { useDayEndsAt } from "@/lib/day-boundary-store";
+
+function formatHour12(min: number): string {
+  const h = Math.floor(min / 60) % 24;
+  const m = min % 60;
+  const ampm = h < 12 ? "AM" : "PM";
+  const hr = h % 12 || 12;
+  return `${hr}:${String(m).padStart(2, "0")} ${ampm}`;
+}
+
+const DAY_END_OPTIONS = [0, 60, 120, 180, 240, 300, 360]; // 12 AM – 6 AM
 
 
 export const Route = createFileRoute("/settings")({
@@ -35,6 +46,7 @@ function SettingsPage() {
   const { userProfile, logout } = useAuth();
   const currency = useCurrency();
   const { theme, setTheme, mounted } = useTheme();
+  const { dayEndsAtMin, setDayEndsAtMin, mounted: dayEndsMounted } = useDayEndsAt();
 
 
   const name = userProfile?.name || "Your name";
@@ -206,6 +218,46 @@ function SettingsPage() {
           })}
         </div>
       </section>
+
+      {/* Routine day */}
+      <section className="rounded-[14px] border border-border/60 bg-card p-4 space-y-3 shadow-sm transition-all hover:border-border">
+        <div>
+          <h2 className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+            Routine Day
+          </h2>
+          <p className="text-[12px] text-muted-foreground mt-1">
+            Tasks scheduled before this time belong to the previous routine day.
+          </p>
+        </div>
+        <div className="flex items-center justify-between">
+          <span className="text-[13px] font-semibold text-foreground">Day ends at</span>
+          <span className="text-[12px] font-mono font-semibold text-primary">
+            {dayEndsMounted ? formatHour12(dayEndsAtMin) : "—"}
+          </span>
+        </div>
+        <div className="grid grid-cols-4 gap-2">
+          {DAY_END_OPTIONS.map((opt) => {
+            const selected = dayEndsMounted && dayEndsAtMin === opt;
+            return (
+              <button
+                key={opt}
+                type="button"
+                onClick={() => setDayEndsAtMin(opt)}
+                aria-pressed={selected}
+                className={`h-10 rounded-[10px] border text-[12px] font-semibold transition-all active:scale-[0.96] ${
+                  selected
+                    ? "border-primary bg-primary/10 text-primary shadow-[0_0_0_1px_var(--primary)]"
+                    : "border-border/60 bg-background/40 text-muted-foreground hover:bg-secondary/40 hover:text-foreground"
+                }`}
+              >
+                {formatHour12(opt)}
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+
 
 
 

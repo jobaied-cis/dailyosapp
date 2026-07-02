@@ -12,6 +12,7 @@ import { suggestNextTask } from "@/lib/ai-routine.functions";
 import { haptic } from "@/lib/haptic";
 import { useOnline } from "@/lib/use-online";
 import { toast } from "sonner";
+import { useDayEndsAt } from "@/lib/day-boundary-store";
 
 function toMinutes(hhmm: string): number {
   const [h, m] = hhmm.split(":").map(Number);
@@ -24,14 +25,15 @@ function getTaskEndMinutes(t: Task): number {
 }
 
 /**
- * Cutoff for grouping post-midnight tasks under "tomorrow".
- * Any task starting before 06:00 belongs to the next calendar day's routine.
+ * Late-night ordering only. Tasks whose start time is before the user's
+ * "Day Ends At" setting belong to the PREVIOUS routine day — they are
+ * shown under the same "Today" heading, but sorted after the evening
+ * blocks so the timeline reads chronologically past midnight.
+ * Stats, streaks, completions and notifications all key off the raw
+ * store and are unaffected by this ordering.
  */
-const TOMORROW_CUTOFF_MIN = 360; // 06:00
-
-/** 0 = today, 1 = tomorrow — based on start time. */
-function taskDayOffset(t: Task): 0 | 1 {
-  return toMinutes(t.time) < TOMORROW_CUTOFF_MIN ? 1 : 0;
+function taskLateNightOffset(t: Task, dayEndsAtMin: number): 0 | 1 {
+  return toMinutes(t.time) < dayEndsAtMin ? 1 : 0;
 }
 
 /** Convert "HH:MM" (24h) to "h:MM AM/PM" (12h). */
@@ -76,12 +78,15 @@ export const Route = createFileRoute("/routine")({
 
 function RoutinePage() {
   const rawTasks = useTasks();
-  // Re-order so any task starting before 06:00 lands AFTER tonight's tasks
-  // (belongs to tomorrow's routine). Stats/streaks/completions are unaffected
-  // — they key off the raw store, not this rendering order.
+  const { dayEndsAtMin } = useDayEndsAt();
+  // Re-order so any task starting before the "Day Ends At" cutoff lands
+  // AFTER tonight's tasks — those late-night tasks still belong to the
+  // SAME routine day (yesterday's plan continuing past midnight).
+  // Stats/streaks/completions are unaffected — they key off the raw store,
+  // not this rendering order.
   const tasks = [...rawTasks].sort((a, b) => {
-    const da = taskDayOffset(a);
-    const db = taskDayOffset(b);
+    const da = taskLateNightOffset(a, dayEndsAtMin);
+    const db = taskLateNightOffset(b, dayEndsAtMin);
     if (da !== db) return da - db;
     return toMinutes(a.time) - toMinutes(b.time);
   });
@@ -174,29 +179,33 @@ function RoutinePage() {
   if (now !== null && hereIndex === -1 && tasks.length > 0 && nowMin < toMinutes(tasks[0].time)) hereIndex = 0;
 
 
-  // Group sorted tasks into time sections, tagged with day offset (0=today, 1=tomorrow)
-  type SectionItem = { day: 0 | 1; label: string; icon: string; tasks: Task[]; originalIndices: number[] };
+  // Group sorted tasks into time sections. All sections belong to the same
+  // routine day ("Today"); late-night tasks (before the Day Ends At cutoff)
+  // get their own "Late Night" band at the end of the timeline.
+  type SectionItem = { day: 0; label: string; icon: string; tasks: Task[]; originalIndices: number[] };
   const sections: SectionItem[] = [];
   let current: SectionItem | null = null;
 
   for (let i = 0; i < tasks.length; i++) {
     const t = tasks[i];
     const m = toMinutes(t.time);
-    const day = taskDayOffset(t);
+    const isLateNight = taskLateNightOffset(t, dayEndsAtMin) === 1;
     let label: string;
     let icon: string;
-    if (m >= 300 && m < 720) { label = "Morning"; icon = "\u{1F305}"; }
+    if (isLateNight) { label = "Late Night"; icon = "\u{1F319}"; }
+    else if (m >= 300 && m < 720) { label = "Morning"; icon = "\u{1F305}"; }
     else if (m >= 720 && m < 1020) { label = "Afternoon"; icon = "\u2600\uFE0F"; }
     else if (m >= 1020 && m < 1260) { label = "Evening"; icon = "\u{1F306}"; }
     else { label = "Night"; icon = "\u{1F319}"; }
 
-    if (!current || current.label !== label || current.day !== day) {
-      current = { day, label, icon, tasks: [], originalIndices: [] };
+    if (!current || current.label !== label) {
+      current = { day: 0, label, icon, tasks: [], originalIndices: [] };
       sections.push(current);
     }
     current.tasks.push(t);
     current.originalIndices.push(i);
   }
+
 
   const progressLabel =
     allDone
@@ -601,22 +610,9 @@ function RoutinePage() {
 
       <ul className="space-y-3">
         {sections.map((section, sIdx) => {
-          const prevDay = sIdx > 0 ? sections[sIdx - 1].day : -1;
-          const showDayHeader = section.day !== prevDay;
           return (
-          <Fragment key={`${section.day}-${section.label}`}>
-            {showDayHeader && (
-              <li className="flex items-center gap-2 px-1 select-none pt-3 pb-1 animate-fade-in-soft">
-                <span className={`text-[10px] font-bold uppercase tracking-[0.2em] px-2.5 py-1 rounded-full ${
-                  section.day === 0
-                    ? "bg-primary/10 text-primary"
-                    : "bg-secondary text-muted-foreground"
-                }`}>
-                  {section.day === 0 ? "Today" : "Tomorrow"}
-                </span>
-                <span className="flex-1 h-px bg-border/60" />
-              </li>
-            )}
+          <Fragment key={`${sIdx}-${section.label}`}>
+
             <li className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em] text-muted-foreground/80 px-1 select-none pt-2 pb-1 animate-fade-in-soft">
               <span>{section.icon}</span>
               <span>{section.label}</span>
@@ -729,7 +725,7 @@ function RoutinePage() {
                   </li>
                 {i < tasks.length - 1 && (() => {
                   const next = tasks[i + 1];
-                  if (taskDayOffset(next) !== taskDayOffset(t)) return null;
+                  if (taskLateNightOffset(next, dayEndsAtMin) !== taskLateNightOffset(t, dayEndsAtMin)) return null;
                   const currentEnd = getTaskEndMinutes(t);
                   const nextStart = toMinutes(next.time);
                   const gapMin = nextStart - currentEnd;
