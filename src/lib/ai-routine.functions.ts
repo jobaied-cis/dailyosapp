@@ -74,6 +74,13 @@ export const generateRoutine = createServerFn({ method: "POST" })
           .join("\n")}`
       : "";
 
+    const shapeInstruction = `Return ONLY a JSON object in this EXACT shape (no arrays at the root, no extra keys, no prose, no code fences):
+{
+  "tasks": [
+    { "time": "HH:MM", "endTime": "HH:MM", "title": "...", "note": "..." }
+  ]
+}`;
+
     const systemPrompt = `Create a clean daily routine based on the user's plan.
 
 Rules:
@@ -83,17 +90,43 @@ Rules:
 - Keep tasks short and practical
 - Max 10 tasks
 - Each task must have time, endTime, title, optional note
-- Return ONLY structured JSON`;
 
-    try {
+${shapeInstruction}`;
+
+    const userPrompt = `User's plan: ${data.prompt}${existing}`;
+
+    const runOnce = async (system: string) => {
       const { experimental_output } = await generateText({
         model: gateway("google/gemini-3-flash-preview"),
         experimental_output: Output.object({ schema: RoutineSchema }),
-        system: systemPrompt,
-        prompt: `User's plan: ${data.prompt}${existing}`,
+        system,
+        prompt: userPrompt,
       });
+      return experimental_output;
+    };
 
-      const tasks = (experimental_output.tasks || [])
+    const isNoObjectError = (err: unknown) => {
+      const name = (err as { name?: string })?.name ?? "";
+      const msg = (err as { message?: string })?.message ?? "";
+      return (
+        name === "AI_NoObjectGeneratedError" ||
+        name === "NoObjectGeneratedError" ||
+        /NoObjectGenerated|did not match schema|response_format/i.test(msg)
+      );
+    };
+
+    try {
+      let output;
+      try {
+        output = await runOnce(systemPrompt);
+      } catch (err) {
+        if (!isNoObjectError(err)) throw err;
+        console.warn("generateRoutine: schema miss, retrying with stricter shape instruction");
+        const stricter = `${systemPrompt}\n\nCRITICAL: Your previous reply was rejected. You MUST wrap the array under the "tasks" key. Do NOT return a bare array. Reply with the object literally starting with {"tasks":[ and ending with ]}.`;
+        output = await runOnce(stricter);
+      }
+
+      const tasks = (output.tasks || [])
         .map(sanitizeTask)
         .filter((t): t is NonNullable<ReturnType<typeof sanitizeTask>> => t !== null);
 
