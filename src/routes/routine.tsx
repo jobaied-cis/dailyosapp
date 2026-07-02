@@ -728,8 +728,10 @@ function RoutinePage() {
                     </div>
                   </li>
                 {i < tasks.length - 1 && (() => {
+                  const next = tasks[i + 1];
+                  if (taskDayOffset(next) !== taskDayOffset(t)) return null;
                   const currentEnd = getTaskEndMinutes(t);
-                  const nextStart = toMinutes(tasks[i + 1].time);
+                  const nextStart = toMinutes(next.time);
                   const gapMin = nextStart - currentEnd;
                   if (gapMin <= 15) return null;
                   return (
@@ -744,7 +746,8 @@ function RoutinePage() {
               );
             })}
           </Fragment>
-        ))}
+          );
+        })}
         {hereIndex === -1 && tasks.length > 0 && (
           <li className="flex items-center gap-2.5 px-1 py-1.5 select-none animate-fade-in-soft">
             <span className="relative flex size-3 shrink-0">
