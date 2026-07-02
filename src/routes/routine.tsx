@@ -78,12 +78,15 @@ export const Route = createFileRoute("/routine")({
 
 function RoutinePage() {
   const rawTasks = useTasks();
-  // Re-order so any task starting before 06:00 lands AFTER tonight's tasks
-  // (belongs to tomorrow's routine). Stats/streaks/completions are unaffected
-  // — they key off the raw store, not this rendering order.
+  const { dayEndsAtMin } = useDayEndsAt();
+  // Re-order so any task starting before the "Day Ends At" cutoff lands
+  // AFTER tonight's tasks — those late-night tasks still belong to the
+  // SAME routine day (yesterday's plan continuing past midnight).
+  // Stats/streaks/completions are unaffected — they key off the raw store,
+  // not this rendering order.
   const tasks = [...rawTasks].sort((a, b) => {
-    const da = taskDayOffset(a);
-    const db = taskDayOffset(b);
+    const da = taskLateNightOffset(a, dayEndsAtMin);
+    const db = taskLateNightOffset(b, dayEndsAtMin);
     if (da !== db) return da - db;
     return toMinutes(a.time) - toMinutes(b.time);
   });
