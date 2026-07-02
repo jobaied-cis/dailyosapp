@@ -650,14 +650,14 @@ function RoutinePage() {
                       className={`flex items-start gap-3 p-4 w-full ${t.completed ? "animate-task-bounce animate-success-flash rounded-[1.25rem]" : ""}`}
                     >
                       {/* Left time rail */}
-                      <div className="w-14 shrink-0 flex flex-col items-start pt-0.5">
-                        <span className="text-[13px] font-mono font-semibold text-foreground/80 leading-tight">
-                          {t.time}
+                      <div className="w-16 shrink-0 flex flex-col items-start pt-0.5">
+                        <span className="text-[12px] font-mono font-semibold text-foreground/80 leading-tight whitespace-nowrap">
+                          {formatTime12(t.time)}
                         </span>
                         {t.endTime && (
                           <>
-                            <span className="text-[10px] font-mono text-muted-foreground/70 leading-tight mt-0.5">
-                              {t.endTime}
+                            <span className="text-[10px] font-mono text-muted-foreground/70 leading-tight mt-0.5 whitespace-nowrap">
+                              {formatTime12(t.endTime)}
                             </span>
                             <span className="text-[9px] font-medium text-muted-foreground/60 mt-1">
                               {formatDuration(getTaskEndMinutes(t) - toMinutes(t.time))}
