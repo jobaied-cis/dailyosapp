@@ -738,7 +738,7 @@ function RoutinePage() {
                   </li>
                 {i < tasks.length - 1 && (() => {
                   const next = tasks[i + 1];
-                  if (taskDayOffset(next) !== taskDayOffset(t)) return null;
+                  if (taskLateNightOffset(next, dayEndsAtMin) !== taskLateNightOffset(t, dayEndsAtMin)) return null;
                   const currentEnd = getTaskEndMinutes(t);
                   const nextStart = toMinutes(next.time);
                   const gapMin = nextStart - currentEnd;
