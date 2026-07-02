@@ -234,7 +234,7 @@ export function AIRoutineSheet({ onClose }: { onClose: () => void }) {
                       </div>
                       <div className="w-[88px] shrink-0 flex flex-col pt-0.5">
                         <span className="text-[12px] font-mono font-semibold text-foreground/85 leading-tight">
-                          {s.time}–{s.endTime}
+                          {formatTime12(s.time)}–{formatTime12(s.endTime)}
                         </span>
                       </div>
                       <div className="flex-1 min-w-0">
