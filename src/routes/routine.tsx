@@ -128,14 +128,25 @@ function RoutinePage() {
     if (reached < lastMilestone) setLastMilestone(reached);
   }, [pct, total, lastMilestone]);
 
-  // Compute per-task time intelligence based on start/end block
+  // Compute per-task time intelligence based on start/end block.
+  // Compare in "routine-day" coordinates that start at the configured
+  // Day Ends At cutoff, so a late-night task (e.g. 01:30) is treated as
+  // still upcoming during the daytime of the same routine day instead of
+  // being flagged as missed the instant its calendar-time end passes.
+  const toRoutineMin = (m: number) => ((m - dayEndsAtMin) + 1440) % 1440;
+  const nowRoutineMin = now !== null ? toRoutineMin(nowMin) : -1;
   const taskMeta = tasks.map((t) => {
     const start = toMinutes(t.time);
     const end = getTaskEndMinutes(t);
-    const isActive = now !== null && !t.completed && nowMin >= start && nowMin < end;
-    const isMissed = now !== null && !t.completed && nowMin >= end;
+    const rStart = toRoutineMin(start);
+    // Preserve zero/negative-length blocks and blocks that cross the cutoff.
+    const rawLen = Math.max(1, end - start);
+    const rEnd = rStart + rawLen;
+    const isActive = now !== null && !t.completed && nowRoutineMin >= rStart && nowRoutineMin < rEnd;
+    const isMissed = now !== null && !t.completed && nowRoutineMin >= rEnd;
     return { start, end, isActive, isMissed };
   });
+
 
   // Daily summary
   const missedCount = taskMeta.filter((m) => m.isMissed).length;
