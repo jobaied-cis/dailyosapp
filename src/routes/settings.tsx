@@ -5,6 +5,17 @@ import { useAuth } from "@/lib/auth-context";
 import { CurrencyTrigger } from "@/components/CurrencySheet";
 import { useCurrency, TAKA } from "@/lib/currency";
 import { useTheme } from "@/lib/theme-store";
+import { useDayEndsAt } from "@/lib/day-boundary-store";
+
+function formatHour12(min: number): string {
+  const h = Math.floor(min / 60) % 24;
+  const m = min % 60;
+  const ampm = h < 12 ? "AM" : "PM";
+  const hr = h % 12 || 12;
+  return `${hr}:${String(m).padStart(2, "0")} ${ampm}`;
+}
+
+const DAY_END_OPTIONS = [0, 60, 120, 180, 240, 300, 360]; // 12 AM – 6 AM
 
 
 export const Route = createFileRoute("/settings")({
