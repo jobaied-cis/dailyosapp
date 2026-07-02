@@ -12,6 +12,7 @@ import { suggestNextTask } from "@/lib/ai-routine.functions";
 import { haptic } from "@/lib/haptic";
 import { useOnline } from "@/lib/use-online";
 import { toast } from "sonner";
+import { useDayEndsAt } from "@/lib/day-boundary-store";
 
 function toMinutes(hhmm: string): number {
   const [h, m] = hhmm.split(":").map(Number);
@@ -24,14 +25,15 @@ function getTaskEndMinutes(t: Task): number {
 }
 
 /**
- * Cutoff for grouping post-midnight tasks under "tomorrow".
- * Any task starting before 06:00 belongs to the next calendar day's routine.
+ * Late-night ordering only. Tasks whose start time is before the user's
+ * "Day Ends At" setting belong to the PREVIOUS routine day — they are
+ * shown under the same "Today" heading, but sorted after the evening
+ * blocks so the timeline reads chronologically past midnight.
+ * Stats, streaks, completions and notifications all key off the raw
+ * store and are unaffected by this ordering.
  */
-const TOMORROW_CUTOFF_MIN = 360; // 06:00
-
-/** 0 = today, 1 = tomorrow — based on start time. */
-function taskDayOffset(t: Task): 0 | 1 {
-  return toMinutes(t.time) < TOMORROW_CUTOFF_MIN ? 1 : 0;
+function taskLateNightOffset(t: Task, dayEndsAtMin: number): 0 | 1 {
+  return toMinutes(t.time) < dayEndsAtMin ? 1 : 0;
 }
 
 /** Convert "HH:MM" (24h) to "h:MM AM/PM" (12h). */
