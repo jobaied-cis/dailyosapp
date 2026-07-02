@@ -379,7 +379,7 @@ function RoutinePage() {
                 </span>
                 <h3 className="text-lg font-bold text-foreground mt-3">{activeTask.title}</h3>
                 <p className="text-sm text-muted-foreground mt-1">
-                  {activeTask.endTime ? `${activeTask.time} – ${activeTask.endTime}` : activeTask.time}
+                  {activeTask.endTime ? `${formatTime12(activeTask.time)} – ${formatTime12(activeTask.endTime)}` : formatTime12(activeTask.time)}
                 </p>
                 <p className="text-2xl font-bold text-primary mt-3">
                   ⏳ {formatDuration(remaining)} left
