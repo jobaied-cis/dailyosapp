@@ -405,7 +405,7 @@ function RoutinePage() {
                   {" · next up: "}
                   <span className="text-foreground font-semibold">{nextUp.title}</span>
                   {" "}
-                  <span className="font-mono text-xs">({nextUp.time}{minsUntil > 0 ? ` · ${formatDuration(minsUntil)}` : ""})</span>
+                  <span className="font-mono text-xs">({formatTime12(nextUp.time)}{minsUntil > 0 ? ` · ${formatDuration(minsUntil)}` : ""})</span>
                 </p>
               ) : (
                 <p className="text-sm text-muted-foreground animate-task-bounce">You&apos;re done for today ✨</p>
