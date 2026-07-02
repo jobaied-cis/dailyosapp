@@ -75,7 +75,16 @@ export const Route = createFileRoute("/routine")({
 });
 
 function RoutinePage() {
-  const tasks = useTasks();
+  const rawTasks = useTasks();
+  // Re-order so any task starting before 06:00 lands AFTER tonight's tasks
+  // (belongs to tomorrow's routine). Stats/streaks/completions are unaffected
+  // — they key off the raw store, not this rendering order.
+  const tasks = [...rawTasks].sort((a, b) => {
+    const da = taskDayOffset(a);
+    const db = taskDayOffset(b);
+    if (da !== db) return da - db;
+    return toMinutes(a.time) - toMinutes(b.time);
+  });
   const online = useOnline();
   const [open, setOpen] = useState(false);
   const [aiOpen, setAiOpen] = useState(false);
