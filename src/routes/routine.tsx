@@ -179,29 +179,33 @@ function RoutinePage() {
   if (now !== null && hereIndex === -1 && tasks.length > 0 && nowMin < toMinutes(tasks[0].time)) hereIndex = 0;
 
 
-  // Group sorted tasks into time sections, tagged with day offset (0=today, 1=tomorrow)
-  type SectionItem = { day: 0 | 1; label: string; icon: string; tasks: Task[]; originalIndices: number[] };
+  // Group sorted tasks into time sections. All sections belong to the same
+  // routine day ("Today"); late-night tasks (before the Day Ends At cutoff)
+  // get their own "Late Night" band at the end of the timeline.
+  type SectionItem = { day: 0; label: string; icon: string; tasks: Task[]; originalIndices: number[] };
   const sections: SectionItem[] = [];
   let current: SectionItem | null = null;
 
   for (let i = 0; i < tasks.length; i++) {
     const t = tasks[i];
     const m = toMinutes(t.time);
-    const day = taskDayOffset(t);
+    const isLateNight = taskLateNightOffset(t, dayEndsAtMin) === 1;
     let label: string;
     let icon: string;
-    if (m >= 300 && m < 720) { label = "Morning"; icon = "\u{1F305}"; }
+    if (isLateNight) { label = "Late Night"; icon = "\u{1F319}"; }
+    else if (m >= 300 && m < 720) { label = "Morning"; icon = "\u{1F305}"; }
     else if (m >= 720 && m < 1020) { label = "Afternoon"; icon = "\u2600\uFE0F"; }
     else if (m >= 1020 && m < 1260) { label = "Evening"; icon = "\u{1F306}"; }
     else { label = "Night"; icon = "\u{1F319}"; }
 
-    if (!current || current.label !== label || current.day !== day) {
-      current = { day, label, icon, tasks: [], originalIndices: [] };
+    if (!current || current.label !== label) {
+      current = { day: 0, label, icon, tasks: [], originalIndices: [] };
       sections.push(current);
     }
     current.tasks.push(t);
     current.originalIndices.push(i);
   }
+
 
   const progressLabel =
     allDone
