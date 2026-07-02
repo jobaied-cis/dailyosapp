@@ -12,6 +12,16 @@ const QUICK_CHIPS = [
   "Morning routine",
 ];
 
+function formatTime12(hhmm: string): string {
+  if (!hhmm || !/^\d{1,2}:\d{2}$/.test(hhmm)) return hhmm;
+  const [hRaw, mRaw] = hhmm.split(":").map(Number);
+  const h = ((hRaw % 24) + 24) % 24;
+  const m = ((mRaw % 60) + 60) % 60;
+  const ampm = h < 12 ? "AM" : "PM";
+  const hr = h % 12 || 12;
+  return `${hr}:${String(m).padStart(2, "0")} ${ampm}`;
+}
+
 type Suggestion = {
   time: string;
   endTime: string;
