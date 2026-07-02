@@ -416,6 +416,32 @@ function RoutinePage() {
         }
         const nextUp = tasks.find((t, idx) => !t.completed && taskMeta[idx].start > nowMin);
         const minsUntil = nextUp ? toMinutes(nextUp.time) - nowMin : 0;
+        if (allDone) {
+          return (
+            <div className="space-y-2">
+              <div className="bg-card/60 border border-primary/25 rounded-[1.25rem] p-5 text-center shadow-[0_8px_32px_-12px_rgba(37,99,235,0.25)] animate-ai-panel-in">
+                <p className="text-sm text-muted-foreground animate-task-bounce">You&apos;re done for today ✨</p>
+                <p className="text-[12px] text-muted-foreground/80 mt-1">
+                  Archive today and reset the timeline for the next routine day.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    haptic([10, 30, 10]);
+                    startNewRoutineDay();
+                    setSummaryDismissed(true);
+                    setNextSuggestions(null);
+                    setLastMilestone(0);
+                    toast.success("New routine day started 🌅");
+                  }}
+                  className="press mt-4 inline-flex items-center gap-2 bg-primary text-primary-foreground font-semibold px-6 py-3 rounded-full text-sm shadow-[0_6px_20px_-4px_rgba(37,99,235,0.45)] hover:shadow-[0_8px_24px_-4px_rgba(37,99,235,0.55)]"
+                >
+                  <Sparkles className="size-4" strokeWidth={2.5} /> Start New Day
+                </button>
+              </div>
+            </div>
+          );
+        }
         return (
           <div className="space-y-2">
             <div className="bg-card/60 border border-border/40 rounded-[1.25rem] p-4 text-center">
@@ -430,6 +456,7 @@ function RoutinePage() {
               ) : (
                 <p className="text-sm text-muted-foreground animate-task-bounce">You&apos;re done for today ✨</p>
               )}
+
               {!nextSuggestions && (() => {
                 const hasFreeTime = !nextUp || minsUntil >= 15;
                 return (
