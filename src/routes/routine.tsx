@@ -174,14 +174,15 @@ function RoutinePage() {
   if (now !== null && hereIndex === -1 && tasks.length > 0 && nowMin < toMinutes(tasks[0].time)) hereIndex = 0;
 
 
-  // Group sorted tasks into time sections
-  type SectionItem = { label: string; icon: string; tasks: Task[]; originalIndices: number[] };
+  // Group sorted tasks into time sections, tagged with day offset (0=today, 1=tomorrow)
+  type SectionItem = { day: 0 | 1; label: string; icon: string; tasks: Task[]; originalIndices: number[] };
   const sections: SectionItem[] = [];
   let current: SectionItem | null = null;
 
   for (let i = 0; i < tasks.length; i++) {
     const t = tasks[i];
     const m = toMinutes(t.time);
+    const day = taskDayOffset(t);
     let label: string;
     let icon: string;
     if (m >= 300 && m < 720) { label = "Morning"; icon = "\u{1F305}"; }
@@ -189,8 +190,8 @@ function RoutinePage() {
     else if (m >= 1020 && m < 1260) { label = "Evening"; icon = "\u{1F306}"; }
     else { label = "Night"; icon = "\u{1F319}"; }
 
-    if (!current || current.label !== label) {
-      current = { label, icon, tasks: [], originalIndices: [] };
+    if (!current || current.label !== label || current.day !== day) {
+      current = { day, label, icon, tasks: [], originalIndices: [] };
       sections.push(current);
     }
     current.tasks.push(t);
