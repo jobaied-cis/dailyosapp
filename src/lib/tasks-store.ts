@@ -3,6 +3,7 @@ import {
   isCompletedOn,
   setCompletedOn,
   clearCompletionsForTask,
+  clearCompletionsForDay,
   subscribeCompletions,
 } from "@/lib/task-completions-store";
 import {
