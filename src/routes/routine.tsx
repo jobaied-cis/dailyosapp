@@ -202,28 +202,41 @@ function RoutinePage() {
   // tasks (12 AM–3 AM) can't prematurely trigger end-of-day.
   const missedCount = taskMeta.filter((m) => m.isMissed).length;
   // Planned = sum of the duration of every task currently rendered in
-  // today's routine list.
-  //   - Uses ONLY tasks from useTasks() (already excludes archived days,
-  //     other weekdays, skipped-today, and AI preview tasks that live in
-  //     component state, not the store).
-  //   - Uses the SAME rawDurationMin helper each task card uses.
-  //   - Skips tasks without an explicit endTime (no default duration —
-  //     the card doesn't show one either, so it can't contribute).
-  //   - Clamps to [0, 1440) so a corrupted row can never inject 24h.
-  //   - Counts each task exactly once.
+  // today's routine list. `tasks` comes from useTasks(), which already
+  // scopes to the current routine day (today's weekday, today's exception
+  // overlay, no archived-day rows). No extra date filter is required.
+  // Tasks without an endTime contribute nothing (the card shows no
+  // duration either).
   const plannedBreakdown = tasks
     .filter((t) => !!t.endTime)
-    .map((t) => {
-      const d = rawDurationMin(t);
-      const safe = Number.isFinite(d) && d > 0 && d < 1440 ? d : 0;
-      return { id: t.id, title: t.title, time: t.time, endTime: t.endTime, dur: safe };
-    });
+    .map((t) => ({
+      id: t.id,
+      title: t.title,
+      time: t.time,
+      endTime: t.endTime,
+      dur: rawDurationMin(t),
+    }));
   const plannedMin = plannedBreakdown.reduce((sum, b) => sum + b.dur, 0);
   if (typeof window !== "undefined") {
+    const dateKey = new Date().toISOString().slice(0, 10);
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yKey = yesterday.toISOString().slice(0, 10);
+    const plannedIds = new Set(plannedBreakdown.map((b) => b.id));
+    const audit = rawTasks.map((t) => ({
+      id: t.id,
+      title: t.title,
+      routineDayKey: dateKey,
+      calendarDate: dateKey,
+      archived: false,
+      recurring: !!t.repeat && t.repeat !== "none",
+      inTodayList: tasks.some((x) => x.id === t.id),
+      inPlanned: plannedIds.has(t.id),
+    }));
     // eslint-disable-next-line no-console
     console.log(
-      `[Planned] tasks=${plannedBreakdown.length} sum=${plannedMin}m`,
-      plannedBreakdown,
+      `[Planned] currentRoutineDayKey=${dateKey} yesterdayKey=${yKey} today=${tasks.length} yesterday=0 planned=${plannedBreakdown.length} sum=${plannedMin}m`,
+      { audit, breakdown: plannedBreakdown },
     );
   }
   const lastRoutineEnd = taskMeta.length ? Math.max(...taskMeta.map((m) => m.rEnd)) : 0;
