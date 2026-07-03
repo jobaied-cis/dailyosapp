@@ -1113,11 +1113,30 @@ function EditTaskSheet({ task, onClose }: { task: Task; onClose: () => void }) {
   const titleEmpty = !title.trim();
   const showTitleError = touched && titleEmpty;
 
+  const handleStartChange = (v: string) => {
+    setTime(v);
+    if (!endTime) return;
+    const s = toMinutes(v);
+    const eMin = toMinutes(endTime);
+    if (eMin === s || (eMin < s && s - eMin <= 5)) {
+      const bumped = (s + 30) % 1440;
+      setEndTime(`${String(Math.floor(bumped / 60)).padStart(2, "0")}:${String(bumped % 60).padStart(2, "0")}`);
+    }
+  };
+
+  const invalidRange = !!endTime && toMinutes(endTime) === toMinutes(time);
+
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     setTouched(true);
     if (titleEmpty) return;
-    editTask(task.id, { time, endTime: endTime || undefined, title, note });
+    if (invalidRange) {
+      toast.error("End time must differ from start time");
+      return;
+    }
+    // Route through editTaskToday so recurring tasks write a per-day
+    // exception instead of mutating the template (protects history).
+    editTaskToday(task.id, { time, endTime: endTime || undefined, title, note });
     onClose();
   };
 
@@ -1136,7 +1155,7 @@ function EditTaskSheet({ task, onClose }: { task: Task; onClose: () => void }) {
               <input
                 type="time"
                 value={time}
-                onChange={(e) => setTime(e.target.value)}
+                onChange={(e) => handleStartChange(e.target.value)}
                 className="w-full bg-secondary rounded-xl px-4 py-3.5 text-foreground outline-none focus:ring-2 focus:ring-primary/40 focus:bg-card focus:shadow-[0_0_0_4px_rgba(37,99,235,0.08)] transition-all font-medium"
               />
             </Field>
@@ -1149,6 +1168,9 @@ function EditTaskSheet({ task, onClose }: { task: Task; onClose: () => void }) {
               />
             </Field>
           </div>
+          {invalidRange && (
+            <p className="text-[11px] font-medium text-destructive -mt-3">End time must differ from start time.</p>
+          )}
 
           <Field label="Title">
             <input
