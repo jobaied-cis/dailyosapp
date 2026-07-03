@@ -160,26 +160,27 @@ function RoutinePage() {
   // Day Ends At cutoff, so a late-night task (e.g. 01:30) is treated as
   // still upcoming during the daytime of the same routine day instead of
   // being flagged as missed the instant its calendar-time end passes.
-  const toRoutineMin = (m: number) => ((m - dayEndsAtMin) + 1440) % 1440;
+  const toRoutineMin = routineMinFactory(dayEndsAtMin);
   const nowRoutineMin = now !== null ? toRoutineMin(nowMin) : -1;
   const taskMeta = tasks.map((t) => {
     const start = toMinutes(t.time);
     const end = getTaskEndMinutes(t);
     const rStart = toRoutineMin(start);
-    // Preserve zero/negative-length blocks and blocks that cross the cutoff.
-    const rawLen = Math.max(1, end - start);
+    // Wrap-safe length (cross-midnight tasks handled correctly).
+    const rawLen = Math.max(1, rawDurationMin(t) || (end - start));
     const rEnd = rStart + rawLen;
     const isActive = now !== null && !t.completed && nowRoutineMin >= rStart && nowRoutineMin < rEnd;
     const isMissed = now !== null && !t.completed && nowRoutineMin >= rEnd;
-    return { start, end, isActive, isMissed };
+    return { start, end, rStart, rEnd, isActive, isMissed };
   });
 
 
-  // Daily summary
+  // Daily summary — all comparisons happen in routine-day space so late-night
+  // tasks (12 AM–3 AM) can't prematurely trigger end-of-day.
   const missedCount = taskMeta.filter((m) => m.isMissed).length;
-  const plannedMin = tasks.reduce((sum, t) => sum + Math.max(0, getTaskEndMinutes(t) - toMinutes(t.time)), 0);
-  const lastEnd = tasks.length ? Math.max(...tasks.map((t) => getTaskEndMinutes(t))) : 0;
-  const endOfDay = now !== null && tasks.length > 0 && nowMin >= lastEnd;
+  const plannedMin = tasks.reduce((sum, t) => sum + Math.max(0, rawDurationMin(t)), 0);
+  const lastRoutineEnd = taskMeta.length ? Math.max(...taskMeta.map((m) => m.rEnd)) : 0;
+  const endOfDay = now !== null && tasks.length > 0 && nowRoutineMin >= lastRoutineEnd;
   const allDone = total > 0 && done === total;
   const reachedThreshold = total > 0 && done / total >= 0.8;
   const { streak, justBroke, status: streakStatus } = useStreak(reachedThreshold, endOfDay && !reachedThreshold);
@@ -212,9 +213,10 @@ function RoutinePage() {
     setYesterdayRecap(null);
   };
 
-  // Index where "You are here" divider should appear (only after clock is set)
-  let hereIndex = now === null ? -2 : tasks.findIndex((t) => toMinutes(t.time) > nowMin);
-  if (now !== null && hereIndex === -1 && tasks.length > 0 && nowMin < toMinutes(tasks[0].time)) hereIndex = 0;
+  // Index where "You are here" divider should appear (only after clock is set).
+  // Compare in routine-day space so late-night tasks are ordered correctly.
+  let hereIndex = now === null ? -2 : taskMeta.findIndex((m) => m.rStart > nowRoutineMin);
+  if (now !== null && hereIndex === -1 && taskMeta.length > 0 && nowRoutineMin < taskMeta[0].rStart) hereIndex = 0;
 
 
   // Group sorted tasks into time sections. All sections belong to the same
