@@ -800,15 +800,10 @@ function RoutinePage() {
                   </li>
                 {i < tasks.length - 1 && (() => {
                   const next = tasks[i + 1];
-                  // Normalize both times into the active routine day's coordinate
-                  // space (day starts at dayEndsAtMin). This keeps the gap correct
-                  // even when the next task is a late-night task belonging to the
-                  // same routine day (e.g. 11:30 PM → 12:30 AM = 1h free).
-                  const toRoutineMin = (m: number) => ((m - dayEndsAtMin) + 1440) % 1440;
-                  const currentEnd = getTaskEndMinutes(t);
-                  const nextStart = toMinutes(next.time);
-                  const rCurEnd = toRoutineMin(currentEnd);
-                  const rNextStart = toRoutineMin(nextStart);
+                  // Use the shared routine-day meta so cross-midnight blocks
+                  // (rEnd already wraps correctly) produce the right gap.
+                  const rCurEnd = taskMeta[i].rEnd;
+                  const rNextStart = taskMeta[i + 1].rStart;
                   const gapMin = rNextStart - rCurEnd;
                   if (gapMin <= 0) return null;
                   return (
