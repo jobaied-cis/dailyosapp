@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, Fragment } from "react";
-import { addTask, deleteTask, editTask, startNewRoutineDay, toggleTask, useTasks, type Task, type Repeat } from "@/lib/tasks-store";
+import { addTask, deleteTask, editTask, editTaskToday, startNewRoutineDay, toggleTask, useTasks, type Task, type Repeat } from "@/lib/tasks-store";
 import { useStreak } from "@/lib/streak-store";
 import { useDailySummary, getSummaryFor, type DaySummary } from "@/lib/daily-summary-store";
 import { getLastSeenSummaryDate, markSummarySeen } from "@/lib/summary-seen-store";
