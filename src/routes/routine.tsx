@@ -209,6 +209,13 @@ function RoutinePage() {
     (sum, t) => (t.endTime ? sum + Math.max(0, rawDurationMin(t)) : sum),
     0,
   );
+  if (typeof window !== "undefined") {
+    // eslint-disable-next-line no-console
+    console.log("[Planned Debug]", tasks.length, tasks.map((t) => ({
+      id: t.id, title: t.title, time: t.time, endTime: t.endTime,
+      dur: t.endTime ? Math.max(0, rawDurationMin(t)) : 0,
+    })), "sum:", plannedMin);
+  }
   const lastRoutineEnd = taskMeta.length ? Math.max(...taskMeta.map((m) => m.rEnd)) : 0;
   const endOfDay = now !== null && tasks.length > 0 && nowRoutineMin >= lastRoutineEnd;
   const allDone = total > 0 && done === total;
