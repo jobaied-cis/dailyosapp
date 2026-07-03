@@ -4,6 +4,7 @@ import {
   setCompletedOn,
   clearCompletionsForTask,
   clearCompletionsForDay,
+  getCompletionsForDay,
   subscribeCompletions,
 } from "@/lib/task-completions-store";
 import {
@@ -16,6 +17,7 @@ import {
   subscribeExceptions,
   type TaskException,
 } from "@/lib/task-exceptions-store";
+import { archiveRoutineDay } from "@/lib/routine-archive-store";
 
 /**
  * Repeat rule for a task.
