@@ -408,11 +408,16 @@ function RoutinePage() {
 
       {/* Current Task */}
       {now !== null && (() => {
+        // Empty routine — skip Now/Done cards entirely; the list body
+        // renders its own empty state.
+        if (tasks.length === 0) return null;
+
         const activeIndex = taskMeta.findIndex((m) => m.isActive);
         const activeTask = activeIndex >= 0 ? tasks[activeIndex] : null;
         if (activeTask) {
-          const end = getTaskEndMinutes(activeTask);
-          const remaining = Math.max(0, end - nowMin);
+          const meta = taskMeta[activeIndex];
+          // remaining in routine-day space so cross-midnight blocks work.
+          const remaining = Math.max(0, meta.rEnd - nowRoutineMin);
           return (
             <div
               role="button"
@@ -443,8 +448,11 @@ function RoutinePage() {
             </div>
           );
         }
-        const nextUp = tasks.find((t, idx) => !t.completed && taskMeta[idx].start > nowMin);
-        const minsUntil = nextUp ? toMinutes(nextUp.time) - nowMin : 0;
+        // Next-up must also be resolved in routine-day space so late-night
+        // tasks (12 AM–3 AM) are picked as "next" during the evening.
+        const nextIdx = taskMeta.findIndex((m, idx) => !tasks[idx].completed && m.rStart > nowRoutineMin);
+        const nextUp = nextIdx >= 0 ? tasks[nextIdx] : undefined;
+        const minsUntil = nextUp ? taskMeta[nextIdx].rStart - nowRoutineMin : 0;
         if (allDone) {
           return (
             <div className="space-y-2">
