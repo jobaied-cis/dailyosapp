@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState, Fragment } from "react";
-import { addTask, deleteTask, editTask, startNewRoutineDay, toggleTask, useTasks, type Task, type Repeat } from "@/lib/tasks-store";
+import { addTask, deleteTask, editTaskToday, startNewRoutineDay, toggleTask, useTasks, type Task, type Repeat } from "@/lib/tasks-store";
 import { useStreak } from "@/lib/streak-store";
 import { useDailySummary, getSummaryFor, type DaySummary } from "@/lib/daily-summary-store";
 import { getLastSeenSummaryDate, markSummarySeen } from "@/lib/summary-seen-store";
@@ -22,6 +22,33 @@ function toMinutes(hhmm: string): number {
 function getTaskEndMinutes(t: Task): number {
   if (t.endTime) return toMinutes(t.endTime);
   return toMinutes(t.time) + 30;
+}
+
+/**
+ * Raw duration of a task in minutes. Handles cross-midnight blocks
+ * (e.g. 23:30 → 01:00 = 90 min) by wrapping when end <= start.
+ * Zero-duration blocks return 30 (default) for one-off legacy items,
+ * but if start === end we return 0 so callers can flag invalid input.
+ */
+function rawDurationMin(t: Task): number {
+  const start = toMinutes(t.time);
+  if (!t.endTime) return 30;
+  const end = toMinutes(t.endTime);
+  const diff = end - start;
+  if (diff > 0) return diff;
+  if (diff === 0) return 0;
+  return diff + 1440; // cross-midnight
+}
+
+/**
+ * Shift a raw calendar minute into "routine-day" coordinates where the
+ * day begins at `dayEndsAtMin`. All in-day comparisons (active window,
+ * missed, next-up, remaining, end-of-day) MUST use this space so that
+ * late-night tasks (before the cutoff) are treated as still belonging
+ * to the same routine day.
+ */
+function routineMinFactory(dayEndsAtMin: number) {
+  return (m: number) => ((m - dayEndsAtMin) + 1440) % 1440;
 }
 
 /**
@@ -133,26 +160,27 @@ function RoutinePage() {
   // Day Ends At cutoff, so a late-night task (e.g. 01:30) is treated as
   // still upcoming during the daytime of the same routine day instead of
   // being flagged as missed the instant its calendar-time end passes.
-  const toRoutineMin = (m: number) => ((m - dayEndsAtMin) + 1440) % 1440;
+  const toRoutineMin = routineMinFactory(dayEndsAtMin);
   const nowRoutineMin = now !== null ? toRoutineMin(nowMin) : -1;
   const taskMeta = tasks.map((t) => {
     const start = toMinutes(t.time);
     const end = getTaskEndMinutes(t);
     const rStart = toRoutineMin(start);
-    // Preserve zero/negative-length blocks and blocks that cross the cutoff.
-    const rawLen = Math.max(1, end - start);
+    // Wrap-safe length (cross-midnight tasks handled correctly).
+    const rawLen = Math.max(1, rawDurationMin(t) || (end - start));
     const rEnd = rStart + rawLen;
     const isActive = now !== null && !t.completed && nowRoutineMin >= rStart && nowRoutineMin < rEnd;
     const isMissed = now !== null && !t.completed && nowRoutineMin >= rEnd;
-    return { start, end, isActive, isMissed };
+    return { start, end, rStart, rEnd, isActive, isMissed };
   });
 
 
-  // Daily summary
+  // Daily summary — all comparisons happen in routine-day space so late-night
+  // tasks (12 AM–3 AM) can't prematurely trigger end-of-day.
   const missedCount = taskMeta.filter((m) => m.isMissed).length;
-  const plannedMin = tasks.reduce((sum, t) => sum + Math.max(0, getTaskEndMinutes(t) - toMinutes(t.time)), 0);
-  const lastEnd = tasks.length ? Math.max(...tasks.map((t) => getTaskEndMinutes(t))) : 0;
-  const endOfDay = now !== null && tasks.length > 0 && nowMin >= lastEnd;
+  const plannedMin = tasks.reduce((sum, t) => sum + Math.max(0, rawDurationMin(t)), 0);
+  const lastRoutineEnd = taskMeta.length ? Math.max(...taskMeta.map((m) => m.rEnd)) : 0;
+  const endOfDay = now !== null && tasks.length > 0 && nowRoutineMin >= lastRoutineEnd;
   const allDone = total > 0 && done === total;
   const reachedThreshold = total > 0 && done / total >= 0.8;
   const { streak, justBroke, status: streakStatus } = useStreak(reachedThreshold, endOfDay && !reachedThreshold);
@@ -185,9 +213,10 @@ function RoutinePage() {
     setYesterdayRecap(null);
   };
 
-  // Index where "You are here" divider should appear (only after clock is set)
-  let hereIndex = now === null ? -2 : tasks.findIndex((t) => toMinutes(t.time) > nowMin);
-  if (now !== null && hereIndex === -1 && tasks.length > 0 && nowMin < toMinutes(tasks[0].time)) hereIndex = 0;
+  // Index where "You are here" divider should appear (only after clock is set).
+  // Compare in routine-day space so late-night tasks are ordered correctly.
+  let hereIndex = now === null ? -2 : taskMeta.findIndex((m) => m.rStart > nowRoutineMin);
+  if (now !== null && hereIndex === -1 && taskMeta.length > 0 && nowRoutineMin < taskMeta[0].rStart) hereIndex = 0;
 
 
   // Group sorted tasks into time sections. All sections belong to the same
@@ -379,11 +408,16 @@ function RoutinePage() {
 
       {/* Current Task */}
       {now !== null && (() => {
+        // Empty routine — skip Now/Done cards entirely; the list body
+        // renders its own empty state.
+        if (tasks.length === 0) return null;
+
         const activeIndex = taskMeta.findIndex((m) => m.isActive);
         const activeTask = activeIndex >= 0 ? tasks[activeIndex] : null;
         if (activeTask) {
-          const end = getTaskEndMinutes(activeTask);
-          const remaining = Math.max(0, end - nowMin);
+          const meta = taskMeta[activeIndex];
+          // remaining in routine-day space so cross-midnight blocks work.
+          const remaining = Math.max(0, meta.rEnd - nowRoutineMin);
           return (
             <div
               role="button"
@@ -414,8 +448,11 @@ function RoutinePage() {
             </div>
           );
         }
-        const nextUp = tasks.find((t, idx) => !t.completed && taskMeta[idx].start > nowMin);
-        const minsUntil = nextUp ? toMinutes(nextUp.time) - nowMin : 0;
+        // Next-up must also be resolved in routine-day space so late-night
+        // tasks (12 AM–3 AM) are picked as "next" during the evening.
+        const nextIdx = taskMeta.findIndex((m, idx) => !tasks[idx].completed && m.rStart > nowRoutineMin);
+        const nextUp = nextIdx >= 0 ? tasks[nextIdx] : undefined;
+        const minsUntil = nextUp ? taskMeta[nextIdx].rStart - nowRoutineMin : 0;
         if (allDone) {
           return (
             <div className="space-y-2">
@@ -694,7 +731,7 @@ function RoutinePage() {
                               {formatTime12(t.endTime)}
                             </span>
                             <span className="text-[9px] font-medium text-muted-foreground/60 mt-1">
-                              {formatDuration(getTaskEndMinutes(t) - toMinutes(t.time))}
+                              {formatDuration(rawDurationMin(t))}
                             </span>
                           </>
                         )}
@@ -762,16 +799,10 @@ function RoutinePage() {
                     </div>
                   </li>
                 {i < tasks.length - 1 && (() => {
-                  const next = tasks[i + 1];
-                  // Normalize both times into the active routine day's coordinate
-                  // space (day starts at dayEndsAtMin). This keeps the gap correct
-                  // even when the next task is a late-night task belonging to the
-                  // same routine day (e.g. 11:30 PM → 12:30 AM = 1h free).
-                  const toRoutineMin = (m: number) => ((m - dayEndsAtMin) + 1440) % 1440;
-                  const currentEnd = getTaskEndMinutes(t);
-                  const nextStart = toMinutes(next.time);
-                  const rCurEnd = toRoutineMin(currentEnd);
-                  const rNextStart = toRoutineMin(nextStart);
+                  // Use the shared routine-day meta so cross-midnight blocks
+                  // (rEnd already wraps correctly) produce the right gap.
+                  const rCurEnd = taskMeta[i].rEnd;
+                  const rNextStart = taskMeta[i + 1].rStart;
                   const gapMin = rNextStart - rCurEnd;
                   if (gapMin <= 0) return null;
                   return (
@@ -861,10 +892,32 @@ function AddTaskSheet({ onClose }: { onClose: () => void }) {
   const titleEmpty = !title.trim();
   const showTitleError = touched && titleEmpty;
 
+  // Auto-advance end when start moves past it, unless the user has
+  // explicitly typed a cross-midnight end (end < start by more than 30 min).
+  const handleStartChange = (v: string) => {
+    setTime(v);
+    if (!endTime) return;
+    const s = toMinutes(v);
+    const eMin = toMinutes(endTime);
+    // If end is equal or slightly before start (<= 5 min), treat as invalid
+    // and push end forward by 30 min. Larger backward gaps are treated as
+    // intentional cross-midnight and preserved.
+    if (eMin === s || (eMin < s && s - eMin <= 5)) {
+      const bumped = (s + 30) % 1440;
+      setEndTime(`${String(Math.floor(bumped / 60)).padStart(2, "0")}:${String(bumped % 60).padStart(2, "0")}`);
+    }
+  };
+
+  const invalidRange = !!endTime && toMinutes(endTime) === toMinutes(time);
+
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     setTouched(true);
     if (titleEmpty) return;
+    if (invalidRange) {
+      toast.error("End time must differ from start time");
+      return;
+    }
     const finalRepeat: Repeat =
       repeat === "custom" as never
         ? (customDays.length > 0 ? { days: [...customDays].sort() } : "none")
@@ -889,7 +942,7 @@ function AddTaskSheet({ onClose }: { onClose: () => void }) {
               <input
                 type="time"
                 value={time}
-                onChange={(e) => setTime(e.target.value)}
+                onChange={(e) => handleStartChange(e.target.value)}
                 className="w-full bg-secondary rounded-xl px-4 py-3.5 text-foreground outline-none focus:ring-2 focus:ring-primary/40 focus:bg-card focus:shadow-[0_0_0_4px_rgba(37,99,235,0.08)] transition-all font-medium"
               />
             </Field>
@@ -902,6 +955,9 @@ function AddTaskSheet({ onClose }: { onClose: () => void }) {
               />
             </Field>
           </div>
+          {invalidRange && (
+            <p className="text-[11px] font-medium text-destructive -mt-3">End time must differ from start time.</p>
+          )}
 
           <Field label="Title">
             <input
@@ -1057,11 +1113,30 @@ function EditTaskSheet({ task, onClose }: { task: Task; onClose: () => void }) {
   const titleEmpty = !title.trim();
   const showTitleError = touched && titleEmpty;
 
+  const handleStartChange = (v: string) => {
+    setTime(v);
+    if (!endTime) return;
+    const s = toMinutes(v);
+    const eMin = toMinutes(endTime);
+    if (eMin === s || (eMin < s && s - eMin <= 5)) {
+      const bumped = (s + 30) % 1440;
+      setEndTime(`${String(Math.floor(bumped / 60)).padStart(2, "0")}:${String(bumped % 60).padStart(2, "0")}`);
+    }
+  };
+
+  const invalidRange = !!endTime && toMinutes(endTime) === toMinutes(time);
+
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     setTouched(true);
     if (titleEmpty) return;
-    editTask(task.id, { time, endTime: endTime || undefined, title, note });
+    if (invalidRange) {
+      toast.error("End time must differ from start time");
+      return;
+    }
+    // Route through editTaskToday so recurring tasks write a per-day
+    // exception instead of mutating the template (protects history).
+    editTaskToday(task.id, { time, endTime: endTime || undefined, title, note });
     onClose();
   };
 
@@ -1080,7 +1155,7 @@ function EditTaskSheet({ task, onClose }: { task: Task; onClose: () => void }) {
               <input
                 type="time"
                 value={time}
-                onChange={(e) => setTime(e.target.value)}
+                onChange={(e) => handleStartChange(e.target.value)}
                 className="w-full bg-secondary rounded-xl px-4 py-3.5 text-foreground outline-none focus:ring-2 focus:ring-primary/40 focus:bg-card focus:shadow-[0_0_0_4px_rgba(37,99,235,0.08)] transition-all font-medium"
               />
             </Field>
@@ -1093,6 +1168,9 @@ function EditTaskSheet({ task, onClose }: { task: Task; onClose: () => void }) {
               />
             </Field>
           </div>
+          {invalidRange && (
+            <p className="text-[11px] font-medium text-destructive -mt-3">End time must differ from start time.</p>
+          )}
 
           <Field label="Title">
             <input
@@ -1134,11 +1212,23 @@ function EditTaskSheet({ task, onClose }: { task: Task; onClose: () => void }) {
 }
 
 function FocusMode({ task, onClose, onComplete }: { task: Task; onClose: () => void; onComplete: () => void }) {
+  const { dayEndsAtMin } = useDayEndsAt();
   const initial = (() => {
-    const end = task.endTime ? toMinutes(task.endTime) : toMinutes(task.time) + 30;
+    const startMin = toMinutes(task.time);
+    // Duration handles cross-midnight tasks correctly.
+    const durMin = rawDurationMin(task) || 30;
     const now = new Date();
-    const nowSec = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
-    return Math.max(0, end * 60 - nowSec);
+    const nowMin = now.getHours() * 60 + now.getMinutes();
+    const nowSecInMin = now.getSeconds();
+    const toRoutineMin = routineMinFactory(dayEndsAtMin);
+    // Compute remaining in routine-day minutes then convert to seconds.
+    const rStart = toRoutineMin(startMin);
+    const rEnd = rStart + durMin;
+    const rNow = toRoutineMin(nowMin);
+    const remainingMin = rEnd - rNow;
+    if (remainingMin <= 0) return 0;
+    // Subtract the fractional second offset for a smoother first tick.
+    return Math.max(0, remainingMin * 60 - nowSecInMin);
   })();
   const [remaining, setRemaining] = useState(initial);
   const [paused, setPaused] = useState(false);

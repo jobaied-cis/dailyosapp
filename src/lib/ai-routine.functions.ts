@@ -46,17 +46,64 @@ const SuggestInput = z.object({
   ),
 });
 
+function toMin(hhmm: string): number {
+  const [h, m] = hhmm.split(":").map(Number);
+  return (h || 0) * 60 + (m || 0);
+}
+
+/** Duration honoring cross-midnight blocks (23:30 → 01:00 = 90 min). */
+function durationMin(startHHMM: string, endHHMM: string): number {
+  const diff = toMin(endHHMM) - toMin(startHHMM);
+  if (diff > 0) return diff;
+  if (diff === 0) return 0;
+  return diff + 1440;
+}
+
 function sanitizeTask(t: z.infer<typeof TaskSchema>) {
   const title = t.title?.trim();
   if (!title) return null;
   if (!TIME_RE.test(t.time)) return null;
   if (!TIME_RE.test(t.endTime)) return null;
+  // Reject zero-duration blocks. Cross-midnight (end < start) is allowed
+  // via durationMin's wrap logic; a 24h block is treated as invalid.
+  const dur = durationMin(t.time, t.endTime);
+  if (dur <= 0 || dur >= 24 * 60) return null;
   return {
     time: t.time,
     endTime: t.endTime,
     title: title.slice(0, 120),
     note: t.note?.trim().slice(0, 200) || undefined,
   };
+}
+
+/**
+ * True when [aStart,aEnd) overlaps [bStart,bEnd) on a 24h wall clock,
+ * treating cross-midnight blocks as two intervals.
+ */
+function intervalsOverlap(
+  aStart: string,
+  aEnd: string,
+  bStart: string,
+  bEnd: string,
+): boolean {
+  const expand = (s: string, e: string): Array<[number, number]> => {
+    const sm = toMin(s);
+    const em = toMin(e);
+    if (em > sm) return [[sm, em]];
+    if (em === sm) return [];
+    return [
+      [sm, 1440],
+      [0, em],
+    ];
+  };
+  const A = expand(aStart, aEnd);
+  const B = expand(bStart, bEnd);
+  for (const [as, ae] of A) {
+    for (const [bs, be] of B) {
+      if (as < be && bs < ae) return true;
+    }
+  }
+  return false;
 }
 
 export const generateRoutine = createServerFn({ method: "POST" })
@@ -126,9 +173,29 @@ ${shapeInstruction}`;
         output = await runOnce(stricter);
       }
 
-      const tasks = (output.tasks || [])
+      const cleaned = (output.tasks || [])
         .map(sanitizeTask)
         .filter((t): t is NonNullable<ReturnType<typeof sanitizeTask>> => t !== null);
+
+      // Drop AI tasks that overlap the user's existing tasks or a previously
+      // accepted AI task in the same response.
+      const existing = (data.existingTasks ?? []).filter(
+        (e) => TIME_RE.test(e.time) && (!e.endTime || TIME_RE.test(e.endTime)),
+      );
+      const accepted: Array<{ time: string; endTime: string }> = [];
+      const tasks: typeof cleaned = [];
+      for (const t of cleaned) {
+        const clashesExisting = existing.some((e) =>
+          intervalsOverlap(t.time, t.endTime, e.time, e.endTime ?? e.time),
+        );
+        if (clashesExisting) continue;
+        const clashesAccepted = accepted.some((a) =>
+          intervalsOverlap(t.time, t.endTime, a.time, a.endTime),
+        );
+        if (clashesAccepted) continue;
+        accepted.push({ time: t.time, endTime: t.endTime });
+        tasks.push(t);
+      }
 
       return { tasks };
     } catch (err) {

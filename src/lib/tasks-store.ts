@@ -4,6 +4,7 @@ import {
   setCompletedOn,
   clearCompletionsForTask,
   clearCompletionsForDay,
+  getCompletionsForDay,
   subscribeCompletions,
 } from "@/lib/task-completions-store";
 import {
@@ -16,6 +17,7 @@ import {
   subscribeExceptions,
   type TaskException,
 } from "@/lib/task-exceptions-store";
+import { archiveRoutineDay } from "@/lib/routine-archive-store";
 
 /**
  * Repeat rule for a task.
@@ -246,48 +248,54 @@ export function resetDay() {
  * Safe to call multiple times, but skips work when nothing looks finished.
  * The routine page only surfaces the action when the day is fully done.
  */
+let startNewDayInFlight = false;
+let lastStartNewDayKey: string | null = null;
+
 export function startNewRoutineDay(): void {
   ensureInit();
   if (typeof window === "undefined") return;
+  if (startNewDayInFlight) return;
 
   const today = new Date();
   const weekday = today.getDay();
   const dateKey = todayDateKey(today);
 
-  // Build a snapshot of the tasks that made up today's active routine day,
-  // with their final completion state applied.
-  void import("@/lib/task-completions-store").then(({ getCompletionsForDay }) => {
-    void import("@/lib/routine-archive-store").then(({ archiveRoutineDay }) => {
-      const completedIds = new Set(getCompletionsForDay(dateKey));
-      const snapshot: Task[] = [];
-      for (const raw of cache) {
-        if (!taskShowsOnWeekday(raw, weekday)) continue;
-        const recurring = isRecurring(raw);
-        const completed = recurring ? completedIds.has(raw.id) : raw.completed;
-        snapshot.push({ ...raw, completed });
-      }
-      const done = snapshot.filter((t) => t.completed).length;
-      archiveRoutineDay({
-        dateKey,
-        archivedAt: new Date().toISOString(),
-        tasks: snapshot,
-        done,
-        total: snapshot.length,
-      });
+  // Prevent duplicate archives for the same routine day within one session.
+  if (lastStartNewDayKey === dateKey) return;
 
-      // Reset today's overlay for recurring tasks (untick them for the new day).
-      clearCompletionsForDay(dateKey);
-
-      // Remove completed one-off tasks from the active list. Recurring tasks
-      // stay in place — their template is what makes them recurring.
-      const next = cache.filter((t) => {
-        if (isRecurring(t)) return true;
-        return !t.completed;
-      });
-      // Also clear the `completed` boolean on any surviving one-off entries.
-      persist(next.map((t) => (isRecurring(t) ? t : { ...t, completed: false })));
+  startNewDayInFlight = true;
+  try {
+    // Snapshot from the CURRENT cache — no async gap where cache could drift.
+    const completedIds = new Set(getCompletionsForDay(dateKey));
+    const snapshot: Task[] = [];
+    for (const raw of cache) {
+      if (!taskShowsOnWeekday(raw, weekday)) continue;
+      const recurring = isRecurring(raw);
+      const completed = recurring ? completedIds.has(raw.id) : raw.completed;
+      snapshot.push({ ...raw, completed });
+    }
+    const done = snapshot.filter((t) => t.completed).length;
+    archiveRoutineDay({
+      dateKey,
+      archivedAt: new Date().toISOString(),
+      tasks: snapshot,
+      done,
+      total: snapshot.length,
     });
-  });
+
+    // Reset today's overlay for recurring tasks (untick them for the new day).
+    clearCompletionsForDay(dateKey);
+
+    // Remove completed one-off tasks; recurring templates stay.
+    const next = cache
+      .filter((t) => (isRecurring(t) ? true : !t.completed))
+      .map((t) => (isRecurring(t) ? t : { ...t, completed: false }));
+    persist(next);
+
+    lastStartNewDayKey = dateKey;
+  } finally {
+    startNewDayInFlight = false;
+  }
 }
 
 
