@@ -731,7 +731,7 @@ function RoutinePage() {
                               {formatTime12(t.endTime)}
                             </span>
                             <span className="text-[9px] font-medium text-muted-foreground/60 mt-1">
-                              {formatDuration(getTaskEndMinutes(t) - toMinutes(t.time))}
+                              {formatDuration(rawDurationMin(t))}
                             </span>
                           </>
                         )}
