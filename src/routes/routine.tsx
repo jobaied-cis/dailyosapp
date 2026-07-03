@@ -178,7 +178,14 @@ function RoutinePage() {
   // Daily summary — all comparisons happen in routine-day space so late-night
   // tasks (12 AM–3 AM) can't prematurely trigger end-of-day.
   const missedCount = taskMeta.filter((m) => m.isMissed).length;
-  const plannedMin = tasks.reduce((sum, t) => sum + Math.max(0, rawDurationMin(t)), 0);
+  // Planned = sum of every visible task's duration, using the same
+  // rawDurationMin helper each task card uses. Tasks without an explicit
+  // endTime don't display a duration on their card, so they don't
+  // contribute here either (keeps card sum == Planned).
+  const plannedMin = tasks.reduce(
+    (sum, t) => (t.endTime ? sum + Math.max(0, rawDurationMin(t)) : sum),
+    0,
+  );
   const lastRoutineEnd = taskMeta.length ? Math.max(...taskMeta.map((m) => m.rEnd)) : 0;
   const endOfDay = now !== null && tasks.length > 0 && nowRoutineMin >= lastRoutineEnd;
   const allDone = total > 0 && done === total;
