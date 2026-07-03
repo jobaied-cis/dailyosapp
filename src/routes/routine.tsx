@@ -892,10 +892,32 @@ function AddTaskSheet({ onClose }: { onClose: () => void }) {
   const titleEmpty = !title.trim();
   const showTitleError = touched && titleEmpty;
 
+  // Auto-advance end when start moves past it, unless the user has
+  // explicitly typed a cross-midnight end (end < start by more than 30 min).
+  const handleStartChange = (v: string) => {
+    setTime(v);
+    if (!endTime) return;
+    const s = toMinutes(v);
+    const eMin = toMinutes(endTime);
+    // If end is equal or slightly before start (<= 5 min), treat as invalid
+    // and push end forward by 30 min. Larger backward gaps are treated as
+    // intentional cross-midnight and preserved.
+    if (eMin === s || (eMin < s && s - eMin <= 5)) {
+      const bumped = (s + 30) % 1440;
+      setEndTime(`${String(Math.floor(bumped / 60)).padStart(2, "0")}:${String(bumped % 60).padStart(2, "0")}`);
+    }
+  };
+
+  const invalidRange = !!endTime && toMinutes(endTime) === toMinutes(time);
+
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     setTouched(true);
     if (titleEmpty) return;
+    if (invalidRange) {
+      toast.error("End time must differ from start time");
+      return;
+    }
     const finalRepeat: Repeat =
       repeat === "custom" as never
         ? (customDays.length > 0 ? { days: [...customDays].sort() } : "none")
@@ -920,7 +942,7 @@ function AddTaskSheet({ onClose }: { onClose: () => void }) {
               <input
                 type="time"
                 value={time}
-                onChange={(e) => setTime(e.target.value)}
+                onChange={(e) => handleStartChange(e.target.value)}
                 className="w-full bg-secondary rounded-xl px-4 py-3.5 text-foreground outline-none focus:ring-2 focus:ring-primary/40 focus:bg-card focus:shadow-[0_0_0_4px_rgba(37,99,235,0.08)] transition-all font-medium"
               />
             </Field>
@@ -933,6 +955,9 @@ function AddTaskSheet({ onClose }: { onClose: () => void }) {
               />
             </Field>
           </div>
+          {invalidRange && (
+            <p className="text-[11px] font-medium text-destructive -mt-3">End time must differ from start time.</p>
+          )}
 
           <Field label="Title">
             <input
