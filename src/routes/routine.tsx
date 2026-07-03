@@ -201,14 +201,31 @@ function RoutinePage() {
   // Daily summary — all comparisons happen in routine-day space so late-night
   // tasks (12 AM–3 AM) can't prematurely trigger end-of-day.
   const missedCount = taskMeta.filter((m) => m.isMissed).length;
-  // Planned = sum of every visible task's duration, using the same
-  // rawDurationMin helper each task card uses. Tasks without an explicit
-  // endTime don't display a duration on their card, so they don't
-  // contribute here either (keeps card sum == Planned).
-  const plannedMin = tasks.reduce(
-    (sum, t) => (t.endTime ? sum + Math.max(0, rawDurationMin(t)) : sum),
-    0,
-  );
+  // Planned = sum of the duration of every task currently rendered in
+  // today's routine list.
+  //   - Uses ONLY tasks from useTasks() (already excludes archived days,
+  //     other weekdays, skipped-today, and AI preview tasks that live in
+  //     component state, not the store).
+  //   - Uses the SAME rawDurationMin helper each task card uses.
+  //   - Skips tasks without an explicit endTime (no default duration —
+  //     the card doesn't show one either, so it can't contribute).
+  //   - Clamps to [0, 1440) so a corrupted row can never inject 24h.
+  //   - Counts each task exactly once.
+  const plannedBreakdown = tasks
+    .filter((t) => !!t.endTime)
+    .map((t) => {
+      const d = rawDurationMin(t);
+      const safe = Number.isFinite(d) && d > 0 && d < 1440 ? d : 0;
+      return { id: t.id, title: t.title, time: t.time, endTime: t.endTime, dur: safe };
+    });
+  const plannedMin = plannedBreakdown.reduce((sum, b) => sum + b.dur, 0);
+  if (typeof window !== "undefined") {
+    // eslint-disable-next-line no-console
+    console.log(
+      `[Planned] tasks=${plannedBreakdown.length} sum=${plannedMin}m`,
+      plannedBreakdown,
+    );
+  }
   const lastRoutineEnd = taskMeta.length ? Math.max(...taskMeta.map((m) => m.rEnd)) : 0;
   const endOfDay = now !== null && tasks.length > 0 && nowRoutineMin >= lastRoutineEnd;
   const allDone = total > 0 && done === total;
