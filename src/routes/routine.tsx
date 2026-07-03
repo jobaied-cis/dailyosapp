@@ -14,9 +14,25 @@ import { useOnline } from "@/lib/use-online";
 import { toast } from "sonner";
 import { useDayEndsAt } from "@/lib/day-boundary-store";
 
+/**
+ * Parse a "HH:MM" 24-hour clock string into minutes since midnight.
+ * Tolerates optional " AM"/" PM" suffixes on legacy strings so a task
+ * accidentally stored as "1:30 PM" is interpreted as 13:30, not 01:30.
+ * Never returns a value outside [0, 1440).
+ */
 function toMinutes(hhmm: string): number {
-  const [h, m] = hhmm.split(":").map(Number);
-  return (h || 0) * 60 + (m || 0);
+  if (!hhmm) return 0;
+  const raw = String(hhmm).trim().toUpperCase();
+  const ampm = raw.endsWith("AM") ? "AM" : raw.endsWith("PM") ? "PM" : null;
+  const core = ampm ? raw.slice(0, -2).trim() : raw;
+  const [hStr, mStr] = core.split(":");
+  let h = Number(hStr);
+  const m = Number(mStr);
+  if (!Number.isFinite(h) || !Number.isFinite(m)) return 0;
+  if (ampm === "AM") h = h % 12;
+  else if (ampm === "PM") h = (h % 12) + 12;
+  const total = h * 60 + m;
+  return ((total % 1440) + 1440) % 1440;
 }
 
 function getTaskEndMinutes(t: Task): number {
@@ -25,20 +41,27 @@ function getTaskEndMinutes(t: Task): number {
 }
 
 /**
- * Raw duration of a task in minutes. Handles cross-midnight blocks
- * (e.g. 23:30 → 01:00 = 90 min) by wrapping when end <= start.
- * Zero-duration blocks return 30 (default) for one-off legacy items,
- * but if start === end we return 0 so callers can flag invalid input.
+ * Task duration in minutes, computed ONLY from the task's own start and
+ * end time. Independent of Day Ends At / routine-day normalization.
+ *
+ *   - Same-day block:      end - start  (e.g. 12:00 → 13:30 = 90)
+ *   - Zero-length block:   0            (start === end)
+ *   - Cross-midnight block: end - start + 1440   (e.g. 23:30 → 01:00 = 90)
+ *
+ * Tasks with no endTime fall back to a 30-min default so legacy one-off
+ * items keep the same behavior they've always had on the card.
  */
 function rawDurationMin(t: Task): number {
-  const start = toMinutes(t.time);
   if (!t.endTime) return 30;
+  const start = toMinutes(t.time);
   const end = toMinutes(t.endTime);
   const diff = end - start;
   if (diff > 0) return diff;
   if (diff === 0) return 0;
-  return diff + 1440; // cross-midnight
+  return diff + 1440;
 }
+
+
 
 /**
  * Shift a raw calendar minute into "routine-day" coordinates where the
