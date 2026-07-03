@@ -25,6 +25,33 @@ function getTaskEndMinutes(t: Task): number {
 }
 
 /**
+ * Raw duration of a task in minutes. Handles cross-midnight blocks
+ * (e.g. 23:30 → 01:00 = 90 min) by wrapping when end <= start.
+ * Zero-duration blocks return 30 (default) for one-off legacy items,
+ * but if start === end we return 0 so callers can flag invalid input.
+ */
+function rawDurationMin(t: Task): number {
+  const start = toMinutes(t.time);
+  if (!t.endTime) return 30;
+  const end = toMinutes(t.endTime);
+  const diff = end - start;
+  if (diff > 0) return diff;
+  if (diff === 0) return 0;
+  return diff + 1440; // cross-midnight
+}
+
+/**
+ * Shift a raw calendar minute into "routine-day" coordinates where the
+ * day begins at `dayEndsAtMin`. All in-day comparisons (active window,
+ * missed, next-up, remaining, end-of-day) MUST use this space so that
+ * late-night tasks (before the cutoff) are treated as still belonging
+ * to the same routine day.
+ */
+function routineMinFactory(dayEndsAtMin: number) {
+  return (m: number) => ((m - dayEndsAtMin) + 1440) % 1440;
+}
+
+/**
  * Late-night ordering only. Tasks whose start time is before the user's
  * "Day Ends At" setting belong to the PREVIOUS routine day — they are
  * shown under the same "Today" heading, but sorted after the evening
