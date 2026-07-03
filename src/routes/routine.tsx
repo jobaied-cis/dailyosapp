@@ -763,11 +763,17 @@ function RoutinePage() {
                   </li>
                 {i < tasks.length - 1 && (() => {
                   const next = tasks[i + 1];
-                  if (taskLateNightOffset(next, dayEndsAtMin) !== taskLateNightOffset(t, dayEndsAtMin)) return null;
+                  // Normalize both times into the active routine day's coordinate
+                  // space (day starts at dayEndsAtMin). This keeps the gap correct
+                  // even when the next task is a late-night task belonging to the
+                  // same routine day (e.g. 11:30 PM → 12:30 AM = 1h free).
+                  const toRoutineMin = (m: number) => ((m - dayEndsAtMin) + 1440) % 1440;
                   const currentEnd = getTaskEndMinutes(t);
                   const nextStart = toMinutes(next.time);
-                  const gapMin = nextStart - currentEnd;
-                  if (gapMin <= 15) return null;
+                  const rCurEnd = toRoutineMin(currentEnd);
+                  const rNextStart = toRoutineMin(nextStart);
+                  const gapMin = rNextStart - rCurEnd;
+                  if (gapMin <= 0) return null;
                   return (
                     <li className="flex justify-center select-none py-0.5 animate-fade-in-soft">
                       <span className="inline-flex items-center gap-1 text-[10px] font-medium text-muted-foreground/60 bg-secondary/40 px-2.5 py-0.5 rounded-full">
