@@ -173,9 +173,29 @@ ${shapeInstruction}`;
         output = await runOnce(stricter);
       }
 
-      const tasks = (output.tasks || [])
+      const cleaned = (output.tasks || [])
         .map(sanitizeTask)
         .filter((t): t is NonNullable<ReturnType<typeof sanitizeTask>> => t !== null);
+
+      // Drop AI tasks that overlap the user's existing tasks or a previously
+      // accepted AI task in the same response.
+      const existing = (data.existingTasks ?? []).filter(
+        (e) => TIME_RE.test(e.time) && (!e.endTime || TIME_RE.test(e.endTime)),
+      );
+      const accepted: Array<{ time: string; endTime: string }> = [];
+      const tasks: typeof cleaned = [];
+      for (const t of cleaned) {
+        const clashesExisting = existing.some((e) =>
+          intervalsOverlap(t.time, t.endTime, e.time, e.endTime ?? e.time),
+        );
+        if (clashesExisting) continue;
+        const clashesAccepted = accepted.some((a) =>
+          intervalsOverlap(t.time, t.endTime, a.time, a.endTime),
+        );
+        if (clashesAccepted) continue;
+        accepted.push({ time: t.time, endTime: t.endTime });
+        tasks.push(t);
+      }
 
       return { tasks };
     } catch (err) {
