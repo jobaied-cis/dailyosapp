@@ -1212,11 +1212,23 @@ function EditTaskSheet({ task, onClose }: { task: Task; onClose: () => void }) {
 }
 
 function FocusMode({ task, onClose, onComplete }: { task: Task; onClose: () => void; onComplete: () => void }) {
+  const { dayEndsAtMin } = useDayEndsAt();
   const initial = (() => {
-    const end = task.endTime ? toMinutes(task.endTime) : toMinutes(task.time) + 30;
+    const startMin = toMinutes(task.time);
+    // Duration handles cross-midnight tasks correctly.
+    const durMin = rawDurationMin(task) || 30;
     const now = new Date();
-    const nowSec = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
-    return Math.max(0, end * 60 - nowSec);
+    const nowMin = now.getHours() * 60 + now.getMinutes();
+    const nowSecInMin = now.getSeconds();
+    const toRoutineMin = routineMinFactory(dayEndsAtMin);
+    // Compute remaining in routine-day minutes then convert to seconds.
+    const rStart = toRoutineMin(startMin);
+    const rEnd = rStart + durMin;
+    const rNow = toRoutineMin(nowMin);
+    const remainingMin = rEnd - rNow;
+    if (remainingMin <= 0) return 0;
+    // Subtract the fractional second offset for a smoother first tick.
+    return Math.max(0, remainingMin * 60 - nowSecInMin);
   })();
   const [remaining, setRemaining] = useState(initial);
   const [paused, setPaused] = useState(false);
