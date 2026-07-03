@@ -799,7 +799,6 @@ function RoutinePage() {
                     </div>
                   </li>
                 {i < tasks.length - 1 && (() => {
-                  const next = tasks[i + 1];
                   // Use the shared routine-day meta so cross-midnight blocks
                   // (rEnd already wraps correctly) produce the right gap.
                   const rCurEnd = taskMeta[i].rEnd;
