@@ -382,7 +382,7 @@ function RoutinePage() {
       )}
 
       {/* Yesterday recap card — shown once on first open of a new day (today only) */}
-      {yesterdayRecap && (() => {
+      {isTodayView && yesterdayRecap && (() => {
         const r = yesterdayRecap;
         const dayBefore = (() => {
           const d = new Date(r.date + "T00:00:00");
