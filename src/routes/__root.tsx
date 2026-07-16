@@ -16,6 +16,12 @@ import { SplashScreen } from "@/components/auth/SplashScreen";
 import { InstallPrompt } from "@/components/InstallPrompt";
 import { useEventsSync } from "@/lib/events-store";
 import { useExpensesSync } from "@/lib/expenses-store";
+import { useTasksSync } from "@/lib/tasks-store";
+import { useCompletionSync } from "@/lib/task-completions-store";
+import { useExceptionSync } from "@/lib/task-exceptions-store";
+import { useArchiveSync } from "@/lib/routine-archive-store";
+import { useMissionSync } from "@/lib/missions-store";
+import { useStreakSync } from "@/lib/streak-store";
 import { runCloudMigrationOnce } from "@/lib/cloud-migrate";
 
 import appCss from "../styles.css?url";
@@ -170,6 +176,12 @@ function RootSwitch() {
   // Keep cloud stores in sync with the current session
   useEventsSync(userId);
   useExpensesSync(userId);
+  useTasksSync(userId);
+  useCompletionSync(userId);
+  useExceptionSync(userId);
+  useArchiveSync(userId);
+  useMissionSync(userId);
+  useStreakSync(userId);
 
   // One-time migrate local data to cloud on first sign-in per user
   useEffect(() => {
