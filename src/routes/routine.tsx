@@ -482,6 +482,8 @@ function RoutinePage() {
         // Empty routine — skip Now/Done cards entirely; the list body
         // renders its own empty state.
         if (tasks.length === 0) return null;
+        // Time-based cards only apply to the current routine day.
+        if (!isTodayView) return null;
 
         const activeIndex = taskMeta.findIndex((m) => m.isActive);
         const activeTask = activeIndex >= 0 ? tasks[activeIndex] : null;
