@@ -1015,6 +1015,41 @@ function AddTaskSheet({ onClose }: { onClose: () => void }) {
           </button>
         </div>
         <form onSubmit={submit} className="space-y-5">
+          <Field label="Date">
+            <div className="grid grid-cols-3 gap-1.5">
+              {([
+                { id: "today", label: "Today" },
+                { id: "tomorrow", label: "Tomorrow" },
+                { id: "pick", label: "Pick date" },
+              ] as const).map((o) => {
+                const active = dateMode === o.id;
+                return (
+                  <button
+                    key={o.id}
+                    type="button"
+                    onClick={() => chooseDateMode(o.id)}
+                    className={`press text-[12px] font-semibold py-2.5 rounded-xl border transition-colors ${
+                      active
+                        ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                        : "bg-secondary text-foreground/80 border-transparent hover:bg-secondary/70"
+                    }`}
+                  >
+                    {o.label}
+                  </button>
+                );
+              })}
+            </div>
+            {dateMode === "pick" && (
+              <input
+                type="date"
+                value={date}
+                min={todayKey()}
+                onChange={(e) => setDate(e.target.value || todayKey())}
+                className="mt-3 w-full bg-secondary rounded-xl px-4 py-3.5 text-foreground outline-none focus:ring-2 focus:ring-primary/40 focus:bg-card focus:shadow-[0_0_0_4px_rgba(37,99,235,0.08)] transition-all font-medium"
+              />
+            )}
+          </Field>
+
           <div className="grid grid-cols-2 gap-3">
             <Field label="Start">
               <input
