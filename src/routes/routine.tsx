@@ -127,19 +127,23 @@ export const Route = createFileRoute("/routine")({
 });
 
 function RoutinePage() {
-  const rawTasks = useTasks();
+  const todayKeyStr = useMemo(() => todayKey(), []);
+  const [viewDate, setViewDate] = useState(todayKeyStr);
+  const isTodayView = viewDate === todayKeyStr;
+  const rawTasks = useTasksForDate(viewDate);
+  const tomorrowTasks = useTasksForDate(tomorrowKey());
   const { dayEndsAtMin } = useDayEndsAt();
   // Re-order so any task starting before the "Day Ends At" cutoff lands
   // AFTER tonight's tasks — those late-night tasks still belong to the
   // SAME routine day (yesterday's plan continuing past midnight).
   // Stats/streaks/completions are unaffected — they key off the raw store,
   // not this rendering order.
-  const tasks = [...rawTasks].sort((a, b) => {
+  const tasks = useMemo(() => [...rawTasks].sort((a, b) => {
     const da = taskLateNightOffset(a, dayEndsAtMin);
     const db = taskLateNightOffset(b, dayEndsAtMin);
     if (da !== db) return da - db;
     return toMinutes(a.time) - toMinutes(b.time);
-  });
+  }), [rawTasks, dayEndsAtMin]);
   const online = useOnline();
   const [open, setOpen] = useState(false);
   const [aiOpen, setAiOpen] = useState(false);
