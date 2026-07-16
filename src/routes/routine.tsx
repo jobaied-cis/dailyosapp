@@ -114,6 +114,16 @@ function formatDuration(minutes: number): string {
   return `${m}m`;
 }
 
+/** Convert a YYYY-MM-DD key into a friendly label. */
+function formatDateLabel(dateKey: string): string {
+  const today = todayKey();
+  const tomorrow = tomorrowKey();
+  if (dateKey === today) return "Today";
+  if (dateKey === tomorrow) return "Tomorrow";
+  const d = new Date(dateKey + "T00:00:00");
+  return d.toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" });
+}
+
 
 
 export const Route = createFileRoute("/routine")({
