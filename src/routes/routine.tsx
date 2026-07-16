@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState, Fragment } from "react";
-import { addTask, deleteTask, editTaskToday, startNewRoutineDay, toggleTask, useTasks, type Task, type Repeat } from "@/lib/tasks-store";
+import { useEffect, useMemo, useState, Fragment } from "react";
+import { addTask, deleteTask, editTaskToday, startNewRoutineDay, toggleTask, useTasksForDate, type Task, type Repeat } from "@/lib/tasks-store";
 import { useStreak } from "@/lib/streak-store";
 import { useDailySummary, getSummaryFor, type DaySummary } from "@/lib/daily-summary-store";
 import { getLastSeenSummaryDate, markSummarySeen } from "@/lib/summary-seen-store";
@@ -114,6 +114,16 @@ function formatDuration(minutes: number): string {
   return `${m}m`;
 }
 
+/** Convert a YYYY-MM-DD key into a friendly label. */
+function formatDateLabel(dateKey: string): string {
+  const today = todayKey();
+  const tomorrow = tomorrowKey();
+  if (dateKey === today) return "Today";
+  if (dateKey === tomorrow) return "Tomorrow";
+  const d = new Date(dateKey + "T00:00:00");
+  return d.toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" });
+}
+
 
 
 export const Route = createFileRoute("/routine")({
@@ -127,19 +137,23 @@ export const Route = createFileRoute("/routine")({
 });
 
 function RoutinePage() {
-  const rawTasks = useTasks();
+  const todayKeyStr = useMemo(() => todayKey(), []);
+  const [viewDate, setViewDate] = useState(todayKeyStr);
+  const isTodayView = viewDate === todayKeyStr;
+  const rawTasks = useTasksForDate(viewDate);
+  const tomorrowTasks = useTasksForDate(tomorrowKey());
   const { dayEndsAtMin } = useDayEndsAt();
   // Re-order so any task starting before the "Day Ends At" cutoff lands
   // AFTER tonight's tasks — those late-night tasks still belong to the
   // SAME routine day (yesterday's plan continuing past midnight).
   // Stats/streaks/completions are unaffected — they key off the raw store,
   // not this rendering order.
-  const tasks = [...rawTasks].sort((a, b) => {
+  const tasks = useMemo(() => [...rawTasks].sort((a, b) => {
     const da = taskLateNightOffset(a, dayEndsAtMin);
     const db = taskLateNightOffset(b, dayEndsAtMin);
     if (da !== db) return da - db;
     return toMinutes(a.time) - toMinutes(b.time);
-  });
+  }), [rawTasks, dayEndsAtMin]);
   const online = useOnline();
   const [open, setOpen] = useState(false);
   const [aiOpen, setAiOpen] = useState(false);
@@ -192,8 +206,9 @@ function RoutinePage() {
     // Wrap-safe length (cross-midnight tasks handled correctly).
     const rawLen = Math.max(1, rawDurationMin(t) || (end - start));
     const rEnd = rStart + rawLen;
-    const isActive = now !== null && !t.completed && nowRoutineMin >= rStart && nowRoutineMin < rEnd;
-    const isMissed = now !== null && !t.completed && nowRoutineMin >= rEnd;
+    // Time-based status only makes sense for the current routine day.
+    const isActive = isTodayView && now !== null && !t.completed && nowRoutineMin >= rStart && nowRoutineMin < rEnd;
+    const isMissed = isTodayView && now !== null && !t.completed && nowRoutineMin >= rEnd;
     return { start, end, rStart, rEnd, isActive, isMissed };
   });
 
@@ -240,11 +255,17 @@ function RoutinePage() {
     );
   }
   const lastRoutineEnd = taskMeta.length ? Math.max(...taskMeta.map((m) => m.rEnd)) : 0;
-  const endOfDay = now !== null && tasks.length > 0 && nowRoutineMin >= lastRoutineEnd;
+  // End-of-day detection only applies when viewing the current routine day.
+  const endOfDay = isTodayView && now !== null && tasks.length > 0 && nowRoutineMin >= lastRoutineEnd;
   const allDone = total > 0 && done === total;
   const reachedThreshold = total > 0 && done / total >= 0.8;
   const { streak, justBroke, status: streakStatus } = useStreak(reachedThreshold, endOfDay && !reachedThreshold);
-  const { today: todaySummary, yesterday: yesterdaySummary } = useDailySummary(done, total);
+  // Only persist daily summary for the actual current day; previewing a future
+  // day must not overwrite today's stored stats.
+  const { today: todaySummary, yesterday: yesterdaySummary } = useDailySummary(
+    isTodayView ? done : 0,
+    isTodayView ? total : 0,
+  );
 
   // One-shot toast when streak breaks
   useEffect(() => {
@@ -253,7 +274,7 @@ function RoutinePage() {
 
   const [summaryDismissed, setSummaryDismissed] = useState(false);
   useEffect(() => { setSummaryDismissed(false); }, [allDone, endOfDay]);
-  const showSummary = total > 0 && !summaryDismissed && (allDone || endOfDay);
+  const showSummary = isTodayView && total > 0 && !summaryDismissed && (allDone || endOfDay);
 
   // Yesterday-recap card: shown once on first open of a new day.
   const [yesterdayRecap, setYesterdayRecap] = useState<DaySummary | null>(null);
@@ -335,6 +356,22 @@ function RoutinePage() {
       )}
 
 
+      {/* Date header — shown when previewing a non-today date */}
+      {!isTodayView && (
+        <div className="flex items-center justify-between bg-card border border-border/60 rounded-2xl p-3 shadow-[0_8px_32px_-12px_rgba(15,23,42,0.08)]">
+          <span className="text-sm font-semibold text-foreground">
+            Viewing {formatDateLabel(viewDate)}
+          </span>
+          <button
+            type="button"
+            onClick={() => setViewDate(todayKeyStr)}
+            className="press text-[12px] font-semibold px-3 py-1.5 rounded-full bg-primary/10 text-primary hover:bg-primary/15 border border-primary/20 transition-colors"
+          >
+            Back to Today
+          </button>
+        </div>
+      )}
+
       {/* Streak */}
       {streak > 0 && (
         <div className="flex items-center justify-center">
@@ -344,8 +381,8 @@ function RoutinePage() {
         </div>
       )}
 
-      {/* Yesterday recap card — shown once on first open of a new day */}
-      {yesterdayRecap && (() => {
+      {/* Yesterday recap card — shown once on first open of a new day (today only) */}
+      {isTodayView && yesterdayRecap && (() => {
         const r = yesterdayRecap;
         const dayBefore = (() => {
           const d = new Date(r.date + "T00:00:00");
@@ -446,7 +483,9 @@ function RoutinePage() {
         </div>
         <div className="bg-card border border-border/60 rounded-b-2xl rounded-t-none px-4 pt-3 pb-3 shadow-[0_8px_32px_-12px_rgba(15,23,42,0.08)]">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[13px] font-semibold text-foreground">Today&apos;s progress</span>
+            <span className="text-[13px] font-semibold text-foreground">
+              {isTodayView ? "Today&apos;s progress" : `${formatDateLabel(viewDate)} progress`}
+            </span>
             <span className="text-[13px] font-semibold tabular-nums text-foreground">
               {Math.round(pct)}%
               <span className={`ml-1.5 font-medium ${
@@ -471,6 +510,8 @@ function RoutinePage() {
         // Empty routine — skip Now/Done cards entirely; the list body
         // renders its own empty state.
         if (tasks.length === 0) return null;
+        // Time-based cards only apply to the current routine day.
+        if (!isTodayView) return null;
 
         const activeIndex = taskMeta.findIndex((m) => m.isActive);
         const activeTask = activeIndex >= 0 ? tasks[activeIndex] : null;
@@ -891,12 +932,46 @@ function RoutinePage() {
         )}
 
         {tasks.length === 0 && (
-          <li className="text-center text-muted-foreground py-16">
-            <div className="inline-flex items-center justify-center size-16 rounded-full bg-secondary mb-5">
-              <ClipboardList className="size-7 text-muted-foreground" />
-            </div>
-            <p className="text-base font-semibold text-foreground">No tasks yet</p>
-            <p className="text-sm text-muted-foreground mt-1.5">Start by adding your first task 💪</p>
+          <li className="text-center text-muted-foreground py-12">
+            {isTodayView && tomorrowTasks.length > 0 ? (
+              <div className="space-y-5">
+                <div className="inline-flex items-center justify-center size-16 rounded-full bg-secondary mb-1">
+                  <ClipboardList className="size-7 text-muted-foreground" />
+                </div>
+                <p className="text-base font-semibold text-foreground">Nothing scheduled for today.</p>
+                <div className="bg-card border border-border/60 rounded-[1.25rem] p-4 text-left shadow-[0_8px_32px_-12px_rgba(15,23,42,0.08)]">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary mb-3">Tomorrow</p>
+                  <ul className="space-y-2.5">
+                    {tomorrowTasks.slice(0, 3).map((t) => (
+                      <li key={t.id} className="flex items-center justify-between text-sm">
+                        <span className="font-medium text-foreground truncate pr-3">{t.title}</span>
+                        <span className="font-mono text-xs text-muted-foreground shrink-0">{formatTime12(t.time)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  {tomorrowTasks.length > 3 && (
+                    <p className="text-[11px] text-muted-foreground mt-2.5">
+                      +{tomorrowTasks.length - 3} more tomorrow
+                    </p>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setViewDate(tomorrowKey())}
+                    className="press mt-4 w-full text-center text-[12px] font-semibold px-4 py-2.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+                  >
+                    View Tomorrow
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="inline-flex items-center justify-center size-16 rounded-full bg-secondary mb-5">
+                  <ClipboardList className="size-7 text-muted-foreground" />
+                </div>
+                <p className="text-base font-semibold text-foreground">No tasks yet</p>
+                <p className="text-sm text-muted-foreground mt-1.5">Start by adding your first task 💪</p>
+              </>
+            )}
           </li>
         )}
       </ul>
