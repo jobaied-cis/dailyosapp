@@ -932,12 +932,46 @@ function RoutinePage() {
         )}
 
         {tasks.length === 0 && (
-          <li className="text-center text-muted-foreground py-16">
-            <div className="inline-flex items-center justify-center size-16 rounded-full bg-secondary mb-5">
-              <ClipboardList className="size-7 text-muted-foreground" />
-            </div>
-            <p className="text-base font-semibold text-foreground">No tasks yet</p>
-            <p className="text-sm text-muted-foreground mt-1.5">Start by adding your first task 💪</p>
+          <li className="text-center text-muted-foreground py-12">
+            {isTodayView && tomorrowTasks.length > 0 ? (
+              <div className="space-y-5">
+                <div className="inline-flex items-center justify-center size-16 rounded-full bg-secondary mb-1">
+                  <ClipboardList className="size-7 text-muted-foreground" />
+                </div>
+                <p className="text-base font-semibold text-foreground">Nothing scheduled for today.</p>
+                <div className="bg-card border border-border/60 rounded-[1.25rem] p-4 text-left shadow-[0_8px_32px_-12px_rgba(15,23,42,0.08)]">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-primary mb-3">Tomorrow</p>
+                  <ul className="space-y-2.5">
+                    {tomorrowTasks.slice(0, 3).map((t) => (
+                      <li key={t.id} className="flex items-center justify-between text-sm">
+                        <span className="font-medium text-foreground truncate pr-3">{t.title}</span>
+                        <span className="font-mono text-xs text-muted-foreground shrink-0">{formatTime12(t.time)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  {tomorrowTasks.length > 3 && (
+                    <p className="text-[11px] text-muted-foreground mt-2.5">
+                      +{tomorrowTasks.length - 3} more tomorrow
+                    </p>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setViewDate(tomorrowKey())}
+                    className="press mt-4 w-full text-center text-[12px] font-semibold px-4 py-2.5 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+                  >
+                    View Tomorrow
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="inline-flex items-center justify-center size-16 rounded-full bg-secondary mb-5">
+                  <ClipboardList className="size-7 text-muted-foreground" />
+                </div>
+                <p className="text-base font-semibold text-foreground">No tasks yet</p>
+                <p className="text-sm text-muted-foreground mt-1.5">Start by adding your first task 💪</p>
+              </>
+            )}
           </li>
         )}
       </ul>
