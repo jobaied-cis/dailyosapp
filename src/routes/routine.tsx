@@ -356,6 +356,22 @@ function RoutinePage() {
       )}
 
 
+      {/* Date header — shown when previewing a non-today date */}
+      {!isTodayView && (
+        <div className="flex items-center justify-between bg-card border border-border/60 rounded-2xl p-3 shadow-[0_8px_32px_-12px_rgba(15,23,42,0.08)]">
+          <span className="text-sm font-semibold text-foreground">
+            Viewing {formatDateLabel(viewDate)}
+          </span>
+          <button
+            type="button"
+            onClick={() => setViewDate(todayKeyStr)}
+            className="press text-[12px] font-semibold px-3 py-1.5 rounded-full bg-primary/10 text-primary hover:bg-primary/15 border border-primary/20 transition-colors"
+          >
+            Back to Today
+          </button>
+        </div>
+      )}
+
       {/* Streak */}
       {streak > 0 && (
         <div className="flex items-center justify-center">
@@ -365,7 +381,7 @@ function RoutinePage() {
         </div>
       )}
 
-      {/* Yesterday recap card — shown once on first open of a new day */}
+      {/* Yesterday recap card — shown once on first open of a new day (today only) */}
       {yesterdayRecap && (() => {
         const r = yesterdayRecap;
         const dayBefore = (() => {
