@@ -174,6 +174,9 @@ export function useTasks(): Task[] {
     for (const raw of tasks) {
       if (!taskShowsOnWeekday(raw, weekday)) continue;
       const recurring = isRecurring(raw);
+      // Future-dated one-off tasks stay hidden until their day arrives.
+      // Legacy tasks without a `date` field default to today.
+      if (!recurring && raw.date && raw.date !== dateKey) continue;
       const ex = recurring ? getException(raw.id, dateKey) : undefined;
       if (ex?.skipped) continue;
       const withException = ex ? applyException(raw, ex) : raw;
