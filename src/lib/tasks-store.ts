@@ -41,6 +41,12 @@ export interface Task {
   note?: string;
   completed: boolean;
   repeat?: Repeat;
+  /**
+   * Calendar date this one-off task is planned for ("YYYY-MM-DD").
+   * Only meaningful for non-recurring tasks. Legacy tasks without this
+   * field are treated as today's date for backward compatibility.
+   */
+  date?: string;
 }
 
 const STORAGE_KEY = "dailyos.tasks.v1";
