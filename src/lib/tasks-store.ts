@@ -211,9 +211,10 @@ export function toggleTask(id: string) {
 }
 
 
-export function addTask(input: { time: string; endTime?: string; title: string; note?: string; repeat?: Repeat }) {
+export function addTask(input: { time: string; endTime?: string; title: string; note?: string; repeat?: Repeat; date?: string }) {
   ensureInit();
   if (!isValidTitle(input.title)) return;
+  const recurring = input.repeat && input.repeat !== "none";
   const task: Task = {
     id: crypto.randomUUID(),
     time: input.time,
@@ -221,7 +222,9 @@ export function addTask(input: { time: string; endTime?: string; title: string; 
     title: input.title.trim(),
     note: input.note?.trim() || undefined,
     completed: false,
-    repeat: input.repeat && input.repeat !== "none" ? input.repeat : undefined,
+    repeat: recurring ? input.repeat : undefined,
+    // `date` only applies to one-off tasks. Recurring templates ignore it.
+    date: !recurring ? (input.date || todayDateKey()) : undefined,
   };
   persist([...cache, task]);
 }
