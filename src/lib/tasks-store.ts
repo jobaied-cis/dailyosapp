@@ -283,6 +283,8 @@ export function startNewRoutineDay(): void {
     for (const raw of cache) {
       if (!taskShowsOnWeekday(raw, weekday)) continue;
       const recurring = isRecurring(raw);
+      // Skip future-dated one-off tasks so they aren't archived early.
+      if (!recurring && raw.date && raw.date !== dateKey) continue;
       const completed = recurring ? completedIds.has(raw.id) : raw.completed;
       snapshot.push({ ...raw, completed });
     }
