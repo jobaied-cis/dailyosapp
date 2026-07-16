@@ -941,6 +941,16 @@ function RoutinePage() {
 
 
 
+function todayKey(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+function tomorrowKey(): string {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 function AddTaskSheet({ onClose }: { onClose: () => void }) {
   const [time, setTime] = useState("08:00");
   const [endTime, setEndTime] = useState("08:30");
@@ -948,9 +958,17 @@ function AddTaskSheet({ onClose }: { onClose: () => void }) {
   const [note, setNote] = useState("");
   const [repeat, setRepeat] = useState<Repeat>("none");
   const [customDays, setCustomDays] = useState<number[]>([]);
+  const [date, setDate] = useState<string>(() => todayKey());
+  const [dateMode, setDateMode] = useState<"today" | "tomorrow" | "pick">("today");
   const [touched, setTouched] = useState(false);
   const titleEmpty = !title.trim();
   const showTitleError = touched && titleEmpty;
+
+  const chooseDateMode = (mode: "today" | "tomorrow" | "pick") => {
+    setDateMode(mode);
+    if (mode === "today") setDate(todayKey());
+    else if (mode === "tomorrow") setDate(tomorrowKey());
+  };
 
   // Auto-advance end when start moves past it, unless the user has
   // explicitly typed a cross-midnight end (end < start by more than 30 min).
@@ -982,7 +1000,7 @@ function AddTaskSheet({ onClose }: { onClose: () => void }) {
       repeat === "custom" as never
         ? (customDays.length > 0 ? { days: [...customDays].sort() } : "none")
         : repeat;
-    addTask({ time, endTime: endTime || undefined, title, note, repeat: finalRepeat });
+    addTask({ time, endTime: endTime || undefined, title, note, repeat: finalRepeat, date });
     onClose();
   };
 
