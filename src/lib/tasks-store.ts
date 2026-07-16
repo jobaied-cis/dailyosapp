@@ -147,6 +147,30 @@ function todayDateKey(d = new Date()): string {
 }
 
 /**
+ * Derive visible tasks for a specific calendar date. Mirrors the logic
+ * in useTasks() but parameterized so the UI can preview future days.
+ */
+function getTasksForDate(tasks: Task[], dateKey: string): Task[] {
+  const d = new Date(dateKey + "T00:00:00");
+  const weekday = d.getDay();
+
+  const out: Task[] = [];
+  for (const raw of tasks) {
+    if (!taskShowsOnWeekday(raw, weekday)) continue;
+    const recurring = isRecurring(raw);
+    // Future-dated one-off tasks stay hidden until their day arrives.
+    // Legacy tasks without a `date` field default to the requested date.
+    if (!recurring && raw.date && raw.date !== dateKey) continue;
+    const ex = recurring ? getException(raw.id, dateKey) : undefined;
+    if (ex?.skipped) continue;
+    const withException = ex ? applyException(raw, ex) : raw;
+    const completed = recurring ? isCompletedOn(raw.id, dateKey) : raw.completed;
+    out.push({ ...withException, completed });
+  }
+  return out.sort((a, b) => a.time.localeCompare(b.time));
+}
+
+/**
  * Returns today's visible tasks with:
  *  - per-day completion overlay (recurring tasks)
  *  - per-day exception overlay (edit-only-today + skip-today)
@@ -165,26 +189,26 @@ export function useTasks(): Task[] {
   }, []);
 
   // Memoize derivation so render-pass identity is stable when nothing changed.
-  return useMemoReact(() => {
-    const today = new Date();
-    const weekday = today.getDay();
-    const dateKey = todayDateKey(today);
+  return useMemoReact(() => getTasksForDate(tasks, todayDateKey()), [tasks, version]);
+}
 
-    const out: Task[] = [];
-    for (const raw of tasks) {
-      if (!taskShowsOnWeekday(raw, weekday)) continue;
-      const recurring = isRecurring(raw);
-      // Future-dated one-off tasks stay hidden until their day arrives.
-      // Legacy tasks without a `date` field default to today.
-      if (!recurring && raw.date && raw.date !== dateKey) continue;
-      const ex = recurring ? getException(raw.id, dateKey) : undefined;
-      if (ex?.skipped) continue;
-      const withException = ex ? applyException(raw, ex) : raw;
-      const completed = recurring ? isCompletedOn(raw.id, dateKey) : raw.completed;
-      out.push({ ...withException, completed });
-    }
-    return out.sort((a, b) => a.time.localeCompare(b.time));
-  }, [tasks, version]);
+/**
+ * Returns visible tasks for an arbitrary calendar date (YYYY-MM-DD).
+ * Used by the Routine screen's day preview / future-date view.
+ */
+export function useTasksForDate(dateKey: string): Task[] {
+  const tasks = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  const [version, force] = useReducer((x: number) => x + 1, 0);
+  useEffect(() => {
+    const u1 = subscribeCompletions(force);
+    const u2 = subscribeExceptions(force);
+    return () => {
+      u1();
+      u2();
+    };
+  }, []);
+
+  return useMemoReact(() => getTasksForDate(tasks, dateKey), [tasks, version, dateKey]);
 }
 
 export function toggleTask(id: string) {
