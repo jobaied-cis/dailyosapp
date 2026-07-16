@@ -941,6 +941,16 @@ function RoutinePage() {
 
 
 
+function todayKey(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+function tomorrowKey(): string {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 function AddTaskSheet({ onClose }: { onClose: () => void }) {
   const [time, setTime] = useState("08:00");
   const [endTime, setEndTime] = useState("08:30");
@@ -948,9 +958,17 @@ function AddTaskSheet({ onClose }: { onClose: () => void }) {
   const [note, setNote] = useState("");
   const [repeat, setRepeat] = useState<Repeat>("none");
   const [customDays, setCustomDays] = useState<number[]>([]);
+  const [date, setDate] = useState<string>(() => todayKey());
+  const [dateMode, setDateMode] = useState<"today" | "tomorrow" | "pick">("today");
   const [touched, setTouched] = useState(false);
   const titleEmpty = !title.trim();
   const showTitleError = touched && titleEmpty;
+
+  const chooseDateMode = (mode: "today" | "tomorrow" | "pick") => {
+    setDateMode(mode);
+    if (mode === "today") setDate(todayKey());
+    else if (mode === "tomorrow") setDate(tomorrowKey());
+  };
 
   // Auto-advance end when start moves past it, unless the user has
   // explicitly typed a cross-midnight end (end < start by more than 30 min).
@@ -982,7 +1000,7 @@ function AddTaskSheet({ onClose }: { onClose: () => void }) {
       repeat === "custom" as never
         ? (customDays.length > 0 ? { days: [...customDays].sort() } : "none")
         : repeat;
-    addTask({ time, endTime: endTime || undefined, title, note, repeat: finalRepeat });
+    addTask({ time, endTime: endTime || undefined, title, note, repeat: finalRepeat, date });
     onClose();
   };
 
@@ -997,6 +1015,41 @@ function AddTaskSheet({ onClose }: { onClose: () => void }) {
           </button>
         </div>
         <form onSubmit={submit} className="space-y-5">
+          <Field label="Date">
+            <div className="grid grid-cols-3 gap-1.5">
+              {([
+                { id: "today", label: "Today" },
+                { id: "tomorrow", label: "Tomorrow" },
+                { id: "pick", label: "Pick date" },
+              ] as const).map((o) => {
+                const active = dateMode === o.id;
+                return (
+                  <button
+                    key={o.id}
+                    type="button"
+                    onClick={() => chooseDateMode(o.id)}
+                    className={`press text-[12px] font-semibold py-2.5 rounded-xl border transition-colors ${
+                      active
+                        ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                        : "bg-secondary text-foreground/80 border-transparent hover:bg-secondary/70"
+                    }`}
+                  >
+                    {o.label}
+                  </button>
+                );
+              })}
+            </div>
+            {dateMode === "pick" && (
+              <input
+                type="date"
+                value={date}
+                min={todayKey()}
+                onChange={(e) => setDate(e.target.value || todayKey())}
+                className="mt-3 w-full bg-secondary rounded-xl px-4 py-3.5 text-foreground outline-none focus:ring-2 focus:ring-primary/40 focus:bg-card focus:shadow-[0_0_0_4px_rgba(37,99,235,0.08)] transition-all font-medium"
+              />
+            )}
+          </Field>
+
           <div className="grid grid-cols-2 gap-3">
             <Field label="Start">
               <input

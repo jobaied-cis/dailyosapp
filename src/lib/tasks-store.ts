@@ -41,6 +41,12 @@ export interface Task {
   note?: string;
   completed: boolean;
   repeat?: Repeat;
+  /**
+   * Calendar date this one-off task is planned for ("YYYY-MM-DD").
+   * Only meaningful for non-recurring tasks. Legacy tasks without this
+   * field are treated as today's date for backward compatibility.
+   */
+  date?: string;
 }
 
 const STORAGE_KEY = "dailyos.tasks.v1";
@@ -168,6 +174,9 @@ export function useTasks(): Task[] {
     for (const raw of tasks) {
       if (!taskShowsOnWeekday(raw, weekday)) continue;
       const recurring = isRecurring(raw);
+      // Future-dated one-off tasks stay hidden until their day arrives.
+      // Legacy tasks without a `date` field default to today.
+      if (!recurring && raw.date && raw.date !== dateKey) continue;
       const ex = recurring ? getException(raw.id, dateKey) : undefined;
       if (ex?.skipped) continue;
       const withException = ex ? applyException(raw, ex) : raw;
@@ -202,9 +211,10 @@ export function toggleTask(id: string) {
 }
 
 
-export function addTask(input: { time: string; endTime?: string; title: string; note?: string; repeat?: Repeat }) {
+export function addTask(input: { time: string; endTime?: string; title: string; note?: string; repeat?: Repeat; date?: string }) {
   ensureInit();
   if (!isValidTitle(input.title)) return;
+  const recurring = input.repeat && input.repeat !== "none";
   const task: Task = {
     id: crypto.randomUUID(),
     time: input.time,
@@ -212,7 +222,9 @@ export function addTask(input: { time: string; endTime?: string; title: string; 
     title: input.title.trim(),
     note: input.note?.trim() || undefined,
     completed: false,
-    repeat: input.repeat && input.repeat !== "none" ? input.repeat : undefined,
+    repeat: recurring ? input.repeat : undefined,
+    // `date` only applies to one-off tasks. Recurring templates ignore it.
+    date: !recurring ? (input.date || todayDateKey()) : undefined,
   };
   persist([...cache, task]);
 }
@@ -271,6 +283,8 @@ export function startNewRoutineDay(): void {
     for (const raw of cache) {
       if (!taskShowsOnWeekday(raw, weekday)) continue;
       const recurring = isRecurring(raw);
+      // Skip future-dated one-off tasks so they aren't archived early.
+      if (!recurring && raw.date && raw.date !== dateKey) continue;
       const completed = recurring ? completedIds.has(raw.id) : raw.completed;
       snapshot.push({ ...raw, completed });
     }
