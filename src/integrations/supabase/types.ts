@@ -14,7 +14,329 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      events: {
+        Row: {
+          completed: boolean
+          created_at: string
+          date: string
+          id: string
+          notes: string
+          priority: string
+          time: string
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          completed?: boolean
+          created_at?: string
+          date: string
+          id?: string
+          notes?: string
+          priority?: string
+          time?: string
+          title: string
+          type?: string
+          user_id: string
+        }
+        Update: {
+          completed?: boolean
+          created_at?: string
+          date?: string
+          id?: string
+          notes?: string
+          priority?: string
+          time?: string
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      expenses: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          id: string
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          category?: string
+          created_at?: string
+          id?: string
+          title: string
+          type?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          id?: string
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      mission_tasks: {
+        Row: {
+          completed: boolean
+          created_at: string
+          day: number
+          id: string
+          mission_id: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          completed?: boolean
+          created_at?: string
+          day?: number
+          id?: string
+          mission_id: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          completed?: boolean
+          created_at?: string
+          day?: number
+          id?: string
+          mission_id?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mission_tasks_mission_id_fkey"
+            columns: ["mission_id"]
+            isOneToOne: false
+            referencedRelation: "missions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      missions: {
+        Row: {
+          created_at: string
+          days: number
+          id: string
+          priority: number
+          start_date: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          days?: number
+          id?: string
+          priority?: number
+          start_date?: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          days?: number
+          id?: string
+          priority?: number
+          start_date?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar: string | null
+          created_at: string
+          currency: string | null
+          id: string
+          name: string | null
+          notification_enabled: boolean
+          priorities: string[] | null
+          timezone: string | null
+          updated_at: string
+        }
+        Insert: {
+          avatar?: string | null
+          created_at?: string
+          currency?: string | null
+          id: string
+          name?: string | null
+          notification_enabled?: boolean
+          priorities?: string[] | null
+          timezone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          avatar?: string | null
+          created_at?: string
+          currency?: string | null
+          id?: string
+          name?: string | null
+          notification_enabled?: boolean
+          priorities?: string[] | null
+          timezone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      routine_archives: {
+        Row: {
+          archived_at: string
+          date_key: string
+          done: number
+          id: string
+          tasks: Json
+          total: number
+          user_id: string
+        }
+        Insert: {
+          archived_at?: string
+          date_key: string
+          done?: number
+          id?: string
+          tasks?: Json
+          total?: number
+          user_id: string
+        }
+        Update: {
+          archived_at?: string
+          date_key?: string
+          done?: number
+          id?: string
+          tasks?: Json
+          total?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      streak_state: {
+        Row: {
+          last_broken_at: string | null
+          last_completed_date: string | null
+          last_evaluated_date: string | null
+          last_reset_date: string | null
+          streak: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          last_broken_at?: string | null
+          last_completed_date?: string | null
+          last_evaluated_date?: string | null
+          last_reset_date?: string | null
+          streak?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          last_broken_at?: string | null
+          last_completed_date?: string | null
+          last_evaluated_date?: string | null
+          last_reset_date?: string | null
+          streak?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      task_completions: {
+        Row: {
+          created_at: string
+          date: string
+          task_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          task_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          task_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      task_exceptions: {
+        Row: {
+          date: string
+          patch: Json
+          task_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          date: string
+          patch?: Json
+          task_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          date?: string
+          patch?: Json
+          task_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      tasks: {
+        Row: {
+          category: string | null
+          created_at: string
+          date: string | null
+          end_time: string | null
+          id: string
+          note: string | null
+          priority: string | null
+          repeat: Json | null
+          time: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          date?: string | null
+          end_time?: string | null
+          id?: string
+          note?: string | null
+          priority?: string | null
+          repeat?: Json | null
+          time?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          date?: string | null
+          end_time?: string | null
+          id?: string
+          note?: string | null
+          priority?: string | null
+          repeat?: Json | null
+          time?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
