@@ -64,10 +64,16 @@ function SettingsPage() {
   const currency = useCurrency();
   const { theme, setTheme, mounted } = useTheme();
   const { dayEndsAtMin, setDayEndsAtMin, mounted: dayEndsMounted } = useDayEndsAt();
+  const [email, setEmail] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user?.email) setEmail(data.user.email);
+    });
+  }, []);
 
   const name = userProfile?.name || "Your name";
   const avatar = userProfile?.avatar || "🙂";
-  const email = userProfile?.name ? "you@dailyos.app" : undefined;
   const priorities = userProfile?.priorities ?? [];
   const currencySymbol = currency === "USD" ? "$" : TAKA;
 
