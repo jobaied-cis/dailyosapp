@@ -457,7 +457,9 @@ function RoutinePage() {
         </div>
         <div className="bg-card border border-border/60 rounded-b-2xl rounded-t-none px-4 pt-3 pb-3 shadow-[0_8px_32px_-12px_rgba(15,23,42,0.08)]">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[13px] font-semibold text-foreground">Today&apos;s progress</span>
+            <span className="text-[13px] font-semibold text-foreground">
+              {isTodayView ? "Today&apos;s progress" : `${formatDateLabel(viewDate)} progress`}
+            </span>
             <span className="text-[13px] font-semibold tabular-nums text-foreground">
               {Math.round(pct)}%
               <span className={`ml-1.5 font-medium ${
