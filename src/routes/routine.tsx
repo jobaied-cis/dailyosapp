@@ -245,11 +245,17 @@ function RoutinePage() {
     );
   }
   const lastRoutineEnd = taskMeta.length ? Math.max(...taskMeta.map((m) => m.rEnd)) : 0;
-  const endOfDay = now !== null && tasks.length > 0 && nowRoutineMin >= lastRoutineEnd;
+  // End-of-day detection only applies when viewing the current routine day.
+  const endOfDay = isTodayView && now !== null && tasks.length > 0 && nowRoutineMin >= lastRoutineEnd;
   const allDone = total > 0 && done === total;
   const reachedThreshold = total > 0 && done / total >= 0.8;
   const { streak, justBroke, status: streakStatus } = useStreak(reachedThreshold, endOfDay && !reachedThreshold);
-  const { today: todaySummary, yesterday: yesterdaySummary } = useDailySummary(done, total);
+  // Only persist daily summary for the actual current day; previewing a future
+  // day must not overwrite today's stored stats.
+  const { today: todaySummary, yesterday: yesterdaySummary } = useDailySummary(
+    isTodayView ? done : 0,
+    isTodayView ? total : 0,
+  );
 
   // One-shot toast when streak breaks
   useEffect(() => {
@@ -258,7 +264,7 @@ function RoutinePage() {
 
   const [summaryDismissed, setSummaryDismissed] = useState(false);
   useEffect(() => { setSummaryDismissed(false); }, [allDone, endOfDay]);
-  const showSummary = total > 0 && !summaryDismissed && (allDone || endOfDay);
+  const showSummary = isTodayView && total > 0 && !summaryDismissed && (allDone || endOfDay);
 
   // Yesterday-recap card: shown once on first open of a new day.
   const [yesterdayRecap, setYesterdayRecap] = useState<DaySummary | null>(null);
