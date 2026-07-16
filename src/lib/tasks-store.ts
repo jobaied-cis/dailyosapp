@@ -1,4 +1,5 @@
 import { useEffect, useMemo as useMemoReact, useReducer, useSyncExternalStore } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import {
   isCompletedOn,
   setCompletedOn,
@@ -20,12 +21,17 @@ import {
 import { archiveRoutineDay } from "@/lib/routine-archive-store";
 
 /**
- * Repeat rule for a task.
- * - undefined / "none": one-off task (always visible).
- * - "daily": shows every day.
- * - "weekdays": shows Mon–Fri.
- * - { days: number[] }: custom — 0=Sun … 6=Sat.
+ * Cloud-backed routine tasks store.
+ * Local cache mirrored to localStorage under the legacy key so offline
+ * reads keep working. Mutations follow the events-store pattern:
+ * optimistic cache update → Supabase write → rollback on error.
+ *
+ * NOTE: the `tasks` table intentionally has no `completed` column.
+ * Completion (for both recurring and one-off tasks) lives in
+ * `task_completions` keyed by date. The `completed` field on the Task
+ * type below is a derived overlay, never persisted to the tasks row.
  */
+
 export type Repeat =
   | "none"
   | "daily"
@@ -35,22 +41,19 @@ export type Repeat =
 
 export interface Task {
   id: string;
-  time: string; // "HH:MM"
-  endTime?: string; // "HH:MM" optional
+  time: string;
+  endTime?: string;
   title: string;
   note?: string;
-  completed: boolean;
+  completed: boolean; // derived from task_completions
   repeat?: Repeat;
-  /**
-   * Calendar date this one-off task is planned for ("YYYY-MM-DD").
-   * Only meaningful for non-recurring tasks. Legacy tasks without this
-   * field are treated as today's date for backward compatibility.
-   */
+  /** Calendar date for one-off tasks (YYYY-MM-DD). Undefined for recurring. */
   date?: string;
+  priority?: string;
+  category?: string;
 }
 
-const STORAGE_KEY = "dailyos.tasks.v1";
-const SEED: Task[] = [];
+const LEGACY_KEY = "dailyos.tasks.v1";
 const MIN_TITLE_LEN = 2;
 
 function isValidTitle(s: string | undefined): boolean {
@@ -62,35 +65,43 @@ function isValidTitle(s: string | undefined): boolean {
 
 const listeners = new Set<() => void>();
 let cache: Task[] = [];
+let currentUserId: string | null = null;
 let initialized = false;
 
-function load(): Task[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(SEED));
-      return SEED;
-    }
-    return JSON.parse(raw) as Task[];
-  } catch {
-    return SEED;
-  }
-}
-
-function persist(next: Task[]) {
-  cache = next;
-  if (typeof window !== "undefined") {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-  }
+function emit() {
   listeners.forEach((l) => l());
 }
 
+function loadLocal(): Task[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(LEGACY_KEY);
+    return raw ? (JSON.parse(raw) as Task[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveLocal(next: Task[]) {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(LEGACY_KEY, JSON.stringify(next));
+  } catch {
+    /* noop */
+  }
+}
+
 function ensureInit() {
-  if (!initialized && typeof window !== "undefined") {
-    cache = load();
+  if (!initialized) {
+    cache = loadLocal();
     initialized = true;
   }
+}
+
+function commit(next: Task[]) {
+  cache = next;
+  saveLocal(next);
+  emit();
 }
 
 function subscribe(cb: () => void) {
@@ -108,18 +119,86 @@ function getServerSnapshot(): Task[] {
   return EMPTY_TASKS;
 }
 
-/** Raw template list (no per-day overlay). Useful for multi-day analytics. */
+function todayDateKey(d = new Date()): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function fromRow(row: any): Task {
+  const repeatRaw = row.repeat;
+  let repeat: Repeat | undefined;
+  if (repeatRaw && typeof repeatRaw === "object") {
+    if (Array.isArray((repeatRaw as any).days)) {
+      repeat = { days: ((repeatRaw as any).days as number[]).filter((n) => Number.isFinite(n)) };
+    }
+  } else if (typeof repeatRaw === "string") {
+    if (repeatRaw === "daily" || repeatRaw === "weekdays" || repeatRaw === "weekends") {
+      repeat = repeatRaw;
+    }
+  }
+  return {
+    id: String(row.id),
+    time: String(row.time ?? ""),
+    endTime: row.end_time ? String(row.end_time) : undefined,
+    title: String(row.title ?? ""),
+    note: row.note ? String(row.note) : undefined,
+    completed: false,
+    repeat,
+    date: row.date ? String(row.date) : undefined,
+    priority: row.priority ? String(row.priority) : undefined,
+    category: row.category ? String(row.category) : undefined,
+  };
+}
+
+function toRow(t: Task, userId: string) {
+  return {
+    id: t.id,
+    user_id: userId,
+    title: t.title,
+    note: t.note ?? null,
+    time: t.time,
+    end_time: t.endTime ?? null,
+    repeat: (t.repeat ?? null) as any,
+    date: t.date ?? null,
+    priority: t.priority ?? null,
+    category: t.category ?? null,
+  };
+}
+
+async function loadFromCloud(userId: string): Promise<void> {
+  const { data, error } = await supabase
+    .from("tasks")
+    .select("*")
+    .eq("user_id", userId);
+  if (error) {
+    console.error("[tasks] load failed:", error.message);
+    return;
+  }
+  commit((data ?? []).map(fromRow));
+}
+
+export function useTasksSync(userId: string | null) {
+  useEffect(() => {
+    if (userId === currentUserId) return;
+    currentUserId = userId;
+    if (!userId) {
+      commit([]);
+      return;
+    }
+    void loadFromCloud(userId);
+  }, [userId]);
+}
+
+/* ---------------------------- selectors ---------------------------- */
+
 export function getAllRawTasks(): Task[] {
   ensureInit();
   return cache;
 }
 
-/** Reactive raw template list — same shape as getAllRawTasks but subscribes. */
 export function useAllRawTasks(): Task[] {
   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
 
-/** Does this task's repeat rule include the given weekday? (0=Sun … 6=Sat) */
 export function taskShowsOnWeekday(t: Task, weekday: number): boolean {
   const r = t.repeat;
   if (!r || r === "none") return true;
@@ -132,7 +211,6 @@ export function taskShowsOnWeekday(t: Task, weekday: number): boolean {
   return true;
 }
 
-
 function isRecurring(t: Task | undefined): boolean {
   if (!t) return false;
   const r = t.repeat;
@@ -142,14 +220,6 @@ function isRecurring(t: Task | undefined): boolean {
   return false;
 }
 
-function todayDateKey(d = new Date()): string {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
-
-/**
- * Derive visible tasks for a specific calendar date. Mirrors the logic
- * in useTasks() but parameterized so the UI can preview future days.
- */
 function getTasksForDate(tasks: Task[], dateKey: string): Task[] {
   const d = new Date(dateKey + "T00:00:00");
   const weekday = d.getDay();
@@ -159,23 +229,18 @@ function getTasksForDate(tasks: Task[], dateKey: string): Task[] {
     if (!taskShowsOnWeekday(raw, weekday)) continue;
     const recurring = isRecurring(raw);
     // Future-dated one-off tasks stay hidden until their day arrives.
-    // Legacy tasks without a `date` field default to the requested date.
     if (!recurring && raw.date && raw.date !== dateKey) continue;
     const ex = recurring ? getException(raw.id, dateKey) : undefined;
     if (ex?.skipped) continue;
     const withException = ex ? applyException(raw, ex) : raw;
-    const completed = recurring ? isCompletedOn(raw.id, dateKey) : raw.completed;
+    // Completion always comes from task_completions now (for both flavors).
+    const completionKey = recurring ? dateKey : (raw.date || dateKey);
+    const completed = isCompletedOn(raw.id, completionKey);
     out.push({ ...withException, completed });
   }
   return out.sort((a, b) => a.time.localeCompare(b.time));
 }
 
-/**
- * Returns today's visible tasks with:
- *  - per-day completion overlay (recurring tasks)
- *  - per-day exception overlay (edit-only-today + skip-today)
- *  - one-off tasks keep their existing `completed` boolean.
- */
 export function useTasks(): Task[] {
   const tasks = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   const [version, force] = useReducer((x: number) => x + 1, 0);
@@ -188,14 +253,9 @@ export function useTasks(): Task[] {
     };
   }, []);
 
-  // Memoize derivation so render-pass identity is stable when nothing changed.
   return useMemoReact(() => getTasksForDate(tasks, todayDateKey()), [tasks, version]);
 }
 
-/**
- * Returns visible tasks for an arbitrary calendar date (YYYY-MM-DD).
- * Used by the Routine screen's day preview / future-date view.
- */
 export function useTasksForDate(dateKey: string): Task[] {
   const tasks = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   const [version, force] = useReducer((x: number) => x + 1, 0);
@@ -211,31 +271,31 @@ export function useTasksForDate(dateKey: string): Task[] {
   return useMemoReact(() => getTasksForDate(tasks, dateKey), [tasks, version, dateKey]);
 }
 
+/* ---------------------------- mutations ---------------------------- */
+
 export function toggleTask(id: string) {
   ensureInit();
   const t = cache.find((x) => x.id === id);
-  if (t && isRecurring(t)) {
-    const dateKey = todayDateKey();
-    const wasDone = isCompletedOn(id, dateKey);
-    setCompletedOn(id, !wasDone, dateKey);
-    if (!wasDone) {
-      void import("@/lib/memory-store").then(({ logMemory }) =>
-        logMemory({ type: "task", meta: `done:${t.title}` }),
-      );
-    }
-    return;
-  }
-  const target = cache.find((x) => x.id === id);
-  persist(cache.map((x) => (x.id === id ? { ...x, completed: !x.completed } : x)));
-  if (target && !target.completed) {
+  if (!t) return;
+  const recurring = isRecurring(t);
+  const dateKey = recurring ? todayDateKey() : (t.date || todayDateKey());
+  const wasDone = isCompletedOn(id, dateKey);
+  setCompletedOn(id, !wasDone, dateKey);
+  if (!wasDone) {
     void import("@/lib/memory-store").then(({ logMemory }) =>
-      logMemory({ type: "task", meta: `done:${target.title}` }),
+      logMemory({ type: "task", meta: `done:${t.title}` }),
     );
   }
 }
 
-
-export function addTask(input: { time: string; endTime?: string; title: string; note?: string; repeat?: Repeat; date?: string }) {
+export function addTask(input: {
+  time: string;
+  endTime?: string;
+  title: string;
+  note?: string;
+  repeat?: Repeat;
+  date?: string;
+}) {
   ensureInit();
   if (!isValidTitle(input.title)) return;
   const recurring = input.repeat && input.repeat !== "none";
@@ -247,43 +307,43 @@ export function addTask(input: { time: string; endTime?: string; title: string; 
     note: input.note?.trim() || undefined,
     completed: false,
     repeat: recurring ? input.repeat : undefined,
-    // `date` only applies to one-off tasks. Recurring templates ignore it.
     date: !recurring ? (input.date || todayDateKey()) : undefined,
   };
-  persist([...cache, task]);
+  const prev = cache;
+  commit([...cache, task]);
+
+  if (!currentUserId) return;
+  void (async () => {
+    const { error } = await supabase.from("tasks").insert(toRow(task, currentUserId!));
+    if (error) {
+      console.error("[tasks] insert failed:", error.message);
+      commit(prev);
+    }
+  })();
 }
 
 export function deleteTask(id: string) {
   ensureInit();
-  persist(cache.filter((t) => t.id !== id));
-  // Sweep per-day data tied to this id.
+  const prev = cache;
+  commit(cache.filter((t) => t.id !== id));
   clearCompletionsForTask(id);
   clearExceptionsForTask(id);
+
+  if (!currentUserId) return;
+  void (async () => {
+    const { error } = await supabase.from("tasks").delete().eq("id", id);
+    if (error) {
+      console.error("[tasks] delete failed:", error.message);
+      commit(prev);
+    }
+  })();
 }
 
 export function resetDay() {
   ensureInit();
-  persist(cache.map((t) => ({ ...t, completed: false })));
+  clearCompletionsForDay(todayDateKey());
 }
 
-/**
- * "Start New Day" — archive the finished routine day and reset the
- * active list for a fresh day.
- *
- * Preserves:
- *   - Recurring task templates (still show tomorrow).
- *   - Historical stats, streaks, daily summaries, per-day completions
- *     for prior dates.
- *   - A snapshot of the finished day's tasks in the archive store.
- *
- * Resets (for today only):
- *   - Per-day completion overlay for today (recurring tasks unchecked).
- *   - One-off completed tasks are removed from the active list (their
- *     final state is preserved in the archive so history stays intact).
- *
- * Safe to call multiple times, but skips work when nothing looks finished.
- * The routine page only surfaces the action when the day is fully done.
- */
 let startNewDayInFlight = false;
 let lastStartNewDayKey: string | null = null;
 
@@ -296,21 +356,21 @@ export function startNewRoutineDay(): void {
   const weekday = today.getDay();
   const dateKey = todayDateKey(today);
 
-  // Prevent duplicate archives for the same routine day within one session.
   if (lastStartNewDayKey === dateKey) return;
 
   startNewDayInFlight = true;
   try {
-    // Snapshot from the CURRENT cache — no async gap where cache could drift.
     const completedIds = new Set(getCompletionsForDay(dateKey));
     const snapshot: Task[] = [];
+    const oneOffToDelete: string[] = [];
     for (const raw of cache) {
       if (!taskShowsOnWeekday(raw, weekday)) continue;
       const recurring = isRecurring(raw);
-      // Skip future-dated one-off tasks so they aren't archived early.
       if (!recurring && raw.date && raw.date !== dateKey) continue;
-      const completed = recurring ? completedIds.has(raw.id) : raw.completed;
+      const completionKey = recurring ? dateKey : (raw.date || dateKey);
+      const completed = isCompletedOn(raw.id, completionKey) || completedIds.has(raw.id);
       snapshot.push({ ...raw, completed });
+      if (!recurring && completed) oneOffToDelete.push(raw.id);
     }
     const done = snapshot.filter((t) => t.completed).length;
     archiveRoutineDay({
@@ -321,14 +381,23 @@ export function startNewRoutineDay(): void {
       total: snapshot.length,
     });
 
-    // Reset today's overlay for recurring tasks (untick them for the new day).
+    // Wipe today's completion overlay (untick recurring tasks for the new day).
     clearCompletionsForDay(dateKey);
 
-    // Remove completed one-off tasks; recurring templates stay.
-    const next = cache
-      .filter((t) => (isRecurring(t) ? true : !t.completed))
-      .map((t) => (isRecurring(t) ? t : { ...t, completed: false }));
-    persist(next);
+    // Delete completed one-off tasks from the active list.
+    if (oneOffToDelete.length > 0) {
+      const nextCache = cache.filter((t) => !oneOffToDelete.includes(t.id));
+      commit(nextCache);
+      if (currentUserId) {
+        void (async () => {
+          const { error } = await supabase
+            .from("tasks")
+            .delete()
+            .in("id", oneOffToDelete);
+          if (error) console.error("[tasks] startNewDay cleanup failed:", error.message);
+        })();
+      }
+    }
 
     lastStartNewDayKey = dateKey;
   } finally {
@@ -336,32 +405,58 @@ export function startNewRoutineDay(): void {
   }
 }
 
-
-
 export function editTask(id: string, updates: Partial<Omit<Task, "id" | "completed">>) {
   ensureInit();
   if (updates.title !== undefined && !isValidTitle(updates.title)) return;
-  persist(
-    cache.map((t) => {
-      if (t.id !== id) return t;
-      return {
-        ...t,
-        time: updates.time ?? t.time,
-        endTime: updates.endTime !== undefined ? (updates.endTime || undefined) : t.endTime,
-        title: updates.title !== undefined ? updates.title.trim() : t.title,
-        note: updates.note !== undefined ? (updates.note?.trim() || undefined) : t.note,
-        repeat: updates.repeat !== undefined
-          ? (updates.repeat && updates.repeat !== "none" ? updates.repeat : undefined)
+  const prev = cache;
+  let updatedRow: Task | null = null;
+  const next = cache.map((t) => {
+    if (t.id !== id) return t;
+    const merged: Task = {
+      ...t,
+      time: updates.time ?? t.time,
+      endTime: updates.endTime !== undefined ? (updates.endTime || undefined) : t.endTime,
+      title: updates.title !== undefined ? updates.title.trim() : t.title,
+      note: updates.note !== undefined ? (updates.note?.trim() || undefined) : t.note,
+      repeat:
+        updates.repeat !== undefined
+          ? updates.repeat && updates.repeat !== "none"
+            ? updates.repeat
+            : undefined
           : t.repeat,
-      };
-    }),
-  );
+      date: updates.date !== undefined ? updates.date : t.date,
+      priority: updates.priority !== undefined ? updates.priority : t.priority,
+      category: updates.category !== undefined ? updates.category : t.category,
+    };
+    updatedRow = merged;
+    return merged;
+  });
+  commit(next);
+
+  if (!currentUserId || !updatedRow) return;
+  void (async () => {
+    const patch = toRow(updatedRow!, currentUserId!);
+    const { error } = await supabase
+      .from("tasks")
+      .update({
+        title: patch.title,
+        note: patch.note,
+        time: patch.time,
+        end_time: patch.end_time,
+        repeat: patch.repeat,
+        date: patch.date,
+        priority: patch.priority,
+        category: patch.category,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", id);
+    if (error) {
+      console.error("[tasks] update failed:", error.message);
+      commit(prev);
+    }
+  })();
 }
 
-/**
- * Edit a recurring task for today only — writes a per-day exception
- * instead of mutating the template. For one-off tasks, falls back to editTask.
- */
 export function editTaskToday(
   id: string,
   updates: Pick<TaskException, "time" | "endTime" | "title" | "note">,
@@ -382,7 +477,6 @@ export function editTaskToday(
   setException(id, patch, todayDateKey());
 }
 
-/** "Edit all future occurrences" — mutates the template. Alias of editTask. */
 export function editTaskFuture(
   id: string,
   updates: Partial<Omit<Task, "id" | "completed">>,
@@ -390,7 +484,6 @@ export function editTaskFuture(
   editTask(id, updates);
 }
 
-/** Skip a recurring task for today only. No-op for one-off tasks. */
 export function skipTaskToday(id: string) {
   ensureInit();
   const t = cache.find((x) => x.id === id);
@@ -398,16 +491,10 @@ export function skipTaskToday(id: string) {
   skipToday(id, todayDateKey());
 }
 
-/** Undo a previous "skip today" or "edit only today" change. */
 export function clearTaskTodayOverride(id: string) {
   clearException(id, todayDateKey());
 }
 
-/**
- * Pure helper: derive today's completion stats from the rendered list
- * (i.e. the result of useTasks()). Counts both recurring and one-off
- * tasks because useTasks() has already overlaid per-day completion.
- */
 export function getTodayCompletion(visibleTasks: Task[]): {
   total: number;
   done: number;
@@ -417,4 +504,16 @@ export function getTodayCompletion(visibleTasks: Task[]): {
   const done = visibleTasks.filter((t) => t.completed).length;
   const pct = total > 0 ? done / total : 0;
   return { total, done, pct };
+}
+
+/** Used by cloud-migrate to seed from localStorage. */
+export async function bulkInsertTasks(rows: Task[]): Promise<void> {
+  if (!currentUserId || rows.length === 0) return;
+  const payload = rows.map((t) => toRow(t, currentUserId!));
+  const { data, error } = await supabase.from("tasks").insert(payload).select();
+  if (error) {
+    console.error("[tasks] bulk insert failed:", error.message);
+    return;
+  }
+  commit([...cache, ...(data ?? []).map(fromRow)]);
 }
