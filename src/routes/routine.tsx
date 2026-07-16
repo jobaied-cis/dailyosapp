@@ -196,8 +196,9 @@ function RoutinePage() {
     // Wrap-safe length (cross-midnight tasks handled correctly).
     const rawLen = Math.max(1, rawDurationMin(t) || (end - start));
     const rEnd = rStart + rawLen;
-    const isActive = now !== null && !t.completed && nowRoutineMin >= rStart && nowRoutineMin < rEnd;
-    const isMissed = now !== null && !t.completed && nowRoutineMin >= rEnd;
+    // Time-based status only makes sense for the current routine day.
+    const isActive = isTodayView && now !== null && !t.completed && nowRoutineMin >= rStart && nowRoutineMin < rEnd;
+    const isMissed = isTodayView && now !== null && !t.completed && nowRoutineMin >= rEnd;
     return { start, end, rStart, rEnd, isActive, isMissed };
   });
 
