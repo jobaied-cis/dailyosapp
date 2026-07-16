@@ -12,8 +12,10 @@ import {
   Sun,
   User,
 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth-context";
+import { supabase } from "@/integrations/supabase/client";
 import { CurrencyTrigger } from "@/components/CurrencySheet";
 import { useCurrency, TAKA } from "@/lib/currency";
 import { useTheme } from "@/lib/theme-store";
