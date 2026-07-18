@@ -281,10 +281,19 @@ function SettingsPage() {
       <section className="rounded-[14px] border border-border/60 bg-card p-4 space-y-3 shadow-sm transition-all hover:border-border">
         <SectionHeader title="Future Features" subtitle="More power coming soon" />
         <div className="space-y-2">
-          <FutureFeatureRow icon={Bell} label="Notifications" onClick={handleComingSoon} />
+          <div className="w-full h-12 rounded-[12px] border border-border/60 bg-background/40 text-[13px] font-semibold text-foreground flex items-center justify-between px-4">
+            <span className="inline-flex items-center gap-2.5">
+              <Bell className="size-4 text-primary" />
+              Notifications
+            </span>
+            <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+              Coming in V1.1
+            </span>
+          </div>
           <FutureFeatureRow icon={Sparkles} label="AI Settings" onClick={handleComingSoon} />
           <FutureFeatureRow icon={BarChart3} label="Statistics" onClick={handleComingSoon} />
         </div>
+
       </section>
 
       {/* Security */}

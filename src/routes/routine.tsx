@@ -226,34 +226,10 @@ function RoutinePage() {
     .filter((t) => !!t.endTime)
     .map((t) => ({
       id: t.id,
-      title: t.title,
-      time: t.time,
-      endTime: t.endTime,
       dur: rawDurationMin(t),
     }));
   const plannedMin = plannedBreakdown.reduce((sum, b) => sum + b.dur, 0);
-  if (typeof window !== "undefined") {
-    const dateKey = new Date().toISOString().slice(0, 10);
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
-    const yKey = yesterday.toISOString().slice(0, 10);
-    const plannedIds = new Set(plannedBreakdown.map((b) => b.id));
-    const audit = rawTasks.map((t) => ({
-      id: t.id,
-      title: t.title,
-      routineDayKey: dateKey,
-      calendarDate: dateKey,
-      archived: false,
-      recurring: !!t.repeat && t.repeat !== "none",
-      inTodayList: tasks.some((x) => x.id === t.id),
-      inPlanned: plannedIds.has(t.id),
-    }));
-    // eslint-disable-next-line no-console
-    console.log(
-      `[Planned] currentRoutineDayKey=${dateKey} yesterdayKey=${yKey} today=${tasks.length} yesterday=0 planned=${plannedBreakdown.length} sum=${plannedMin}m`,
-      { audit, breakdown: plannedBreakdown },
-    );
-  }
+
   const lastRoutineEnd = taskMeta.length ? Math.max(...taskMeta.map((m) => m.rEnd)) : 0;
   // End-of-day detection only applies when viewing the current routine day.
   const endOfDay = isTodayView && now !== null && tasks.length > 0 && nowRoutineMin >= lastRoutineEnd;
