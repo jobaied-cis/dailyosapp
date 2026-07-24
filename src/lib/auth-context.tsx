@@ -230,12 +230,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const signInWithGoogle = useCallback(async () => {
-    const redirect = hasWindow() ? window.location.origin : undefined;
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: redirect },
-    });
-    return { error: error?.message };
+    try {
+      const redirect = hasWindow() ? window.location.origin : undefined;
+      const result = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: redirect,
+      });
+      if (result?.error) {
+        const raw = result.error instanceof Error ? result.error.message : String(result.error);
+        return { error: mapOAuthError(raw) };
+      }
+      return {};
+    } catch (e) {
+      const raw = e instanceof Error ? e.message : String(e);
+      return { error: mapOAuthError(raw) };
+    }
   }, []);
 
   const logout = useCallback(async () => {
