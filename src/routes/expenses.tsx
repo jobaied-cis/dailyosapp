@@ -11,6 +11,8 @@ import {
   setDailyLimit,
   type Expense,
   type ExpenseCategory,
+  type EntryType,
+
 } from "@/lib/expenses-store";
 import { useTakaSymbol, formatTaka } from "@/lib/currency";
 import { CurrencyTrigger } from "@/components/CurrencySheet";
