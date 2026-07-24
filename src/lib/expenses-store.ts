@@ -143,8 +143,15 @@ export async function updateExpense(
     createdAt?: number;
   },
 ): Promise<void> {
-  const patch: Record<string, unknown> = {};
+  const patch: {
+    title?: string;
+    amount?: number;
+    type?: string;
+    category?: string;
+    created_at?: string;
+  } = {};
   const cachePatch: Partial<Expense> = {};
+
   if (input.title !== undefined) {
     patch.title = input.title.trim();
     cachePatch.title = patch.title as string;
