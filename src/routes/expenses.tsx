@@ -668,24 +668,8 @@ function DayCard({
     }
   };
 
-  const handleDelete = (e: Expense) => {
-    const snap = e;
-    deleteExpense(e.id);
-    toast("Entry deleted", {
-      action: {
-        label: "Undo",
-        onClick: () =>
-          snap.type === "income"
-            ? addIncome({ amount: snap.amount, title: snap.title })
-            : addExpense({
-                title: snap.title,
-                amount: snap.amount,
-                type: "expense",
-                category: snap.category,
-              }),
-      },
-    });
-  };
+  // Delete is confirmed at the page level; child rows only request it.
+
 
   // Empty state
   if (items.length === 0) {
