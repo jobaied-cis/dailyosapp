@@ -595,6 +595,8 @@ function ExpensesPage() {
       <DayGroupedHistory
         entries={monthEntries}
         onEdit={setEditing}
+        onOpenDetail={setDetail}
+        onDeleteRequest={requestDelete}
         excludeKeys={[todayKeyStr, yesterdayKeyStr]}
       />
 
@@ -603,6 +605,25 @@ function ExpensesPage() {
       {editing && (
         <EditExpenseSheet expense={editing} onClose={() => setEditing(null)} />
       )}
+      {detail && (
+        <TransactionDetailSheet
+          expense={detail}
+          onClose={() => setDetail(null)}
+          onEdit={(e) => {
+            setDetail(null);
+            setEditing(e);
+          }}
+          onDelete={requestDelete}
+        />
+      )}
+      {pendingDelete && (
+        <ConfirmDeleteDialog
+          expense={pendingDelete}
+          onCancel={() => setPendingDelete(null)}
+          onConfirm={confirmDelete}
+        />
+      )}
+
     </div>
     )}
     </>
