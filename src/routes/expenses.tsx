@@ -818,7 +818,7 @@ function DayCard({
                               onClick={(ev) => {
                                 ev.stopPropagation();
                                 setRevealedId(null);
-                                handleDelete(e);
+                                onDeleteRequest(e);
                               }}
                               aria-label="Delete entry"
                               className="press text-destructive p-1.5 rounded-full bg-destructive/10"
