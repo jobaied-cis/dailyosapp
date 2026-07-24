@@ -205,11 +205,39 @@ function ExpensesPage() {
   const [openExpense, setOpenExpense] = useState(false);
   const [openIncome, setOpenIncome] = useState(false);
   const [editing, setEditing] = useState<Expense | null>(null);
+  const [detail, setDetail] = useState<Expense | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<Expense | null>(null);
   const [selectedMonth, setSelectedMonth] = useState<string>(() => monthKey(Date.now()));
   const [showHistory, setShowHistory] = useState(false);
   const [dailyLimit, setDailyLimitState] = useState<number>(() => getDailyLimit());
   const [editingLimit, setEditingLimit] = useState(false);
   const [filter, setFilter] = useState<Filter>({ scope: "month", category: null });
+
+  const requestDelete = (e: Expense) => {
+    setDetail(null);
+    setPendingDelete(e);
+  };
+  const confirmDelete = () => {
+    const snap = pendingDelete;
+    if (!snap) return;
+    setPendingDelete(null);
+    deleteExpense(snap.id);
+    toast("Entry deleted", {
+      action: {
+        label: "Undo",
+        onClick: () =>
+          snap.type === "income"
+            ? addIncome({ amount: snap.amount, title: snap.title })
+            : addExpense({
+                title: snap.title,
+                amount: snap.amount,
+                type: "expense",
+                category: snap.category,
+              }),
+      },
+    });
+  };
+
 
   // Today's expense calculation (all entries, not just selected month)
   const todayKeyStr = dayKey(Date.now());
