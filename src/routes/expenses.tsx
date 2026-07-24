@@ -542,6 +542,8 @@ function ExpensesPage() {
           dayKey={todayKeyStr}
           items={filteredMonthEntries.filter((e) => dayKey(e.createdAt) === todayKeyStr)}
           onEdit={setEditing}
+          onOpenDetail={setDetail}
+          onDeleteRequest={requestDelete}
           defaultOpen
           isToday
           hideWhenEmptyAndFiltered={!!filter.category || filter.scope !== "month"}
@@ -555,9 +557,12 @@ function ExpensesPage() {
             dayKey={yesterdayKeyStr}
             items={filteredMonthEntries.filter((e) => dayKey(e.createdAt) === yesterdayKeyStr)}
             onEdit={setEditing}
+            onOpenDetail={setDetail}
+            onDeleteRequest={requestDelete}
           />
         </div>
       )}
+
 
       {/* Category Breakdown */}
       <CategoryBreakdown
