@@ -634,6 +634,8 @@ function DayCard({
   dayKey: key,
   items,
   onEdit,
+  onOpenDetail,
+  onDeleteRequest,
   defaultOpen = false,
   isToday = false,
   hideWhenEmptyAndFiltered = false,
@@ -641,10 +643,13 @@ function DayCard({
   dayKey: string;
   items: Expense[];
   onEdit: (e: Expense) => void;
+  onOpenDetail: (e: Expense) => void;
+  onDeleteRequest: (e: Expense) => void;
   defaultOpen?: boolean;
   isToday?: boolean;
   hideWhenEmptyAndFiltered?: boolean;
 }) {
+
   const taka = useTakaSymbol();
   const [isOpen, setIsOpen] = useState(defaultOpen);
   const [revealedId, setRevealedId] = useState<string | null>(null);
