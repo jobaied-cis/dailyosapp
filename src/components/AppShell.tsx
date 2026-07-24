@@ -4,9 +4,12 @@ import { useEffect, useRef, useState, type MouseEvent, type ReactNode } from "re
 import { useTheme } from "@/lib/theme-store";
 import { useCurrency, TAKA } from "@/lib/currency";
 import { CurrencyTrigger } from "@/components/CurrencySheet";
+import { useNotifications } from "@/lib/notifications/use-notifications";
+import { NotificationPermissionPrompt } from "@/components/NotificationPermissionPrompt";
 
 export function AppShell() {
   const { pathname } = useLocation();
+  useNotifications();
 
   return (
     <div className="min-h-screen bg-background flex justify-center">
@@ -54,6 +57,8 @@ export function AppShell() {
             <NavItem to="/expenses" icon={<Wallet className="size-5" />} label="Expense" />
           </div>
         </nav>
+
+        <NotificationPermissionPrompt />
       </div>
     </div>
   );
