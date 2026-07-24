@@ -898,8 +898,11 @@ function DayGroupedHistory({
             dayKey={key}
             items={items}
             onEdit={onEdit}
+            onOpenDetail={onOpenDetail}
+            onDeleteRequest={onDeleteRequest}
             defaultOpen={key === todayKey}
           />
+
         </div>
       ))}
     </div>
