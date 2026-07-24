@@ -154,8 +154,9 @@ export async function updateExpense(
 
   if (input.title !== undefined) {
     patch.title = input.title.trim();
-    cachePatch.title = patch.title as string;
+    cachePatch.title = patch.title;
   }
+
   if (input.amount !== undefined) {
     patch.amount = input.amount;
     cachePatch.amount = input.amount;
