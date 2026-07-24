@@ -10,6 +10,20 @@ import {
 } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { lovable } from "@/integrations/lovable";
+
+function mapOAuthError(raw: string | undefined): string {
+  if (!raw) return "Google sign-in failed. Please try again.";
+  const msg = raw.toLowerCase();
+  if (msg.includes("popup") && msg.includes("clos")) return "Sign-in window was closed before finishing.";
+  if (msg.includes("cancel")) return "Google sign-in was cancelled.";
+  if (msg.includes("network") || msg.includes("fetch")) return "Network issue. Check your connection and try again.";
+  if (msg.includes("unsupported provider") || msg.includes("provider is not enabled"))
+    return "Google sign-in is temporarily unavailable. Please try again shortly.";
+  if (msg.includes("already registered") || msg.includes("user already") || msg.includes("identity") && msg.includes("exist"))
+    return "This email is already registered with a password. Please sign in with Email — account linking isn't supported yet.";
+  return "Couldn't complete Google sign-in. Please try again.";
+}
 
 /**
  * DailyOS Auth — backed by Supabase.
@@ -216,12 +230,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const signInWithGoogle = useCallback(async () => {
-    const redirect = hasWindow() ? window.location.origin : undefined;
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: redirect },
-    });
-    return { error: error?.message };
+    try {
+      const redirect = hasWindow() ? window.location.origin : undefined;
+      const result = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: redirect,
+      });
+      if (result?.error) {
+        const raw = result.error instanceof Error ? result.error.message : String(result.error);
+        return { error: mapOAuthError(raw) };
+      }
+      return {};
+    } catch (e) {
+      const raw = e instanceof Error ? e.message : String(e);
+      return { error: mapOAuthError(raw) };
+    }
   }, []);
 
   const logout = useCallback(async () => {
