@@ -11,6 +11,8 @@ import {
   setDailyLimit,
   type Expense,
   type ExpenseCategory,
+  type EntryType,
+
 } from "@/lib/expenses-store";
 import { useTakaSymbol, formatTaka } from "@/lib/currency";
 import { CurrencyTrigger } from "@/components/CurrencySheet";
@@ -205,11 +207,39 @@ function ExpensesPage() {
   const [openExpense, setOpenExpense] = useState(false);
   const [openIncome, setOpenIncome] = useState(false);
   const [editing, setEditing] = useState<Expense | null>(null);
+  const [detail, setDetail] = useState<Expense | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<Expense | null>(null);
   const [selectedMonth, setSelectedMonth] = useState<string>(() => monthKey(Date.now()));
   const [showHistory, setShowHistory] = useState(false);
   const [dailyLimit, setDailyLimitState] = useState<number>(() => getDailyLimit());
   const [editingLimit, setEditingLimit] = useState(false);
   const [filter, setFilter] = useState<Filter>({ scope: "month", category: null });
+
+  const requestDelete = (e: Expense) => {
+    setDetail(null);
+    setPendingDelete(e);
+  };
+  const confirmDelete = () => {
+    const snap = pendingDelete;
+    if (!snap) return;
+    setPendingDelete(null);
+    deleteExpense(snap.id);
+    toast("Entry deleted", {
+      action: {
+        label: "Undo",
+        onClick: () =>
+          snap.type === "income"
+            ? addIncome({ amount: snap.amount, title: snap.title })
+            : addExpense({
+                title: snap.title,
+                amount: snap.amount,
+                type: "expense",
+                category: snap.category,
+              }),
+      },
+    });
+  };
+
 
   // Today's expense calculation (all entries, not just selected month)
   const todayKeyStr = dayKey(Date.now());
@@ -514,6 +544,8 @@ function ExpensesPage() {
           dayKey={todayKeyStr}
           items={filteredMonthEntries.filter((e) => dayKey(e.createdAt) === todayKeyStr)}
           onEdit={setEditing}
+          onOpenDetail={setDetail}
+          onDeleteRequest={requestDelete}
           defaultOpen
           isToday
           hideWhenEmptyAndFiltered={!!filter.category || filter.scope !== "month"}
@@ -527,9 +559,12 @@ function ExpensesPage() {
             dayKey={yesterdayKeyStr}
             items={filteredMonthEntries.filter((e) => dayKey(e.createdAt) === yesterdayKeyStr)}
             onEdit={setEditing}
+            onOpenDetail={setDetail}
+            onDeleteRequest={requestDelete}
           />
         </div>
       )}
+
 
       {/* Category Breakdown */}
       <CategoryBreakdown
@@ -562,6 +597,8 @@ function ExpensesPage() {
       <DayGroupedHistory
         entries={monthEntries}
         onEdit={setEditing}
+        onOpenDetail={setDetail}
+        onDeleteRequest={requestDelete}
         excludeKeys={[todayKeyStr, yesterdayKeyStr]}
       />
 
@@ -570,6 +607,25 @@ function ExpensesPage() {
       {editing && (
         <EditExpenseSheet expense={editing} onClose={() => setEditing(null)} />
       )}
+      {detail && (
+        <TransactionDetailSheet
+          expense={detail}
+          onClose={() => setDetail(null)}
+          onEdit={(e) => {
+            setDetail(null);
+            setEditing(e);
+          }}
+          onDelete={requestDelete}
+        />
+      )}
+      {pendingDelete && (
+        <ConfirmDeleteDialog
+          expense={pendingDelete}
+          onCancel={() => setPendingDelete(null)}
+          onConfirm={confirmDelete}
+        />
+      )}
+
     </div>
     )}
     </>
@@ -580,6 +636,8 @@ function DayCard({
   dayKey: key,
   items,
   onEdit,
+  onOpenDetail,
+  onDeleteRequest,
   defaultOpen = false,
   isToday = false,
   hideWhenEmptyAndFiltered = false,
@@ -587,10 +645,13 @@ function DayCard({
   dayKey: string;
   items: Expense[];
   onEdit: (e: Expense) => void;
+  onOpenDetail: (e: Expense) => void;
+  onDeleteRequest: (e: Expense) => void;
   defaultOpen?: boolean;
   isToday?: boolean;
   hideWhenEmptyAndFiltered?: boolean;
 }) {
+
   const taka = useTakaSymbol();
   const [isOpen, setIsOpen] = useState(defaultOpen);
   const [revealedId, setRevealedId] = useState<string | null>(null);
@@ -609,24 +670,8 @@ function DayCard({
     }
   };
 
-  const handleDelete = (e: Expense) => {
-    const snap = e;
-    deleteExpense(e.id);
-    toast("Entry deleted", {
-      action: {
-        label: "Undo",
-        onClick: () =>
-          snap.type === "income"
-            ? addIncome({ amount: snap.amount, title: snap.title })
-            : addExpense({
-                title: snap.title,
-                amount: snap.amount,
-                type: "expense",
-                category: snap.category,
-              }),
-      },
-    });
-  };
+  // Delete is confirmed at the page level; child rows only request it.
+
 
   // Empty state
   if (items.length === 0) {
@@ -695,7 +740,7 @@ function DayCard({
             return (
               <li key={e.id} className="card-pop">
                 <SwipeableRow
-                  onSwipeLeft={() => handleDelete(e)}
+                  onSwipeLeft={() => onDeleteRequest(e)}
                   onSwipeRight={() => onEdit(e)}
                   leftLabel="Delete"
                   rightLabel="Edit"
@@ -703,10 +748,20 @@ function DayCard({
                   rightBgClass="bg-primary/90 text-primary-foreground"
                 >
                   <div
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => onOpenDetail(e)}
+                    onKeyDown={(ev) => {
+                      if (ev.key === "Enter" || ev.key === " ") {
+                        ev.preventDefault();
+                        onOpenDetail(e);
+                      }
+                    }}
                     onPointerDown={() => startLongPress(e.id)}
                     onPointerUp={cancelLongPress}
                     onPointerLeave={cancelLongPress}
                     onPointerCancel={cancelLongPress}
+
                     className={`flex items-stretch bg-secondary/40 rounded-2xl overflow-hidden ${
                       isMostRecent
                         ? "ring-1 ring-primary/40 shadow-[0_4px_18px_-6px_rgba(59,130,246,0.35)] bg-secondary/60"
@@ -765,7 +820,7 @@ function DayCard({
                               onClick={(ev) => {
                                 ev.stopPropagation();
                                 setRevealedId(null);
-                                handleDelete(e);
+                                onDeleteRequest(e);
                               }}
                               aria-label="Delete entry"
                               className="press text-destructive p-1.5 rounded-full bg-destructive/10"
@@ -792,12 +847,17 @@ function DayCard({
 function DayGroupedHistory({
   entries,
   onEdit,
+  onOpenDetail,
+  onDeleteRequest,
   excludeKeys = [],
 }: {
   entries: Expense[];
   onEdit: (e: Expense) => void;
+  onOpenDetail: (e: Expense) => void;
+  onDeleteRequest: (e: Expense) => void;
   excludeKeys?: string[];
 }) {
+
   if (entries.length === 0) {
     return (
       <div className="text-center text-muted-foreground py-16">
@@ -840,8 +900,11 @@ function DayGroupedHistory({
             dayKey={key}
             items={items}
             onEdit={onEdit}
+            onOpenDetail={onOpenDetail}
+            onDeleteRequest={onDeleteRequest}
             defaultOpen={key === todayKey}
           />
+
         </div>
       ))}
     </div>
@@ -1572,6 +1635,30 @@ function AddIncomeSheet({ onClose }: { onClose: () => void }) {
   );
 }
 
+function toDateInputValue(ts: number) {
+  const d = new Date(ts);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+function mergeDateKeepTime(originalTs: number, dateInput: string): number {
+  const [y, m, d] = dateInput.split("-").map((n) => parseInt(n, 10));
+  if (!y || !m || !d) return originalTs;
+  const src = new Date(originalTs);
+  const next = new Date(
+    y,
+    m - 1,
+    d,
+    src.getHours(),
+    src.getMinutes(),
+    src.getSeconds(),
+    src.getMilliseconds(),
+  );
+  return next.getTime();
+}
+
 function EditExpenseSheet({
   expense,
   onClose,
@@ -1581,21 +1668,69 @@ function EditExpenseSheet({
 }) {
   const [title, setTitle] = useState(expense.title);
   const [amount, setAmount] = useState(String(expense.amount));
+  const [type, setType] = useState<EntryType>(expense.type);
   const [category, setCategory] = useState<ExpenseCategory>(expense.category);
-  const isIncome = expense.type === "income";
+  const [dateStr, setDateStr] = useState<string>(toDateInputValue(expense.createdAt));
+  const [saving, setSaving] = useState(false);
+  const [pendingIncomeSwitch, setPendingIncomeSwitch] = useState(false);
 
-  const submit = (e: React.FormEvent) => {
+  const isIncome = type === "income";
+  const num = parseFloat(amount);
+  const invalid =
+    !title.trim() || Number.isNaN(num) || num <= 0 || !dateStr;
+
+  const requestTypeChange = (next: EntryType) => {
+    if (next === type) return;
+    if (expense.type === "expense" && next === "income") {
+      setPendingIncomeSwitch(true);
+      return;
+    }
+    setType(next);
+  };
+
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const num = parseFloat(amount);
-    if (!title.trim() || Number.isNaN(num) || num <= 0) return;
-    updateExpense(expense.id, { title, amount: num, category: isIncome ? undefined : category });
-    toast.success(isIncome ? "Income updated" : "Expense updated");
-    onClose();
+    if (invalid || saving) return;
+    setSaving(true);
+    try {
+      const nextTs = mergeDateKeepTime(expense.createdAt, dateStr);
+      await updateExpense(expense.id, {
+        title: title.trim(),
+        amount: num,
+        type,
+        category: isIncome ? "Others" : category,
+        createdAt: nextTs,
+      });
+      toast.success("Transaction updated");
+      onClose();
+    } catch {
+      toast.error("Could not update transaction");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
-    <Sheet title={isIncome ? "Edit income" : "Edit expense"} onClose={onClose}>
+    <Sheet title="Edit transaction" onClose={onClose}>
       <form onSubmit={submit} className="space-y-4">
+        <Field label="Type">
+          <div className="grid grid-cols-2 gap-2">
+            {(["expense", "income"] as EntryType[]).map((t) => (
+              <button
+                key={t}
+                type="button"
+                onClick={() => requestTypeChange(t)}
+                className={`press rounded-xl py-2.5 text-sm font-semibold border transition ${
+                  type === t
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-secondary text-foreground border-transparent"
+                }`}
+              >
+                {t === "income" ? "Income" : "Expense"}
+              </button>
+            ))}
+          </div>
+        </Field>
         <Field label="Title">
           <input
             autoFocus
@@ -1619,17 +1754,207 @@ function EditExpenseSheet({
             <CategorySelect value={category} onChange={setCategory} />
           </Field>
         )}
+        <Field label="Date">
+          <input
+            type="date"
+            value={dateStr}
+            onChange={(e) => setDateStr(e.target.value)}
+            className="w-full bg-secondary rounded-xl px-4 py-3.5 text-foreground outline-none focus:ring-2 focus:ring-primary/30 font-medium"
+          />
+        </Field>
         <button
           type="submit"
-          disabled={!title.trim() || !amount || Number.isNaN(parseFloat(amount)) || parseFloat(amount) <= 0}
+          disabled={invalid || saving}
           className="press w-full bg-primary text-primary-foreground rounded-[1.25rem] py-4 font-semibold shadow-[0_4px_16px_-4px_rgba(37,99,235,0.35)] disabled:opacity-45 disabled:shadow-none mt-2"
         >
-          Save Changes
+          {saving ? "Saving…" : "Save Changes"}
         </button>
       </form>
+
+      {pendingIncomeSwitch && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-foreground/40 backdrop-blur-sm p-6">
+          <div className="w-full max-w-sm bg-card rounded-2xl p-5 shadow-[0_8px_40px_-8px_rgba(15,23,42,0.25)] animate-in zoom-in-95 duration-150">
+            <h4 className="text-base font-bold text-foreground">Change to Income?</h4>
+            <p className="mt-1.5 text-sm text-muted-foreground">
+              Changing this transaction to Income will remove its Expense category.
+            </p>
+            <div className="mt-4 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setPendingIncomeSwitch(false)}
+                className="press rounded-xl px-4 py-2 text-sm font-semibold bg-secondary text-foreground"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setType("income");
+                  setPendingIncomeSwitch(false);
+                }}
+                className="press rounded-xl px-4 py-2 text-sm font-semibold bg-primary text-primary-foreground"
+              >
+                Change
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </Sheet>
   );
 }
+
+function TransactionDetailSheet({
+  expense,
+  onClose,
+  onEdit,
+  onDelete,
+}: {
+  expense: Expense;
+  onClose: () => void;
+  onEdit: (e: Expense) => void;
+  onDelete: (e: Expense) => void;
+}) {
+  const taka = useTakaSymbol();
+  const isIncome = expense.type === "income";
+  const color = isIncome ? "#14B8A6" : CATEGORY_COLOR[expense.category];
+  const emoji = isIncome ? "💰" : CATEGORY_EMOJI[expense.category];
+  const d = new Date(expense.createdAt);
+  const dateLine = d.toLocaleDateString(undefined, {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+  const timeLine = d.toLocaleTimeString(undefined, {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+
+  return (
+    <Sheet title="Transaction" onClose={onClose}>
+      <div className="space-y-4">
+        <div className="flex items-center gap-3">
+          <div
+            className="size-12 rounded-full flex items-center justify-center text-xl"
+            style={{ backgroundColor: `${color}22` }}
+          >
+            {emoji}
+          </div>
+          <div className="flex-1 min-w-0">
+            <h4 className="text-base font-bold text-foreground truncate">
+              {expense.title}
+            </h4>
+            <p className="text-xs text-muted-foreground mt-0.5 font-medium">
+              {isIncome ? "Income" : expense.category}
+            </p>
+          </div>
+          <p
+            className={`text-lg font-mono font-bold ${
+              isIncome ? "text-emerald-600" : "text-foreground"
+            }`}
+          >
+            {isIncome ? "+" : "-"}
+            {formatTaka(expense.amount, taka)}
+          </p>
+        </div>
+
+        <div className="rounded-2xl bg-secondary/50 p-4 space-y-2 text-sm">
+          <div className="flex items-center justify-between">
+            <span className="text-muted-foreground">Type</span>
+            <span className="font-semibold text-foreground">
+              {isIncome ? "Income" : "Expense"}
+            </span>
+          </div>
+          {!isIncome && (
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Category</span>
+              <span className="font-semibold text-foreground">{expense.category}</span>
+            </div>
+          )}
+          <div className="flex items-center justify-between">
+            <span className="text-muted-foreground">Date</span>
+            <span className="font-semibold text-foreground">{dateLine}</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span className="text-muted-foreground">Time</span>
+            <span className="font-semibold text-foreground">{timeLine}</span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2 pt-1">
+          <button
+            type="button"
+            onClick={() => onEdit(expense)}
+            className="press rounded-xl py-3 text-sm font-semibold bg-secondary text-foreground flex items-center justify-center gap-2"
+          >
+            <Pencil className="size-4" /> Edit
+          </button>
+          <button
+            type="button"
+            onClick={() => onDelete(expense)}
+            className="press rounded-xl py-3 text-sm font-semibold bg-destructive/10 text-destructive flex items-center justify-center gap-2"
+          >
+            <Trash2 className="size-4" /> Delete
+          </button>
+        </div>
+      </div>
+    </Sheet>
+  );
+}
+
+function ConfirmDeleteDialog({
+  expense,
+  onCancel,
+  onConfirm,
+}: {
+  expense: Expense;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  const taka = useTakaSymbol();
+  const isIncome = expense.type === "income";
+  return (
+    <div className="fixed inset-0 z-[55] flex items-center justify-center bg-foreground/40 backdrop-blur-sm p-6">
+      <div className="w-full max-w-sm bg-card rounded-2xl p-5 shadow-[0_8px_40px_-8px_rgba(15,23,42,0.25)] animate-in zoom-in-95 duration-150">
+        <h4 className="text-base font-bold text-foreground">Delete transaction?</h4>
+        <div className="mt-3 rounded-xl bg-secondary/50 p-3">
+          <p className="text-sm font-semibold text-foreground truncate">
+            {expense.title}
+          </p>
+          <p
+            className={`text-sm font-mono font-bold mt-0.5 ${
+              isIncome ? "text-emerald-600" : "text-foreground"
+            }`}
+          >
+            {isIncome ? "+" : "-"}
+            {formatTaka(expense.amount, taka)}
+          </p>
+        </div>
+        <p className="mt-3 text-xs text-muted-foreground">
+          This action cannot be undone.
+        </p>
+        <div className="mt-4 flex items-center justify-end gap-2">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="press rounded-xl px-4 py-2 text-sm font-semibold bg-secondary text-foreground"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={onConfirm}
+            className="press rounded-xl px-4 py-2 text-sm font-semibold bg-destructive text-destructive-foreground"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 
 function Sheet({
   title,
