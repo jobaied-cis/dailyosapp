@@ -135,23 +135,49 @@ export async function addIncome(input: { amount: number; title?: string }): Prom
 
 export async function updateExpense(
   id: string,
-  input: { title: string; amount: number; category?: ExpenseCategory },
+  input: {
+    title?: string;
+    amount?: number;
+    type?: EntryType;
+    category?: ExpenseCategory;
+    createdAt?: number;
+  },
 ): Promise<void> {
-  const patch = {
-    title: input.title.trim(),
-    amount: input.amount,
-    ...(input.category !== undefined ? { category: input.category } : {}),
-  };
+  const patch: Record<string, unknown> = {};
+  const cachePatch: Partial<Expense> = {};
+  if (input.title !== undefined) {
+    patch.title = input.title.trim();
+    cachePatch.title = patch.title as string;
+  }
+  if (input.amount !== undefined) {
+    patch.amount = input.amount;
+    cachePatch.amount = input.amount;
+  }
+  if (input.type !== undefined) {
+    patch.type = input.type;
+    cachePatch.type = input.type;
+  }
+  if (input.category !== undefined) {
+    patch.category = input.category;
+    cachePatch.category = input.category;
+  }
+  if (input.createdAt !== undefined) {
+    patch.created_at = new Date(input.createdAt).toISOString();
+    cachePatch.createdAt = input.createdAt;
+  }
+  if (Object.keys(patch).length === 0) return;
   const prev = cache;
-  cache = cache.map((e) => (e.id === id ? { ...e, ...patch } : e));
+  cache = cache.map((e) => (e.id === id ? { ...e, ...cachePatch } : e));
   emit();
   const { error } = await supabase.from("expenses").update(patch).eq("id", id);
   if (error) {
     console.error("[expenses] update failed:", error.message);
     cache = prev;
     emit();
+    throw error;
   }
 }
+
 
 export async function deleteExpense(id: string): Promise<void> {
   const prev = cache;
