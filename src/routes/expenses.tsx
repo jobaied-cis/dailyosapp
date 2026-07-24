@@ -738,7 +738,7 @@ function DayCard({
             return (
               <li key={e.id} className="card-pop">
                 <SwipeableRow
-                  onSwipeLeft={() => handleDelete(e)}
+                  onSwipeLeft={() => onDeleteRequest(e)}
                   onSwipeRight={() => onEdit(e)}
                   leftLabel="Delete"
                   rightLabel="Edit"
@@ -746,10 +746,20 @@ function DayCard({
                   rightBgClass="bg-primary/90 text-primary-foreground"
                 >
                   <div
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => onOpenDetail(e)}
+                    onKeyDown={(ev) => {
+                      if (ev.key === "Enter" || ev.key === " ") {
+                        ev.preventDefault();
+                        onOpenDetail(e);
+                      }
+                    }}
                     onPointerDown={() => startLongPress(e.id)}
                     onPointerUp={cancelLongPress}
                     onPointerLeave={cancelLongPress}
                     onPointerCancel={cancelLongPress}
+
                     className={`flex items-stretch bg-secondary/40 rounded-2xl overflow-hidden ${
                       isMostRecent
                         ? "ring-1 ring-primary/40 shadow-[0_4px_18px_-6px_rgba(59,130,246,0.35)] bg-secondary/60"
