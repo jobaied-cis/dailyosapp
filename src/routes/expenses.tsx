@@ -845,12 +845,17 @@ function DayCard({
 function DayGroupedHistory({
   entries,
   onEdit,
+  onOpenDetail,
+  onDeleteRequest,
   excludeKeys = [],
 }: {
   entries: Expense[];
   onEdit: (e: Expense) => void;
+  onOpenDetail: (e: Expense) => void;
+  onDeleteRequest: (e: Expense) => void;
   excludeKeys?: string[];
 }) {
+
   if (entries.length === 0) {
     return (
       <div className="text-center text-muted-foreground py-16">
