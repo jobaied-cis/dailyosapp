@@ -30,12 +30,18 @@ interface ChannelMessage {
   type: "settings-changed" | "leader-changed" | "wake";
 }
 
-const instanceId = (() => {
+// Lazily generated: generating random values at module scope is a disallowed
+// operation in the Cloudflare Worker runtime used for SSR.
+let instanceIdCache: string | null = null;
+function getInstanceId(): string {
+  if (instanceIdCache) return instanceIdCache;
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
-    return crypto.randomUUID();
+    instanceIdCache = crypto.randomUUID();
+  } else {
+    instanceIdCache = `t-${Math.random().toString(36).slice(2)}-${Date.now()}`;
   }
-  return `t-${Math.random().toString(36).slice(2)}-${Date.now()}`;
-})();
+  return instanceIdCache;
+}
 
 let timer: ReturnType<typeof setTimeout> | null = null;
 let heap = new MinHeap<PlannedItem>((a, b) => a.fireAt - b.fireAt);
