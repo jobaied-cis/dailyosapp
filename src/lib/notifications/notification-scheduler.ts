@@ -73,8 +73,8 @@ function writeLeader(rec: LeaderRecord | null): void {
 function claimLeadership(): boolean {
   const now = Date.now();
   const cur = readLeader();
-  if (!cur || cur.expires < now || cur.id === instanceId) {
-    writeLeader({ id: instanceId, expires: now + LEADER_TTL_MS });
+  if (!cur || cur.expires < now || cur.id === getInstanceId()) {
+    writeLeader({ id: getInstanceId(), expires: now + LEADER_TTL_MS });
     return true;
   }
   return false;
@@ -82,12 +82,12 @@ function claimLeadership(): boolean {
 
 function isLeader(): boolean {
   const cur = readLeader();
-  return !!cur && cur.id === instanceId && cur.expires >= Date.now();
+  return !!cur && cur.id === getInstanceId() && cur.expires >= Date.now();
 }
 
 function releaseLeadership(): void {
   const cur = readLeader();
-  if (cur && cur.id === instanceId) writeLeader(null);
+  if (cur && cur.id === getInstanceId()) writeLeader(null);
 }
 
 function clearTimer(): void {
