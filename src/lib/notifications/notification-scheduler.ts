@@ -30,12 +30,18 @@ interface ChannelMessage {
   type: "settings-changed" | "leader-changed" | "wake";
 }
 
-const instanceId = (() => {
+// Lazily generated: generating random values at module scope is a disallowed
+// operation in the Cloudflare Worker runtime used for SSR.
+let instanceIdCache: string | null = null;
+function getInstanceId(): string {
+  if (instanceIdCache) return instanceIdCache;
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
-    return crypto.randomUUID();
+    instanceIdCache = crypto.randomUUID();
+  } else {
+    instanceIdCache = `t-${Math.random().toString(36).slice(2)}-${Date.now()}`;
   }
-  return `t-${Math.random().toString(36).slice(2)}-${Date.now()}`;
-})();
+  return instanceIdCache;
+}
 
 let timer: ReturnType<typeof setTimeout> | null = null;
 let heap = new MinHeap<PlannedItem>((a, b) => a.fireAt - b.fireAt);
@@ -67,8 +73,8 @@ function writeLeader(rec: LeaderRecord | null): void {
 function claimLeadership(): boolean {
   const now = Date.now();
   const cur = readLeader();
-  if (!cur || cur.expires < now || cur.id === instanceId) {
-    writeLeader({ id: instanceId, expires: now + LEADER_TTL_MS });
+  if (!cur || cur.expires < now || cur.id === getInstanceId()) {
+    writeLeader({ id: getInstanceId(), expires: now + LEADER_TTL_MS });
     return true;
   }
   return false;
@@ -76,12 +82,12 @@ function claimLeadership(): boolean {
 
 function isLeader(): boolean {
   const cur = readLeader();
-  return !!cur && cur.id === instanceId && cur.expires >= Date.now();
+  return !!cur && cur.id === getInstanceId() && cur.expires >= Date.now();
 }
 
 function releaseLeadership(): void {
   const cur = readLeader();
-  if (cur && cur.id === instanceId) writeLeader(null);
+  if (cur && cur.id === getInstanceId()) writeLeader(null);
 }
 
 function clearTimer(): void {
